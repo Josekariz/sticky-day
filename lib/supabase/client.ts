@@ -1,0 +1,2 @@
+// Browser client
+export {};

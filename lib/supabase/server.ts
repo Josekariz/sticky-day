@@ -1,0 +1,2 @@
+// Server client (cookies)
+export {};
