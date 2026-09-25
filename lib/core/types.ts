@@ -23,4 +23,5 @@ export type Note = {
   x: number; // 0..1, fraction of the board's usable width
   y: number; // 0..1, fraction of the board's usable height
   rotation: number;
+  startedAt: number | null; // epoch ms, set while status === "focus"
 }; 
