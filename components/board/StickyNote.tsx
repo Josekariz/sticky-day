@@ -11,12 +11,13 @@ type Props = {
   board: RefObject<HTMLDivElement | null>;
   onMove: (id: string, x: number, y: number) => void; // fractions 0..1
   onOpen: (id: string) => void;
+  onDone: (id: string) => void;
 };
 
 const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
 
-export function StickyNote({ note, board, onMove, onOpen }: Props) {
-  const x = useMotionValue(0); // drag offset only
+export function StickyNote({ note, board, onMove, onOpen, onDone }: Props) {
+  const x = useMotionValue(0);
   const y = useMotionValue(0);
   const paper = paperVar(note.color);
 
@@ -33,8 +34,7 @@ export function StickyNote({ note, board, onMove, onOpen }: Props) {
   }
 
   return (
-    <motion.button
-      type="button"
+    <motion.div
       drag
       dragMomentum={false}
       style={{
@@ -47,22 +47,38 @@ export function StickyNote({ note, board, onMove, onOpen }: Props) {
         ["--paper" as string]: paper,
       }}
       onDragEnd={handleDragEnd}
-      onTap={() => onOpen(note.id)}
       initial={{ scale: 0.6, rotate: note.rotation + 12, opacity: 0 }}
       animate={{ scale: 1, rotate: note.rotation, opacity: 1 }}
+      exit={{ scale: 0.15, rotate: note.rotation + 40, opacity: 0, transition: { duration: 0.35 } }}
       whileHover={{ scale: 1.04, rotate: 0, translateY: -4 }}
       whileDrag={{ scale: 1.08, rotate: 0 }}
       transition={{ type: "spring", stiffness: 380, damping: 22 }}
-      className="sticky-note absolute w-44 h-44 p-4 pb-3 flex flex-col text-left text-ink cursor-grab active:cursor-grabbing"
+      className="sticky-note group absolute w-44 h-44 text-ink cursor-grab active:cursor-grabbing"
     >
-      <span className="relative font-hand text-2xl font-semibold leading-tight line-clamp-3">
-        {note.title}
-      </span>
+      {/* the note face: tap to open */}
+      <button
+        type="button"
+        onClick={() => onOpen(note.id)}
+        className="relative flex h-full w-full flex-col p-4 pb-3 text-left"
+      >
+        <span className="font-hand text-2xl font-semibold leading-tight line-clamp-3">{note.title}</span>
+        <span className="mt-auto flex items-center gap-1.5 pr-8 text-[11px] font-semibold text-ink-soft">
+          <span className="px-2 py-0.5 rounded-full bg-black/10 tabular-nums">{note.estMinutes} min</span>
+          <span className="px-2 py-0.5 rounded-full bg-black/10 capitalize">{note.energy}</span>
+        </span>
+      </button>
 
-      <span className="relative mt-auto flex items-center gap-1.5 pr-8 text-[11px] font-semibold text-ink-soft">
-        <span className="px-2 py-0.5 rounded-full bg-black/10 tabular-nums">{note.estMinutes} min</span>
-        <span className="px-2 py-0.5 rounded-full bg-black/10 capitalize">{note.energy}</span>
-      </span>
-    </motion.button>
+      {/* done: appears on hover / focus */}
+      <button
+        type="button"
+        onClick={(e) => { e.stopPropagation(); onDone(note.id); }}
+        aria-label={`Mark "${note.title}" done`}
+        className="absolute right-2 top-2 grid h-8 w-8 place-items-center rounded-full bg-black/15 opacity-0 transition-opacity hover:bg-black/30 focus-visible:opacity-100 group-hover:opacity-100"
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M20 6 9 17l-5-5" />
+        </svg>
+      </button>
+    </motion.div>
   );
-} 
+}
