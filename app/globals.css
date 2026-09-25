@@ -1,1 +1,98 @@
 @import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --bg: #EDEAE2;
+  --board: #FBFAF6;
+  --frame: #D9D6CE;
+  --ink: #1F1D1A;
+  --ink-soft: #5A554B;
+  --surface: #FFFDF8;
+  --danger: #B23A22;
+  --glow: 0;
+
+  --paper-yellow: #F9E28B;  --paper-lime: #DDEB9A;   --paper-mint: #C7E8CC;
+  --paper-teal: #BDE6E0;    --paper-sky: #BFD9F2;    --paper-lavender: #D6CCF0;
+  --paper-lilac: #E4C6EE;   --paper-pink: #F7BFC7;   --paper-coral: #F9C4B4;
+  --paper-peach: #FAD0A6;   --paper-sand: #EBDCC0;   --paper-grey: #DEDBD3;
+}
+
+.dark {
+  --bg: #15140F;
+  --board: #1E1C17;
+  --frame: #3A372F;
+  --ink: #15140F;          /* ink stays dark: it sits on neon paper */
+  --ink-soft: #3A372F;
+  --surface: #26241E;
+  --danger: #FF6B4A;
+  --glow: 1;
+
+  --paper-yellow: #F5FF3D;  --paper-lime: #B8FF3D;   --paper-mint: #5CFF9E;
+  --paper-teal: #3DFFE4;    --paper-sky: #4DC8FF;    --paper-lavender: #A78BFF;
+  --paper-lilac: #E066FF;   --paper-pink: #FF5FA8;   --paper-coral: #FF6A4D;
+  --paper-peach: #FFA94D;   --paper-sand: #E8D28A;   --paper-grey: #C9CCC2;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-board: var(--board);
+  --color-frame: var(--frame);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-surface: var(--surface);
+  --color-danger: var(--danger);
+  --font-hand: var(--font-hand);
+  --font-body: var(--font-body);
+}
+
+body { background: var(--bg); }
+.dark body { color: #F2EFE6; }
+
+.sticky-note {
+  --paper-hi: color-mix(in oklch, var(--paper) 90%, white);
+  --paper-lo: color-mix(in oklch, var(--paper) 93%, black);
+  --paper-fold: color-mix(in oklch, var(--paper) 78%, black);
+  background-image: linear-gradient(180deg, var(--paper-hi) 0%, var(--paper) 14%, var(--paper-lo) 100%);
+  box-shadow:
+    0 1px 1px rgba(0,0,0,0.06),
+    0 6px 8px -4px rgba(40,30,10,0.22),
+    0 18px 22px -12px rgba(40,30,10,0.25);
+}
+
+/* lifted bottom-right corner */
+.sticky-note::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 30px;
+  height: 30px;
+  background: linear-gradient(135deg, var(--paper-fold) 0 50%, var(--board) 50% 100%);
+  box-shadow: -2px -2px 4px rgba(0,0,0,0.18);
+  pointer-events: none;
+}
+
+/* faint paper grain */
+.sticky-note::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0.18;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.5 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  pointer-events: none;
+}
+
+.dark .sticky-note {
+  box-shadow:
+    0 0 0 1px color-mix(in oklch, var(--paper) 30%, transparent),
+    0 0 26px color-mix(in oklch, var(--paper) 50%, transparent),
+    0 12px 20px -10px rgba(0,0,0,0.6);
+}
+.dark .sticky-note:hover {
+  box-shadow:
+    0 0 0 1px color-mix(in oklch, var(--paper) 40%, transparent),
+    0 0 44px color-mix(in oklch, var(--paper) 72%, transparent),
+    0 12px 20px -10px rgba(0,0,0,0.6);
+}
