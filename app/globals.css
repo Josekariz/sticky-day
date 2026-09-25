@@ -8,6 +8,8 @@
   --frame: #D9D6CE;
   --ink: #1F1D1A;
   --ink-soft: #5A554B;
+  --fg: #1F1D1A;
+  --fg-soft: #5A554B;
   --surface: #FFFDF8;
   --danger: #B23A22;
   --glow: 0;
@@ -24,6 +26,8 @@
   --frame: #3A372F;
   --ink: #15140F;          /* ink stays dark: it sits on neon paper */
   --ink-soft: #3A372F;
+  --fg: #F2EFE6;
+  --fg-soft: #A8A397;
   --surface: #26241E;
   --danger: #FF6B4A;
   --glow: 1;
@@ -35,6 +39,8 @@
   --color-frame: var(--frame);
   --color-ink: var(--ink);
   --color-ink-soft: var(--ink-soft);
+  --color-fg: var(--fg);
+  --color-fg-soft: var(--fg-soft);
   --color-surface: var(--surface);
   --color-danger: var(--danger);
   --font-hand: var(--font-hand);
@@ -42,7 +48,6 @@
 }
 
 body { background: var(--bg); }
-.dark body { color: #F2EFE6; }
 
 .sticky-note {
   --paper-hi: color-mix(in oklch, var(--paper) 90%, white);

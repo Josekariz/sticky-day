@@ -18,7 +18,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       suppressHydrationWarning
       className={`${hand.variable} ${body.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-bg text-ink font-body">
+      <body className="min-h-full flex flex-col bg-bg text-fg font-body">
         <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>
