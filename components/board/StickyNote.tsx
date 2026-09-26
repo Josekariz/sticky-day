@@ -61,7 +61,7 @@ export function StickyNote({ note, board, onMove, onOpen, onDone }: Props) {
         onClick={() => onOpen(note.id)}
         className="relative flex h-full w-full flex-col p-4 pb-3 text-left"
       >
-        <span className="font-hand text-2xl font-semibold leading-tight line-clamp-3">{note.title}</span>
+        <span className="pr-7 font-hand text-2xl font-semibold leading-tight line-clamp-3">{note.title}</span>
         <span className="mt-auto flex items-center gap-1.5 pr-8 text-[11px] font-semibold text-ink-soft">
           <span className="px-2 py-0.5 rounded-full bg-black/10 tabular-nums">{note.estMinutes} min</span>
           <span className="px-2 py-0.5 rounded-full bg-black/10 capitalize">{note.energy}</span>

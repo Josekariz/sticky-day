@@ -21,6 +21,8 @@ export function PickupCard({ note, onClose, onWorkOn, onDone, onTearUp }: Props)
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onClose}
+          tabIndex={-1}
+          onKeyDown={(e) => e.key === "Escape" && onClose()}
         >
           <motion.div
             role="dialog"
@@ -63,6 +65,7 @@ export function PickupCard({ note, onClose, onWorkOn, onDone, onTearUp }: Props)
                   </svg>
                 </button>
                 <button
+                  autoFocus
                   onClick={onClose}
                   aria-label="Close"
                   className="grid h-11 w-11 place-items-center rounded-full"

@@ -23,7 +23,12 @@ export function useBoard(initial: Note[]) {
     openNote,
 
     move(id: string, x: number, y: number) {
-      update(id, { x, y }); // Day 2: also save to Supabase
+      // Day 2: also save to Supabase
+      setNotes((ns) => {
+        const n = ns.find((k) => k.id === id);
+        if (!n) return ns;
+        return [...ns.filter((k) => k.id !== id), { ...n, x, y }]; // last = on top
+      });
     },
     open: (id: string) => setOpenId(id),
     close: () => setOpenId(null),

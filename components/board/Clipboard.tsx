@@ -17,11 +17,12 @@ function fmt(ms: number) {
 export function Clipboard({ note, onDone, onPutBack }: Props) {
   const [now, setNow] = useState(() => Date.now());
 
+  const noteId = note?.id ?? null;
   useEffect(() => {
-    if (!note) return;
+    if (!noteId) return;
     const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);
-  }, [note?.id]);
+  }, [noteId]);
 
   const elapsed = note?.startedAt ? now - note.startedAt : 0;
   const left = note ? note.estMinutes * 60_000 - elapsed : 0;
