@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, useMotionValue } from "framer-motion";
-import type { RefObject } from "react";
+import { useRef, type RefObject } from "react";
 import { paperVar, type Note } from "@/lib/core/types";
 
 export const NOTE_SIZE = 176; // must match w-44 h-44
@@ -20,6 +20,9 @@ export function StickyNote({ note, board, onMove, onOpen, onDone }: Props) {
   const x = useMotionValue(0);
   const y = useMotionValue(0);
   const paper = paperVar(note.color);
+  // A drag ends with pointerup on the note, which the browser turns into a click.
+  // Remember that this gesture was a drag so the click doesn't open the note.
+  const dragged = useRef(false);
 
   function handleDragEnd() {
     const el = board.current;
@@ -46,6 +49,8 @@ export function StickyNote({ note, board, onMove, onOpen, onDone }: Props) {
         backgroundColor: paper,
         ["--paper" as string]: paper,
       }}
+      onPointerDown={() => { dragged.current = false; }}
+      onDragStart={() => { dragged.current = true; }}
       onDragEnd={handleDragEnd}
       initial={{ scale: 0.6, rotate: note.rotation + 12, opacity: 0 }}
       animate={{ scale: 1, rotate: note.rotation, opacity: 1 }}
@@ -58,7 +63,10 @@ export function StickyNote({ note, board, onMove, onOpen, onDone }: Props) {
       {/* the note face: tap to open */}
       <button
         type="button"
-        onClick={() => onOpen(note.id)}
+        onClick={() => {
+          if (dragged.current) { dragged.current = false; return; }
+          onOpen(note.id);
+        }}
         className="relative flex h-full w-full flex-col p-4 pb-3 text-left"
       >
         <span className="pr-7 font-hand text-2xl font-semibold leading-tight line-clamp-3">{note.title}</span>
