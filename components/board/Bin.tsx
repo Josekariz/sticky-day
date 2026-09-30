@@ -4,21 +4,37 @@ import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import type { Note } from "@/lib/core/types";
 
-export function Bin({ notes }: { notes: Note[] }) {
+type Props = {
+  notes: Note[]; // status === "trashed"
+  armed: boolean;
+  onRestore: (id: string) => void;
+  onEmpty: () => void;
+};
+
+export function Bin({ notes, armed, onRestore, onEmpty }: Props) {
   const [open, setOpen] = useState(false);
-  const worked = notes.reduce((s, n) => s + (n.actualMinutes ?? 0), 0);
 
   return (
     <>
       <motion.button
+        data-drop="bin"
         onClick={() => setOpen(true)}
-        aria-label={`Open the bin, ${notes.length} done`}
-        whileHover={{ scale: 1.06, rotate: -3 }}
+        aria-label={`Open the bin, ${notes.length} trashed`}
+        animate={
+          armed
+            ? { rotate: [-8, 8, -8], scale: 1.12 }
+            : { rotate: 0, scale: 1 }
+        }
+        transition={
+          armed
+            ? { rotate: { repeat: Infinity, duration: 0.35, ease: "easeInOut" }, scale: { duration: 0.15 } }
+            : { type: "spring", stiffness: 300, damping: 20 }
+        }
+        whileHover={armed ? undefined : { scale: 1.06, rotate: -3 }}
         whileTap={{ scale: 0.96 }}
         className="fixed bottom-6 right-6 z-30 h-28 w-24 drop-shadow-[0_12px_14px_rgba(0,0,0,0.35)]"
       >
         <svg viewBox="0 0 96 112" className="h-full w-full" aria-hidden>
-          {/* crumpled paper inside, shown once there is something to show */}
           {notes.slice(0, 3).map((n, i) => (
             <circle
               key={n.id}
@@ -30,14 +46,11 @@ export function Bin({ notes }: { notes: Note[] }) {
               strokeWidth="1.5"
             />
           ))}
-          {/* body */}
           <path d="M14 30 L82 30 L74 106 Q48 112 22 106 Z" fill="var(--bin-body)" />
           <path d="M14 30 L82 30 L74 106 Q48 112 22 106 Z" fill="url(#binShade)" />
-          {/* ribs */}
           {[26, 36, 46, 56, 66].map((x) => (
             <line key={x} x1={x} y1="34" x2={x - 3} y2="104" stroke="rgba(0,0,0,0.22)" strokeWidth="2" />
           ))}
-          {/* rim */}
           <ellipse cx="48" cy="30" rx="36" ry="7" fill="var(--bin-rim)" />
           <ellipse cx="48" cy="30" rx="30" ry="4.5" fill="var(--bin-inside)" />
           <defs>
@@ -60,42 +73,64 @@ export function Bin({ notes }: { notes: Note[] }) {
           <>
             <motion.div
               className="fixed inset-0 z-40 bg-black/30"
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
               onClick={() => setOpen(false)}
             />
             <motion.aside
               className="fixed right-0 top-0 z-50 flex h-full w-full max-w-md flex-col gap-4 bg-surface p-6 shadow-2xl"
-              initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }}
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
             >
               <header className="flex items-start justify-between">
                 <div>
-                  <h2 className="font-hand text-4xl font-bold">Today’s bin</h2>
-                  <p className="text-sm text-fg-soft">{notes.length} done · {worked} min worked</p>
+                  <h2 className="font-hand text-4xl font-bold">Trash</h2>
+                  <p className="text-sm text-fg-soft">{notes.length} trashed</p>
                 </div>
-                <button onClick={() => setOpen(false)} aria-label="Close" className="h-11 w-11 rounded-full border border-frame">✕</button>
+                <button
+                  onClick={() => setOpen(false)}
+                  aria-label="Close"
+                  className="h-11 w-11 rounded-full border border-frame"
+                >
+                  ✕
+                </button>
               </header>
 
               <ul className="flex flex-col gap-2">
-                {notes.map((n) => {
-                  const diff = (n.actualMinutes ?? 0) - n.estMinutes;
-                  return (
-                    <li key={n.id} className="flex items-center gap-3 rounded-xl bg-bg p-3">
-                      <span className="h-9 w-9 shrink-0 rotate-[-6deg] rounded-sm shadow" style={{ backgroundColor: `var(--paper-${n.color})` }} />
-                      <span className="flex-1">
-                        <span className="block text-sm font-semibold line-through text-fg-soft">{n.title}</span>
-                        <span className="block text-xs text-fg-soft">est. {n.estMinutes} · took {n.actualMinutes}</span>
-                      </span>
-                      <span className={`text-sm font-bold tabular-nums ${diff > 0 ? "text-danger" : "text-done"}`}>
-                        {diff > 0 ? `+${diff}` : diff} min
-                      </span>
-                    </li>
-                  );
-                })}
-                {notes.length === 0 && <li className="py-8 text-center font-hand text-2xl text-fg-soft">Nothing in here yet.</li>}
+                {notes.map((n) => (
+                  <li key={n.id} className="flex items-center gap-3 rounded-xl bg-bg p-3">
+                    <span
+                      className="h-9 w-9 shrink-0 rotate-[-6deg] rounded-sm shadow"
+                      style={{ backgroundColor: `var(--paper-${n.color})` }}
+                    />
+                    <span className="flex-1 text-sm font-semibold line-through text-fg-soft">{n.title}</span>
+                    <button
+                      onClick={() => onRestore(n.id)}
+                      className="h-9 shrink-0 rounded-lg border border-frame px-3 text-xs font-bold"
+                    >
+                      Restore
+                    </button>
+                  </li>
+                ))}
+                {notes.length === 0 && (
+                  <li className="py-8 text-center font-hand text-2xl text-fg-soft">Nothing in here yet.</li>
+                )}
               </ul>
 
-              <p className="mt-auto text-xs text-fg-soft">The recap and carry-over land here once the AI is wired.</p>
+              {notes.length > 0 && (
+                <button
+                  onClick={() => {
+                    onEmpty();
+                    setOpen(false);
+                  }}
+                  className="mt-auto h-11 self-start rounded-xl border border-danger px-5 text-sm font-semibold text-danger"
+                >
+                  Empty bin
+                </button>
+              )}
             </motion.aside>
           </>
         )}

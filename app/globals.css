@@ -24,6 +24,11 @@
   --bin-body: #6E6A62;
   --bin-rim: #8A857C;
   --bin-inside: #3E3B35;
+  --tray-back: #3E4652;
+  --tray-front: #4F5966;
+  --tray-front-armed: #62708A;
+  --tray-line: #2B313A;
+  --on-tray: #F2EFE6;
 
   --paper-yellow: #F5FF3D;  --paper-lime: #B8FF3D;   --paper-mint: #5CFF9E;
   --paper-teal: #3DFFE4;    --paper-sky: #4DC8FF;    --paper-lavender: #A78BFF;
@@ -42,6 +47,11 @@
   --surface: #26241E;
   --danger: #FF6B4A;
   --glow: 1;
+  --tray-back: #2E353F;
+  --tray-front: #3E4652;
+  --tray-front-armed: #52607A;
+  --tray-line: #1C2027;
+  --on-tray: #F2EFE6;
 }
 
 @theme inline {
@@ -60,6 +70,12 @@
   --color-clipboard-clip: var(--clipboard-clip);
   --color-clipboard-paper: var(--clipboard-paper);
   --color-clipboard-line: var(--clipboard-line);
+  --color-tray-back: var(--tray-back);
+  --color-tray-front: var(--tray-front);
+  --color-tray-front-armed: var(--tray-front-armed);
+  --color-tray-line: var(--tray-line);
+  --color-on-tray: var(--on-tray);
+  --color-paper-yellow: var(--paper-yellow);
   --font-hand: var(--font-hand);
   --font-body: var(--font-body);
 }
