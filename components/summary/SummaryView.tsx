@@ -37,7 +37,7 @@ function Section({ title, items, muted }: { title: string; items: string[]; mute
   );
 }
 
-export function StandupView() {
+export function SummaryView() {
   const [copied, setCopied] = useState(false);
 
   async function copy() {

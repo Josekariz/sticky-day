@@ -7,7 +7,7 @@ import { ThemeToggle } from "@/components/theme/ThemeToggle";
 const LINKS = [
   { href: "/board", label: "Board" },
   { href: "/calendar", label: "Calendar" },
-  { href: "/standup", label: "Standup" },
+  { href: "/summary", label: "Summary" },
 ];
 
 export function Navbar({ initials = "JM" }: { initials?: string }) {
