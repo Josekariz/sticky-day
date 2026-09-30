@@ -51,7 +51,7 @@ export function CalendarView() {
                   {pair && (
                     <circle
                       cx="12" cy="12" r="9" fill="none" strokeWidth="4" strokeLinecap="round"
-                      stroke={frac >= 1 ? "#2E7D4F" : "currentColor"}
+                      stroke={frac >= 1 ? "var(--done)" : "currentColor"}
                       strokeDasharray={`${frac * C} ${C}`}
                       transform="rotate(-90 12 12)"
                     />
@@ -74,7 +74,7 @@ export function CalendarView() {
               <span className="rounded-lg bg-bg px-2.5 py-1 text-xs font-semibold text-fg-soft">Read only</span>
             </div>
             <div className="h-3 overflow-hidden rounded-full bg-bg">
-              <div className="h-full bg-[#2E7D4F]" style={{ width: `${(FAKE[selected][0] / FAKE[selected][1]) * 100}%` }} />
+              <div className="h-full bg-done" style={{ width: `${(FAKE[selected][0] / FAKE[selected][1]) * 100}%` }} />
             </div>
             <p className="rounded-xl bg-bg p-4 text-sm leading-relaxed text-fg-soft">
               The day’s notes and its recap will appear here once the database is wired.

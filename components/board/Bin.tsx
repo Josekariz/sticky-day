@@ -31,15 +31,15 @@ export function Bin({ notes }: { notes: Note[] }) {
             />
           ))}
           {/* body */}
-          <path d="M14 30 L82 30 L74 106 Q48 112 22 106 Z" fill="#6E6A62" />
+          <path d="M14 30 L82 30 L74 106 Q48 112 22 106 Z" fill="var(--bin-body)" />
           <path d="M14 30 L82 30 L74 106 Q48 112 22 106 Z" fill="url(#binShade)" />
           {/* ribs */}
           {[26, 36, 46, 56, 66].map((x) => (
             <line key={x} x1={x} y1="34" x2={x - 3} y2="104" stroke="rgba(0,0,0,0.22)" strokeWidth="2" />
           ))}
           {/* rim */}
-          <ellipse cx="48" cy="30" rx="36" ry="7" fill="#8A857C" />
-          <ellipse cx="48" cy="30" rx="30" ry="4.5" fill="#3E3B35" />
+          <ellipse cx="48" cy="30" rx="36" ry="7" fill="var(--bin-rim)" />
+          <ellipse cx="48" cy="30" rx="30" ry="4.5" fill="var(--bin-inside)" />
           <defs>
             <linearGradient id="binShade" x1="0" x2="1">
               <stop offset="0" stopColor="rgba(255,255,255,0.18)" />
@@ -86,7 +86,7 @@ export function Bin({ notes }: { notes: Note[] }) {
                         <span className="block text-sm font-semibold line-through text-fg-soft">{n.title}</span>
                         <span className="block text-xs text-fg-soft">est. {n.estMinutes} · took {n.actualMinutes}</span>
                       </span>
-                      <span className={`text-sm font-bold tabular-nums ${diff > 0 ? "text-danger" : "text-[#2E7D4F]"}`}>
+                      <span className={`text-sm font-bold tabular-nums ${diff > 0 ? "text-danger" : "text-done"}`}>
                         {diff > 0 ? `+${diff}` : diff} min
                       </span>
                     </li>

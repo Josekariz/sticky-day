@@ -19,7 +19,7 @@ export function LandingNote() {
       </p>
       <Link
         href="/board"
-        className="relative mt-2 flex h-12 items-center justify-center rounded-xl bg-[#1F1D1A] text-sm font-semibold text-[#FBFAF6]"
+        className="relative mt-2 flex h-12 items-center justify-center rounded-xl bg-ink text-sm font-semibold text-on-ink"
       >
         Continue with Google
       </Link>

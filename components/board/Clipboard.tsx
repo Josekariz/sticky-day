@@ -28,13 +28,13 @@ export function Clipboard({ note, onDone, onPutBack }: Props) {
   const left = note ? note.estMinutes * 60_000 - elapsed : 0;
 
   return (
-    <section className="relative rounded-xl bg-[#B98F63] p-4 pt-8 shadow-lg">
+    <section className="relative rounded-xl bg-clipboard p-4 pt-8 shadow-lg">
       <span
-        className="absolute left-1/2 top-[-12px] h-7 w-28 -translate-x-1/2 rounded-lg bg-[#4A4A4A] shadow-[inset_0_2px_0_rgba(255,255,255,0.25),0_3px_4px_rgba(0,0,0,0.3)]"
+        className="absolute left-1/2 top-[-12px] h-7 w-28 -translate-x-1/2 rounded-lg bg-clipboard-clip shadow-[inset_0_2px_0_rgba(255,255,255,0.25),0_3px_4px_rgba(0,0,0,0.3)]"
         aria-hidden
       />
-      <div className="flex flex-col gap-3 rounded bg-[#FFFDF8] p-4 text-[#1F1D1A]">
-        <h2 className="text-[11px] font-bold uppercase tracking-widest text-[#5A554B]">Working on</h2>
+      <div className="flex flex-col gap-3 rounded bg-clipboard-paper p-4 text-ink">
+        <h2 className="text-[11px] font-bold uppercase tracking-widest text-ink-soft">Working on</h2>
 
         {note ? (
           <>
@@ -48,22 +48,22 @@ export function Clipboard({ note, onDone, onPutBack }: Props) {
 
             <div className="py-1 text-center">
               <div className="text-4xl font-bold tabular-nums leading-none">{fmt(elapsed)}</div>
-              <div className={`mt-1 text-xs ${left < 0 ? "text-[#B23A22]" : "text-[#5A554B]"}`}>
+              <div className={`mt-1 text-xs ${left < 0 ? "text-ink-danger" : "text-ink-soft"}`}>
                 {left >= 0 ? `${fmt(left)} left on your estimate` : `${fmt(-left)} over`}
               </div>
             </div>
 
             <div className="flex gap-2">
-              <button onClick={() => onDone(note.id)} className="h-11 flex-1 rounded-xl bg-[#1F1D1A] text-sm font-semibold text-[#FBFAF6]">
+              <button onClick={() => onDone(note.id)} className="h-11 flex-1 rounded-xl bg-ink text-sm font-semibold text-on-ink">
                 Done
               </button>
-              <button onClick={() => onPutBack(note.id)} className="h-11 rounded-xl border border-[#D9D6CE] px-4 text-sm font-semibold">
+              <button onClick={() => onPutBack(note.id)} className="h-11 rounded-xl border border-clipboard-line px-4 text-sm font-semibold">
                 Put back
               </button>
             </div>
           </>
         ) : (
-          <p className="py-6 text-center font-hand text-xl text-[#5A554B]">Nothing pinned. Open a note and hit “Work on it”.</p>
+          <p className="py-6 text-center font-hand text-xl text-ink-soft">Nothing pinned. Open a note and hit “Work on it”.</p>
         )}
       </div>
     </section>

@@ -47,7 +47,7 @@ export function PickupCard({ note, onClose, onWorkOn, onDone, onTearUp }: Props)
                   onClick={() => onTearUp(note.id)}
                   aria-label="Tear up this note"
                   title="Tear up (delete)"
-                  className="grid h-11 w-11 place-items-center rounded-full text-[#B23A22] opacity-50 hover:opacity-100 hover:bg-black/10"
+                  className="grid h-11 w-11 place-items-center rounded-full text-ink-danger opacity-50 hover:opacity-100 hover:bg-black/10"
                 >
                   <svg
                     width="18"
@@ -96,8 +96,8 @@ export function PickupCard({ note, onClose, onWorkOn, onDone, onTearUp }: Props)
 
             <div className="relative mt-4 flex gap-2">
               <button onClick={onClose} className="h-12 rounded-xl border border-black/30 px-4 text-sm font-semibold">Stick back</button>
-              <button onClick={() => onWorkOn(note.id)} className="h-12 flex-1 rounded-xl border-2 border-[#1F1D1A] text-sm font-semibold">Work on it</button>
-              <button onClick={() => onDone(note.id)} className="h-12 flex-1 rounded-xl bg-[#1F1D1A] text-sm font-semibold text-[#FBFAF6]">Done ✓</button>
+              <button onClick={() => onWorkOn(note.id)} className="h-12 flex-1 rounded-xl border-2 border-ink text-sm font-semibold">Work on it</button>
+              <button onClick={() => onDone(note.id)} className="h-12 flex-1 rounded-xl bg-ink text-sm font-semibold text-on-ink">Done ✓</button>
             </div>
           </motion.div>
         </motion.div>

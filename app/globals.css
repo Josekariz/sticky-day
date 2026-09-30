@@ -14,6 +14,18 @@
   --danger: #B23A22;
   --glow: 0;
 
+  /* same in both modes: these sit on paper or are physical objects */
+  --on-ink: #FBFAF6;
+  --ink-danger: #B23A22;
+  --done: #2E7D4F;
+  --clipboard: #B98F63;
+  --clipboard-clip: #4A4A4A;
+  --clipboard-paper: #FFFDF8;
+  --clipboard-line: #D9D6CE;
+  --bin-body: #6E6A62;
+  --bin-rim: #8A857C;
+  --bin-inside: #3E3B35;
+
   --paper-yellow: #F5FF3D;  --paper-lime: #B8FF3D;   --paper-mint: #5CFF9E;
   --paper-teal: #3DFFE4;    --paper-sky: #4DC8FF;    --paper-lavender: #A78BFF;
   --paper-lilac: #E066FF;   --paper-pink: #FF5FA8;   --paper-coral: #FF6A4D;
@@ -43,6 +55,13 @@
   --color-fg-soft: var(--fg-soft);
   --color-surface: var(--surface);
   --color-danger: var(--danger);
+  --color-on-ink: var(--on-ink);
+  --color-ink-danger: var(--ink-danger);
+  --color-done: var(--done);
+  --color-clipboard: var(--clipboard);
+  --color-clipboard-clip: var(--clipboard-clip);
+  --color-clipboard-paper: var(--clipboard-paper);
+  --color-clipboard-line: var(--clipboard-line);
   --font-hand: var(--font-hand);
   --font-body: var(--font-body);
 }
