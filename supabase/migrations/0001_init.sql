@@ -1,1 +1,2 @@
 -- days, notes, RLS
+-- notes.spent_ms bigint not null default 0

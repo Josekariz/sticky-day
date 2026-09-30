@@ -1,4 +1,4 @@
-export type NoteStatus = "board" | "focus" | "done";
+export type NoteStatus = "board" | "focus" | "done" | "trashed";
 export type Energy = "low" | "medium" | "high";
 
 export const PAPER_COLORS = [
@@ -23,5 +23,9 @@ export type Note = {
   x: number; // 0..1, fraction of the board's usable width
   y: number; // 0..1, fraction of the board's usable height
   rotation: number;
-  startedAt: number | null; // epoch ms, set while status === "focus"
-}; 
+  startedAt: number | null; // epoch ms while this focus note's timer is running
+  spentMs: number; // accumulated focus time across pauses
+};
+
+export const MAX_FOCUS = 3;
+ 
