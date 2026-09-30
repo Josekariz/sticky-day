@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, useMotionValue } from "framer-motion";
+import { motion, useMotionValue, type PanInfo } from "framer-motion";
 import { useRef, type RefObject } from "react";
 import { paperVar, type Note } from "@/lib/core/types";
 
@@ -12,11 +12,23 @@ type Props = {
   onMove: (id: string, x: number, y: number) => void; // fractions 0..1
   onOpen: (id: string) => void;
   onDone: (id: string) => void;
+  onDragStart: () => void;
+  onDragMove: (px: number, py: number) => void;
+  onDragEnd: (id: string) => boolean;
 };
 
 const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
 
-export function StickyNote({ note, board, onMove, onOpen, onDone }: Props) {
+export function StickyNote({
+  note,
+  board,
+  onMove,
+  onOpen,
+  onDone,
+  onDragStart,
+  onDragMove,
+  onDragEnd,
+}: Props) {
   const x = useMotionValue(0);
   const y = useMotionValue(0);
   const paper = paperVar(note.color);
@@ -25,15 +37,18 @@ export function StickyNote({ note, board, onMove, onOpen, onDone }: Props) {
   const dragged = useRef(false);
 
   function handleDragEnd() {
-    const el = board.current;
-    if (!el) return;
-    const usableW = el.clientWidth - NOTE_SIZE;
-    const usableH = el.clientHeight - NOTE_SIZE;
-    const nx = clamp01(note.x + x.get() / usableW);
-    const ny = clamp01(note.y + y.get() / usableH);
+    const dx = x.get();
+    const dy = y.get();
     x.set(0);
     y.set(0);
-    onMove(note.id, nx, ny);
+    if (onDragEnd(note.id)) return; // it left the board; don't save a position
+    const el = board.current;
+    if (!el) return;
+    onMove(
+      note.id,
+      clamp01(note.x + dx / (el.clientWidth - NOTE_SIZE)),
+      clamp01(note.y + dy / (el.clientHeight - NOTE_SIZE)),
+    );
   }
 
   return (
@@ -49,14 +64,20 @@ export function StickyNote({ note, board, onMove, onOpen, onDone }: Props) {
         backgroundColor: paper,
         ["--paper" as string]: paper,
       }}
-      onPointerDown={() => { dragged.current = false; }}
-      onDragStart={() => { dragged.current = true; }}
+      onPointerDown={() => {
+        dragged.current = false;
+      }}
+      onDragStart={() => {
+        dragged.current = true;
+        onDragStart();
+      }}
+      onDrag={(_, info: PanInfo) => onDragMove(info.point.x, info.point.y)}
       onDragEnd={handleDragEnd}
       initial={{ scale: 0.6, rotate: note.rotation + 12, opacity: 0 }}
       animate={{ scale: 1, rotate: note.rotation, opacity: 1 }}
       exit={{ scale: 0.15, rotate: note.rotation + 40, opacity: 0, transition: { duration: 0.35 } }}
       whileHover={{ scale: 1.04, rotate: 0, translateY: -4 }}
-      whileDrag={{ scale: 1.08, rotate: 0 }}
+      whileDrag={{ scale: 1.08, rotate: 0, zIndex: 50 }}
       transition={{ type: "spring", stiffness: 380, damping: 22 }}
       className="sticky-note group absolute w-44 h-44 text-ink cursor-grab active:cursor-grabbing"
     >
@@ -64,7 +85,10 @@ export function StickyNote({ note, board, onMove, onOpen, onDone }: Props) {
       <button
         type="button"
         onClick={() => {
-          if (dragged.current) { dragged.current = false; return; }
+          if (dragged.current) {
+            dragged.current = false;
+            return;
+          }
           onOpen(note.id);
         }}
         className="relative flex h-full w-full flex-col p-4 pb-3 text-left"
@@ -79,7 +103,10 @@ export function StickyNote({ note, board, onMove, onOpen, onDone }: Props) {
       {/* done: appears on hover / focus */}
       <button
         type="button"
-        onClick={(e) => { e.stopPropagation(); onDone(note.id); }}
+        onClick={(e) => {
+          e.stopPropagation();
+          onDone(note.id);
+        }}
         aria-label={`Mark "${note.title}" done`}
         className="absolute right-2 top-2 grid h-8 w-8 place-items-center rounded-full bg-black/15 opacity-0 transition-opacity hover:bg-black/30 focus-visible:opacity-100 group-hover:opacity-100"
       >

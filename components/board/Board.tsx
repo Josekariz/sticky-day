@@ -7,18 +7,32 @@ import { StickyNote } from "./StickyNote";
 
 type Props = {
   notes: Note[];
+  dragging: boolean;
   onMove: (id: string, x: number, y: number) => void;
   onOpen: (id: string) => void;
   onDone: (id: string) => void;
+  onDragStart: () => void;
+  onDragMove: (px: number, py: number) => void;
+  onDragEnd: (id: string) => boolean;
 };
 
-export function Board({ notes, onMove, onOpen, onDone }: Props) {
+export function Board({
+  notes,
+  dragging,
+  onMove,
+  onOpen,
+  onDone,
+  onDragStart,
+  onDragMove,
+  onDragEnd,
+}: Props) {
   const boardRef = useRef<HTMLDivElement>(null);
 
   return (
     <div
       ref={boardRef}
-      className="relative flex-1 min-h-[520px] rounded-2xl border-[6px] border-frame bg-board overflow-hidden"
+      data-drop="board"
+      className={`relative flex-1 min-h-[520px] rounded-2xl border-[6px] border-frame bg-board ${dragging ? "overflow-visible z-20" : "overflow-hidden"}`}
     >
       {notes.length === 0 && (
         <p className="absolute inset-0 grid place-items-center font-hand text-3xl text-fg-soft">
@@ -34,6 +48,9 @@ export function Board({ notes, onMove, onOpen, onDone }: Props) {
             onMove={onMove}
             onOpen={onOpen}
             onDone={onDone}
+            onDragStart={onDragStart}
+            onDragMove={onDragMove}
+            onDragEnd={onDragEnd}
           />
         ))}
       </AnimatePresence>

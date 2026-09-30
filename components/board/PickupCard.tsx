@@ -9,17 +9,17 @@ type Props = {
   onClose: () => void;
   onWorkOn: (id: string) => void;
   onDone: (id: string) => void;
-  onTearUp: (id: string) => void;
+  onTrash: (id: string) => void;
   onEdit: (id: string, patch: Partial<Pick<Note, "title" | "detail" | "estMinutes" | "energy">>) => void;
 };
 
 const ENERGY: Energy[] = ["low", "medium", "high"];
 
-export function PickupCard({ note, onClose, onWorkOn, onDone, onTearUp, onEdit }: Props) {
-  const [confirmTear, setConfirmTear] = useState(false);
+export function PickupCard({ note, onClose, onWorkOn, onDone, onTrash, onEdit }: Props) {
+  const [confirmTrash, setConfirmTrash] = useState(false);
 
   function close() {
-    setConfirmTear(false);
+    setConfirmTrash(false);
     onClose();
   }
 
@@ -65,18 +65,7 @@ export function PickupCard({ note, onClose, onWorkOn, onDone, onTearUp, onEdit }
             </label>
 
             <label className="relative flex flex-col gap-1">
-              <span className="flex items-center justify-between text-[11px] font-bold uppercase tracking-widest text-ink-soft">
-                Notes
-                <button
-                  type="button"
-                  disabled
-                  title="Dictation coming soon"
-                  aria-label="Dictate notes (coming soon)"
-                  className="grid h-8 w-8 place-items-center rounded-full opacity-40"
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="2" width="6" height="12" rx="3" /><path d="M5 10a7 7 0 0 0 14 0" /><path d="M12 17v4" /></svg>
-                </button>
-              </span>
+              <span className="text-[11px] font-bold uppercase tracking-widest text-ink-soft">Notes</span>
               <textarea
                 defaultValue={note.detail}
                 rows={3}
@@ -122,15 +111,15 @@ export function PickupCard({ note, onClose, onWorkOn, onDone, onTearUp, onEdit }
             </div>
 
             <div className="relative flex h-6 items-center text-xs font-semibold text-ink-soft">
-              {confirmTear ? (
+              {confirmTrash ? (
                 <span className="flex items-center gap-3">
-                  Tear it up?
-                  <button onClick={() => onTearUp(note.id)} className="underline underline-offset-2 text-ink">Yes, it's gone</button>
-                  <button onClick={() => setConfirmTear(false)} className="underline underline-offset-2">Keep it</button>
+                  Trash it?
+                  <button onClick={() => onTrash(note.id)} className="underline underline-offset-2 text-ink">Yes, trash it</button>
+                  <button onClick={() => setConfirmTrash(false)} className="underline underline-offset-2">Keep it</button>
                 </span>
               ) : (
-                <button onClick={() => setConfirmTear(true)} className="underline underline-offset-2 hover:text-ink">
-                  Tear up this note
+                <button onClick={() => setConfirmTrash(true)} className="underline underline-offset-2 hover:text-ink">
+                  Trash it
                 </button>
               )}
             </div>

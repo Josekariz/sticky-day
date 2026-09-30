@@ -1,12 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { paperVar, type Note } from "@/lib/core/types";
+import { motion, type PanInfo } from "framer-motion";
+import { paperVar, MAX_FOCUS, type Note } from "@/lib/core/types";
 
 type Props = {
-  note: Note | null;
+  notes: Note[]; // status === "focus", newest last
+  armed: boolean; // a note is being dragged over me
   onDone: (id: string) => void;
   onPutBack: (id: string) => void;
+  onResume: (id: string) => void;
+  onDragStart: () => void;
+  onDragMove: (px: number, py: number) => void;
+  onDragEnd: (id: string) => void;
 };
 
 function fmt(ms: number) {
@@ -14,57 +20,93 @@ function fmt(ms: number) {
   return `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
 }
 
-export function Clipboard({ note, onDone, onPutBack }: Props) {
+export function Clipboard({
+  notes,
+  armed,
+  onDone,
+  onPutBack,
+  onResume,
+  onDragStart,
+  onDragMove,
+  onDragEnd,
+}: Props) {
   const [now, setNow] = useState(() => Date.now());
+  const running = notes.some((n) => n.startedAt);
 
-  const noteId = note?.id ?? null;
   useEffect(() => {
-    if (!noteId) return;
+    if (!running) return;
     const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);
-  }, [noteId]);
-
-  const elapsed = note?.startedAt ? now - note.startedAt : 0;
-  const left = note ? note.estMinutes * 60_000 - elapsed : 0;
+  }, [running]);
 
   return (
-    <section className="relative rounded-xl bg-clipboard p-4 pt-8 shadow-lg">
+    <section
+      data-drop="clipboard"
+      className={`relative overflow-visible rounded-xl bg-clipboard p-4 pt-8 shadow-lg transition-shadow ${armed ? "shadow-[0_0_0_4px_var(--paper-yellow)]" : ""}`}
+    >
       <span
         className="absolute left-1/2 top-[-12px] h-7 w-28 -translate-x-1/2 rounded-lg bg-clipboard-clip shadow-[inset_0_2px_0_rgba(255,255,255,0.25),0_3px_4px_rgba(0,0,0,0.3)]"
         aria-hidden
       />
-      <div className="flex flex-col gap-3 rounded bg-clipboard-paper p-4 text-ink">
-        <h2 className="text-[11px] font-bold uppercase tracking-widest text-ink-soft">Working on</h2>
+      <div className="flex flex-col gap-3 overflow-visible rounded bg-clipboard-paper p-4 text-ink">
+        <h2 className="flex justify-between text-[11px] font-bold uppercase tracking-widest text-ink-soft">
+          Working on <span>{notes.length}/{MAX_FOCUS}</span>
+        </h2>
 
-        {note ? (
-          <>
-            <div
-              className="sticky-note relative rotate-[-1.5deg] p-3 text-ink"
-              style={{ backgroundColor: paperVar(note.color), ["--paper" as string]: paperVar(note.color) }}
-            >
-              <div className="relative font-hand text-2xl font-semibold leading-tight">{note.title}</div>
-              <div className="relative mt-1 text-xs font-semibold text-ink-soft">est. {note.estMinutes} min</div>
-            </div>
-
-            <div className="py-1 text-center">
-              <div className="text-4xl font-bold tabular-nums leading-none">{fmt(elapsed)}</div>
-              <div className={`mt-1 text-xs ${left < 0 ? "text-danger" : "text-ink-soft"}`}>
-                {left >= 0 ? `${fmt(left)} left on your estimate` : `${fmt(-left)} over`}
-              </div>
-            </div>
-
-            <div className="flex gap-2">
-              <button onClick={() => onDone(note.id)} className="h-11 flex-1 rounded-xl bg-ink text-sm font-semibold text-on-ink">
-                Done
-              </button>
-              <button onClick={() => onPutBack(note.id)} className="h-11 rounded-xl border border-clipboard-line px-4 text-sm font-semibold">
-                Put back
-              </button>
-            </div>
-          </>
-        ) : (
-          <p className="py-6 text-center font-hand text-xl text-ink-soft">Nothing pinned. Open a note and hit “Work on it”.</p>
+        {notes.length === 0 && (
+          <p className={`py-6 text-center font-hand text-xl ${armed ? "text-ink" : "text-ink-soft"}`}>
+            {armed ? "Drop it here to start" : "Drag a note here to start on it."}
+          </p>
         )}
+
+        {[...notes].reverse().map((n) => {
+          const live = !!n.startedAt;
+          const elapsed = n.spentMs + (live ? now - n.startedAt! : 0);
+          const left = n.estMinutes * 60_000 - elapsed;
+          return (
+            <motion.div
+              key={n.id}
+              drag
+              dragMomentum={false}
+              dragSnapToOrigin
+              onDragStart={onDragStart}
+              onDrag={(_, info: PanInfo) => onDragMove(info.point.x, info.point.y)}
+              onDragEnd={() => onDragEnd(n.id)}
+              whileDrag={{ scale: 1.05, zIndex: 50 }}
+              className={`sticky-note relative cursor-grab p-3 text-ink active:cursor-grabbing transition-opacity ${live ? "" : "opacity-70"}`}
+              style={{
+                backgroundColor: paperVar(n.color),
+                ["--paper" as string]: paperVar(n.color),
+                rotate: live ? "-1.5deg" : "1deg",
+              }}
+            >
+              <div className="relative font-hand text-xl font-semibold leading-tight">{n.title}</div>
+              <div className="relative mt-2 flex items-baseline justify-between">
+                <span className="text-2xl font-bold tabular-nums leading-none">{fmt(elapsed)}</span>
+                <span className={`text-[11px] ${left < 0 ? "text-danger" : "text-ink-soft"}`}>
+                  {live ? (left >= 0 ? `${fmt(left)} left` : `${fmt(-left)} over`) : "paused"}
+                </span>
+              </div>
+              <div className="relative mt-2 flex gap-1.5">
+                {!live && (
+                  <button onClick={() => onResume(n.id)} className="h-9 flex-1 rounded-lg border border-ink text-xs font-bold">
+                    Resume
+                  </button>
+                )}
+                <button onClick={() => onDone(n.id)} className="h-9 flex-1 rounded-lg bg-ink text-xs font-bold text-on-ink">
+                  Done
+                </button>
+                <button
+                  onClick={() => onPutBack(n.id)}
+                  aria-label="Put back on the board"
+                  className="h-9 w-9 rounded-lg border border-clipboard-line text-xs font-bold"
+                >
+                  ↩
+                </button>
+              </div>
+            </motion.div>
+          );
+        })}
       </div>
     </section>
   );
