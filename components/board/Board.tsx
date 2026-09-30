@@ -8,6 +8,7 @@ import { StickyNote } from "./StickyNote";
 type Props = {
   notes: Note[];
   dragging: boolean;
+  over: boolean; // the dragged note is over the clipboard, tray or bin
   onMove: (id: string, x: number, y: number) => void;
   onOpen: (id: string) => void;
   onDone: (id: string) => void;
@@ -20,6 +21,7 @@ type Props = {
 export function Board({
   notes,
   dragging,
+  over,
   onMove,
   onOpen,
   onDone,
@@ -47,6 +49,7 @@ export function Board({
             key={n.id}
             note={n}
             board={boardRef}
+            over={over}
             onMove={onMove}
             onOpen={onOpen}
             onDone={onDone}

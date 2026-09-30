@@ -47,6 +47,7 @@ export function DayView({
         <Board
           notes={b.boardNotes}
           dragging={drop.dragging}
+          over={drop.over === "clipboard" || drop.over === "tray" || drop.over === "bin"}
           onMove={b.move}
           onOpen={b.open}
           onDone={b.done}

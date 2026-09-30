@@ -7,6 +7,7 @@ import { paperVar, type Note } from "@/lib/core/types";
 type Props = {
   note: Note;
   board: RefObject<HTMLDivElement | null>;
+  over: boolean; // being dragged over the clipboard, tray or bin
   onMove: (id: string, x: number, y: number) => void; // fractions 0..1
   onOpen: (id: string) => void;
   onDone: (id: string) => void;
@@ -21,6 +22,7 @@ const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
 export function StickyNote({
   note,
   board,
+  over,
   onMove,
   onOpen,
   onDone,
@@ -80,7 +82,7 @@ export function StickyNote({
       animate={{ scale: 1, rotate: note.rotation, opacity: 1 }}
       exit={{ scale: 0.15, rotate: note.rotation + 40, opacity: 0, transition: { duration: 0.35 } }}
       whileHover={{ scale: 1.04, rotate: 0, translateY: -4 }}
-      whileDrag={{ scale: 1.08, rotate: 0, zIndex: 50 }}
+      whileDrag={{ scale: over ? 0.5 : 1.05, rotate: over ? -12 : 0, zIndex: 50 }}
       transition={{ type: "spring", stiffness: 380, damping: 22 }}
       className="sticky-note group absolute size-(--note-size) touch-none select-none text-ink cursor-grab active:cursor-grabbing"
     >
