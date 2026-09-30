@@ -82,7 +82,7 @@ export function StickyNote({
       whileHover={{ scale: 1.04, rotate: 0, translateY: -4 }}
       whileDrag={{ scale: 1.08, rotate: 0, zIndex: 50 }}
       transition={{ type: "spring", stiffness: 380, damping: 22 }}
-      className="sticky-note group absolute size-(--note-size) text-ink cursor-grab active:cursor-grabbing"
+      className="sticky-note group absolute size-(--note-size) touch-none select-none text-ink cursor-grab active:cursor-grabbing"
     >
       {/* the note face: tap to open */}
       <button
