@@ -103,7 +103,7 @@ export function Navbar({ initials, avatar }: { initials: string; avatar: string 
                 href={l.href}
                 onClick={() => setMenuOpen(false)}
                 aria-current={active ? "page" : undefined}
-                className={`flex h-12 items-center rounded-xl px-4 font-semibold ${
+                className={`flex h-12 items-center justify-center rounded-xl px-4 font-semibold ${
                   active ? "bg-fg text-bg" : "text-fg"
                 }`}
               >
@@ -111,7 +111,7 @@ export function Navbar({ initials, avatar }: { initials: string; avatar: string 
               </Link>
             );
           })}
-          <SignOutButton className="flex h-12 items-center rounded-xl px-4 text-left font-semibold text-danger" />
+          <SignOutButton className="flex h-12 items-center justify-center rounded-xl px-4 font-semibold text-danger" />
         </div>
       )}
     </header>
