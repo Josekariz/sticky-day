@@ -1,18 +1,40 @@
+import { createClient } from "@/lib/supabase/server";
+import { rowToNote, noteToRow, type NoteRow } from "@/lib/core/mappers";
+import { rollover } from "@/lib/core/rollover";
 import { DayView } from "@/components/board/DayView";
-import type { Note } from "@/lib/core/types";
 
-const FAKE: Note[] = [
-  { id: "1", title: "Reply to client email", detail: "", estMinutes: 15, actualMinutes: null, energy: "low", status: "board", color: "yellow", x: 0.05, y: 0.06, rotation: -3, startedAt: null, spentMs: 0 },
-  { id: "2", title: "Finish XML markup for Act 12", detail: "", estMinutes: 90, actualMinutes: null, energy: "high", status: "board", color: "sky", x: 0.3, y: 0.1, rotation: 4, startedAt: null, spentMs: 0 },
-  { id: "3", title: "Review PR #42", detail: "", estMinutes: 30, actualMinutes: null, energy: "medium", status: "board", color: "pink", x: 0.6, y: 0.04, rotation: -1, startedAt: null, spentMs: 0 },
-  { id: "4", title: "Gym", detail: "", estMinutes: 60, actualMinutes: null, energy: "high", status: "board", color: "peach", x: 0.15, y: 0.55, rotation: 2, startedAt: null, spentMs: 0 },
-  { id: "5", title: "Book dentist", detail: "", estMinutes: 10, actualMinutes: null, energy: "low", status: "board", color: "mint", x: 0.5, y: 0.6, rotation: -4, startedAt: null, spentMs: 0 },
-];
+const today = () => new Date().toISOString().slice(0, 10);
 
-export default function BoardPage() {
+export default async function BoardPage() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const userId = user!.id; // layout already redirected if null
+
+  // today's row, or create it and roll over the most recent day
+  let { data: day } = await supabase.from("days").select("id").eq("date", today()).maybeSingle();
+
+  if (!day) {
+    const { data: created } = await supabase
+      .from("days").insert({ user_id: userId, date: today() }).select("id").single();
+    day = created!;
+
+    const { data: prev } = await supabase
+      .from("days").select("id").lt("date", today()).order("date", { ascending: false }).limit(1).maybeSingle();
+
+    if (prev) {
+      const { data: prevNotes } = await supabase.from("notes").select("*").eq("day_id", prev.id);
+      const carried = rollover((prevNotes as NoteRow[] ?? []).map(rowToNote));
+      if (carried.length) {
+        await supabase.from("notes").insert(carried.map((n) => noteToRow(n, day!.id, userId)));
+      }
+    }
+  }
+
+  const { data: rows } = await supabase.from("notes").select("*").eq("day_id", day.id).order("created_at");
+
   return (
     <main className="flex flex-1 flex-col">
-      <DayView initialNotes={FAKE} />
+      <DayView dayId={day.id} userId={userId} initialNotes={(rows as NoteRow[] ?? []).map(rowToNote)} />
     </main>
   );
 }

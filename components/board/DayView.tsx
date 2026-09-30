@@ -10,8 +10,16 @@ import { DoneTray } from "./DoneTray";
 import { Bin } from "./Bin";
 import { PickupCard } from "./PickupCard";
 
-export function DayView({ initialNotes }: { initialNotes: Note[] }) {
-  const b = useBoard(initialNotes);
+export function DayView({
+  dayId,
+  userId,
+  initialNotes,
+}: {
+  dayId: string;
+  userId: string;
+  initialNotes: Note[];
+}) {
+  const b = useBoard(initialNotes, dayId, userId);
   const drop = useDropTargets();
 
   function dropFromBoard(id: string): boolean {
