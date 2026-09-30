@@ -4,25 +4,37 @@ import { useRef, useState } from "react";
 
 export type DropTarget = "clipboard" | "bin" | "board" | "tray" | null;
 
+// The first element for a target that is actually on screen. On phones the drop
+// bar comes before the desktop targets in the DOM; from md up it is display:none
+// and measures 0 wide. Measured on every move because the bar slides in after
+// the drag starts.
+function rectOf(key: Exclude<DropTarget, null>): DOMRect | undefined {
+  for (const el of document.querySelectorAll(`[data-drop='${key}']`)) {
+    const r = el.getBoundingClientRect();
+    if (r.width > 0) return r;
+  }
+  return undefined;
+}
+
 export function useDropTargets() {
-  const rects = useRef<Partial<Record<Exclude<DropTarget, null>, DOMRect>>>({});
   const overRef = useRef<DropTarget>(null);
   const [over, setOver] = useState<DropTarget>(null);
   const [dragging, setDragging] = useState(false);
 
   function start() {
-    const q = (k: string) => document.querySelector(`[data-drop='${k}']`)?.getBoundingClientRect();
-    rects.current = { clipboard: q("clipboard"), bin: q("bin"), board: q("board"), tray: q("tray") };
     setDragging(true);
   }
 
   function move(px: number, py: number) {
-    const hit = (r?: DOMRect) => !!r && px >= r.left && px <= r.right && py >= r.top && py <= r.bottom;
+    const hit = (key: Exclude<DropTarget, null>) => {
+      const r = rectOf(key);
+      return !!r && px >= r.left && px <= r.right && py >= r.top && py <= r.bottom;
+    };
     const t: DropTarget =
-      hit(rects.current.clipboard) ? "clipboard" :
-      hit(rects.current.tray) ? "tray" :
-      hit(rects.current.bin) ? "bin" :
-      hit(rects.current.board) ? "board" : null;
+      hit("clipboard") ? "clipboard" :
+      hit("tray") ? "tray" :
+      hit("bin") ? "bin" :
+      hit("board") ? "board" : null;
     if (t !== overRef.current) {
       overRef.current = t;
       setOver(t);
