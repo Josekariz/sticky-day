@@ -52,6 +52,10 @@ export function useBoard(initial: Note[]) {
       setOpenId(null);
     },
 
+    edit(id: string, patch: Partial<Note>) {
+      update(id, patch); // persistence: also save to Supabase
+    },
+
     /** Placeholder for the AI: one note per comma/newline. Day 3 replaces this with /api/ai/split. */
     addFromDump(text: string) {
       const titles = text.split(/[,\n]+/).map((s) => s.trim()).filter(Boolean);

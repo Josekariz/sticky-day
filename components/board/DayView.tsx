@@ -28,6 +28,7 @@ export function DayView({ initialNotes }: { initialNotes: Note[] }) {
         onWorkOn={b.workOn}
         onDone={b.done}
         onTearUp={b.tearUp}
+        onEdit={b.edit}
       />
       <Bin notes={b.doneNotes} />
     </div>

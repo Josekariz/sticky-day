@@ -16,7 +16,6 @@
 
   /* same in both modes: these sit on paper or are physical objects */
   --on-ink: #FBFAF6;
-  --ink-danger: #B23A22;
   --done: #2E7D4F;
   --clipboard: #B98F63;
   --clipboard-clip: #4A4A4A;
@@ -56,7 +55,6 @@
   --color-surface: var(--surface);
   --color-danger: var(--danger);
   --color-on-ink: var(--on-ink);
-  --color-ink-danger: var(--ink-danger);
   --color-done: var(--done);
   --color-clipboard: var(--clipboard);
   --color-clipboard-clip: var(--clipboard-clip);

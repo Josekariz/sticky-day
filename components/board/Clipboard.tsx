@@ -48,7 +48,7 @@ export function Clipboard({ note, onDone, onPutBack }: Props) {
 
             <div className="py-1 text-center">
               <div className="text-4xl font-bold tabular-nums leading-none">{fmt(elapsed)}</div>
-              <div className={`mt-1 text-xs ${left < 0 ? "text-ink-danger" : "text-ink-soft"}`}>
+              <div className={`mt-1 text-xs ${left < 0 ? "text-danger" : "text-ink-soft"}`}>
                 {left >= 0 ? `${fmt(left)} left on your estimate` : `${fmt(-left)} over`}
               </div>
             </div>
