@@ -50,6 +50,7 @@ export function DayView({
           onMove={b.move}
           onOpen={b.open}
           onDone={b.done}
+          onTrash={b.trash}
           onDragStart={drop.start}
           onDragMove={drop.move}
           onDragEnd={dropFromBoard}

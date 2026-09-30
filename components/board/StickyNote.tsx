@@ -12,6 +12,7 @@ type Props = {
   onMove: (id: string, x: number, y: number) => void; // fractions 0..1
   onOpen: (id: string) => void;
   onDone: (id: string) => void;
+  onTrash: (id: string) => void;
   onDragStart: () => void;
   onDragMove: (px: number, py: number) => void;
   onDragEnd: (id: string) => boolean;
@@ -25,6 +26,7 @@ export function StickyNote({
   onMove,
   onOpen,
   onDone,
+  onTrash,
   onDragStart,
   onDragMove,
   onDragEnd,
@@ -93,11 +95,22 @@ export function StickyNote({
         }}
         className="relative flex h-full w-full flex-col p-4 pb-3 text-left"
       >
-        <span className="pr-7 font-hand text-2xl font-semibold leading-tight line-clamp-3">{note.title}</span>
+        <span className="px-7 font-hand text-2xl font-semibold leading-tight line-clamp-3">{note.title}</span>
         <span className="mt-auto flex items-center gap-1.5 pr-8 text-[11px] font-semibold text-ink-soft">
           <span className="px-2 py-0.5 rounded-full bg-black/10 tabular-nums">{note.estMinutes} min</span>
           <span className="px-2 py-0.5 rounded-full bg-black/10 capitalize">{note.energy}</span>
         </span>
+      </button>
+
+      <button
+        type="button"
+        onClick={(e) => { e.stopPropagation(); onTrash(note.id); }}
+        aria-label={`Trash "${note.title}"`}
+        className="absolute left-2 top-2 grid h-8 w-8 place-items-center rounded-full bg-black/15 opacity-0 transition-opacity hover:bg-black/30 focus-visible:opacity-100 group-hover:opacity-100"
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M3 6h18" /><path d="M8 6V4h8v2" /><path d="M6 6l1 14h10l1-14" />
+        </svg>
       </button>
 
       {/* done: appears on hover / focus */}

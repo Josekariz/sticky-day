@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 
 export function BrainDump({
   onSubmit,
@@ -8,21 +9,27 @@ export function BrainDump({
   onSubmit: (text: string) => Promise<string | null>;
 }) {
   const [text, setText] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (!message) return;
+    const t = setTimeout(() => setMessage(null), 6000);
+    return () => clearTimeout(t);
+  }, [message]);
+
   async function submit() {
-    if (!text.trim() || loading) return;
-    setLoading(true);
+    if (!text.trim() || busy) return;
+    setBusy(true);
     setMessage(null);
     try {
       const warning = await onSubmit(text);
-      setText("");
       setMessage(warning);
+      setText("");
     } catch (e) {
       setMessage(e instanceof Error ? e.message : "Something went wrong");
     } finally {
-      setLoading(false);
+      setBusy(false);
     }
   }
 
@@ -37,9 +44,8 @@ export function BrainDump({
           id="dump"
           value={text}
           onChange={(e) => setText(e.target.value)}
-          disabled={loading}
           placeholder="What do you want to get done today?"
-          className="flex-1 min-w-0 bg-transparent font-hand text-2xl outline-none placeholder:text-fg-soft disabled:opacity-60"
+          className="flex-1 min-w-0 bg-transparent font-hand text-2xl outline-none placeholder:text-fg-soft"
         />
         <button
           type="button"
@@ -56,15 +62,33 @@ export function BrainDump({
         </button>
         <button
           type="submit"
-          disabled={!text.trim() || loading}
-          className="h-11 shrink-0 rounded-xl bg-fg px-5 text-sm font-semibold text-bg disabled:opacity-40"
+          disabled={!text.trim() || busy}
+          className="flex h-11 shrink-0 items-center gap-2 rounded-xl bg-fg px-5 text-sm font-semibold text-bg disabled:opacity-60"
         >
-          {loading ? "Breaking it down…" : "Break it down"}
+          {busy && (
+            <span className="flex gap-1" aria-hidden>
+              <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-bg [animation-delay:-0.3s]" />
+              <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-bg [animation-delay:-0.15s]" />
+              <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-bg" />
+            </span>
+          )}
+          {busy ? "Thinking" : "Break it down"}
         </button>
       </form>
-      {message && (
-        <p className="px-1 text-sm text-fg-soft">{message}</p>
-      )}
+      <AnimatePresence>
+        {message && (
+          <motion.p
+            key={message}
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.2 }}
+            className="px-1 text-sm text-fg-soft"
+          >
+            {message}
+          </motion.p>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

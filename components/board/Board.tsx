@@ -11,6 +11,7 @@ type Props = {
   onMove: (id: string, x: number, y: number) => void;
   onOpen: (id: string) => void;
   onDone: (id: string) => void;
+  onTrash: (id: string) => void;
   onDragStart: () => void;
   onDragMove: (px: number, py: number) => void;
   onDragEnd: (id: string) => boolean;
@@ -22,6 +23,7 @@ export function Board({
   onMove,
   onOpen,
   onDone,
+  onTrash,
   onDragStart,
   onDragMove,
   onDragEnd,
@@ -48,6 +50,7 @@ export function Board({
             onMove={onMove}
             onOpen={onOpen}
             onDone={onDone}
+            onTrash={onTrash}
             onDragStart={onDragStart}
             onDragMove={onDragMove}
             onDragEnd={onDragEnd}
