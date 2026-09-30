@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { motion } from "framer-motion";
+import { SignInButton } from "@/components/auth/SignInButton";
 
 export function LandingNote() {
   return (
@@ -17,12 +17,7 @@ export function LandingNote() {
       <p className="relative text-lg leading-snug">
         Type what you hope to get done. It becomes sticky notes. Work one at a time, then throw them in the bin.
       </p>
-      <Link
-        href="/board"
-        className="relative mt-2 flex h-12 items-center justify-center rounded-xl bg-ink text-sm font-semibold text-on-ink"
-      >
-        Continue with Google
-      </Link>
+      <SignInButton className="relative mt-2 flex h-12 items-center justify-center rounded-xl bg-ink text-sm font-semibold text-on-ink" />
       <p className="relative text-center text-xs text-ink-soft">Google is only used to sign you in.</p>
     </motion.div>
   );
