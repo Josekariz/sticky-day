@@ -10,7 +10,7 @@ const LINKS = [
   { href: "/summary", label: "Summary" },
 ];
 
-export function Navbar({ initials = "JM" }: { initials?: string }) {
+export function Navbar({ initials, avatar }: { initials: string; avatar: string | null }) {
   const path = usePathname();
 
   return (
@@ -39,14 +39,15 @@ export function Navbar({ initials = "JM" }: { initials?: string }) {
 
       <div className="flex items-center gap-3 justify-self-end">
         <ThemeToggle />
-        <Link
-          href="/profile"
-          aria-label="Profile"
-          className="grid h-10 w-10 place-items-center rounded-full bg-fg text-sm font-semibold text-bg"
-        >
-          {initials}
+        <Link href="/profile" aria-label="Profile" className="grid h-10 w-10 place-items-center overflow-hidden rounded-full bg-fg text-sm font-semibold text-bg">
+          {avatar ? (
+            // eslint-disable-next-line @next/next/no-img-element -- external Google URL, no need for next/image
+            <img src={avatar} alt="" className="h-full w-full object-cover" referrerPolicy="no-referrer" />
+          ) : (
+            initials
+          )}
         </Link>
       </div>
     </header>
   );
-} 
+}

@@ -1,9 +1,19 @@
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
 import { Navbar } from "@/components/nav/Navbar";
 
-export default function AppLayout({ children }: LayoutProps<"/">) {
+export default async function AppLayout({ children }: LayoutProps<"/">) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/");
+
+  const name: string = user.user_metadata.full_name ?? user.email?.split("@")[0] ?? "?";
+  const initials = name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
+  const avatar: string | null = user.user_metadata.avatar_url ?? null;
+
   return (
     <>
-      <Navbar />
+      <Navbar initials={initials} avatar={avatar} />
       <div className="flex flex-1 flex-col p-4 md:p-8">{children}</div>
     </>
   );
