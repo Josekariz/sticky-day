@@ -1,9 +1,9 @@
 "use client";
 
-import { motion, useMotionValue, type PanInfo } from "framer-motion";
+import { motion, useMotionValue } from "framer-motion";
 import { useRef, type RefObject } from "react";
 import { paperVar, type Note } from "@/lib/core/types";
-import type { DropTarget } from "./useDropTargets";
+import { centreOf, type DropTarget } from "./useDropTargets";
 
 type Props = {
   note: Note;
@@ -78,7 +78,9 @@ export function StickyNote({
         dragged.current = true;
         onDragStart();
       }}
-      onDrag={(_, info: PanInfo) => onDragMove(info.point.x, info.point.y)}
+      onDrag={() => {
+        if (self.current) onDragMove(...centreOf(self.current));
+      }}
       onDragEnd={handleDragEnd}
       initial={{ scale: 0.6, rotate: note.rotation + 12, opacity: 0 }}
       animate={{ scale: 1, rotate: note.rotation, opacity: 1 }}

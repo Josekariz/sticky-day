@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { motion, type PanInfo } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
+import { motion } from "framer-motion";
 import { paperVar, MAX_FOCUS, type Note } from "@/lib/core/types";
+import { centreOf } from "./useDropTargets";
 
 type Props = {
   notes: Note[]; // status === "focus", newest last
@@ -31,6 +32,7 @@ export function Clipboard({
   onDragEnd,
 }: Props) {
   const [now, setNow] = useState(() => Date.now());
+  const slips = useRef(new Map<string, HTMLDivElement>());
   const running = notes.some((n) => n.startedAt);
 
   useEffect(() => {
@@ -66,11 +68,21 @@ export function Clipboard({
           return (
             <motion.div
               key={n.id}
+              ref={(el) => {
+                if (!el) return;
+                slips.current.set(n.id, el);
+                return () => {
+                  slips.current.delete(n.id);
+                };
+              }}
               drag
               dragMomentum={false}
               dragSnapToOrigin
               onDragStart={onDragStart}
-              onDrag={(_, info: PanInfo) => onDragMove(info.point.x, info.point.y)}
+              onDrag={() => {
+                const el = slips.current.get(n.id);
+                if (el) onDragMove(...centreOf(el));
+              }}
               onDragEnd={() => onDragEnd(n.id)}
               whileDrag={{ scale: 1.05, zIndex: 50 }}
               className={`sticky-note relative cursor-grab p-3 text-ink active:cursor-grabbing transition-opacity ${live ? "" : "opacity-70"}`}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 
 export type DropTarget = "clipboard" | "bin" | "board" | "tray" | null;
 
@@ -21,6 +21,12 @@ function measureAll(): Rects {
   return { clipboard: rectOf("clipboard"), tray: rectOf("tray"), bin: rectOf("bin"), board: rectOf("board") };
 }
 
+/** Centre of an element in viewport coordinates; drops hit-test by this, not the pointer. */
+export function centreOf(el: Element): [number, number] {
+  const r = el.getBoundingClientRect();
+  return [r.left + r.width / 2, r.top + r.height / 2];
+}
+
 export function useDropTargets() {
   const rects = useRef<Rects>({});
   const overRef = useRef<DropTarget>(null);
@@ -28,17 +34,14 @@ export function useDropTargets() {
   const [dragging, setDragging] = useState(false);
 
   // Measure again once the docked targets have mounted, and whenever the window resizes.
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!dragging) return;
     const measure = () => {
       rects.current = measureAll();
     };
-    const frame = requestAnimationFrame(measure);
+    measure();
     window.addEventListener("resize", measure);
-    return () => {
-      cancelAnimationFrame(frame);
-      window.removeEventListener("resize", measure);
-    };
+    return () => window.removeEventListener("resize", measure);
   }, [dragging]);
 
   function start() {

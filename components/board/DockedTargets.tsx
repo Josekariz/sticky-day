@@ -11,14 +11,17 @@ export function DockedTargets({ show, over }: { show: boolean; over: DropTarget 
   return (
     <AnimatePresence>
       {show && (
-        <div
+        <motion.div
           aria-hidden
-          className="pointer-events-none absolute inset-x-0 top-3 z-10 flex justify-center gap-3 md:hidden"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="pointer-events-none absolute inset-x-0 top-14 z-10 mx-auto flex w-fit gap-5 rounded-2xl bg-board/80 px-3 py-2 backdrop-blur-sm md:hidden"
         >
           <Slot target="clipboard"><MiniClipboard armed={over === "clipboard"} /></Slot>
           <Slot target="tray"><MiniTray armed={over === "tray"} /></Slot>
           <Slot target="bin"><MiniBin armed={over === "bin"} /></Slot>
-        </div>
+        </motion.div>
       )}
     </AnimatePresence>
   );
@@ -28,7 +31,7 @@ export function DockedTargets({ show, over }: { show: boolean; over: DropTarget 
 // only the drawing inside slides.
 function Slot({ target, children }: { target: Target; children: React.ReactNode }) {
   return (
-    <div data-drop={target} className="h-16 w-[72px]">
+    <div data-drop={target} className="h-16 w-20">
       <motion.div
         className="h-full w-full"
         initial={{ y: -80, opacity: 0 }}
