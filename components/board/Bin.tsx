@@ -1,8 +1,41 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import type { Note } from "@/lib/core/types";
+
+export function BinShape({ notes = [] }: { notes?: Note[] }) {
+  const shade = useId();
+  return (
+    <svg viewBox="0 0 96 112" className="h-full w-full" aria-hidden>
+      {notes.slice(0, 3).map((n, i) => (
+        <circle
+          key={n.id}
+          cx={[34, 58, 46][i]}
+          cy={[30, 26, 22][i]}
+          r={[11, 10, 12][i]}
+          fill={`var(--paper-${n.color})`}
+          stroke="rgba(0,0,0,0.25)"
+          strokeWidth="1.5"
+        />
+      ))}
+      <path d="M14 30 L82 30 L74 106 Q48 112 22 106 Z" fill="var(--bin-body)" />
+      <path d="M14 30 L82 30 L74 106 Q48 112 22 106 Z" fill={`url(#${shade})`} />
+      {[26, 36, 46, 56, 66].map((x) => (
+        <line key={x} x1={x} y1="34" x2={x - 3} y2="104" stroke="rgba(0,0,0,0.22)" strokeWidth="2" />
+      ))}
+      <ellipse cx="48" cy="30" rx="36" ry="7" fill="var(--bin-rim)" />
+      <ellipse cx="48" cy="30" rx="30" ry="4.5" fill="var(--bin-inside)" />
+      <defs>
+        <linearGradient id={shade} x1="0" x2="1">
+          <stop offset="0" stopColor="rgba(255,255,255,0.18)" />
+          <stop offset="0.5" stopColor="rgba(255,255,255,0)" />
+          <stop offset="1" stopColor="rgba(0,0,0,0.28)" />
+        </linearGradient>
+      </defs>
+    </svg>
+  );
+}
 
 type Props = {
   notes: Note[]; // status === "trashed"
@@ -34,33 +67,7 @@ export function Bin({ notes, armed, onRestore, onEmpty }: Props) {
         whileTap={{ scale: 0.96 }}
         className="fixed bottom-2 right-4 z-30 h-14 w-12 md:bottom-6 md:right-6 md:h-28 md:w-24 drop-shadow-[0_12px_14px_rgba(0,0,0,0.35)]"
       >
-        <svg viewBox="0 0 96 112" className="h-full w-full" aria-hidden>
-          {notes.slice(0, 3).map((n, i) => (
-            <circle
-              key={n.id}
-              cx={[34, 58, 46][i]}
-              cy={[30, 26, 22][i]}
-              r={[11, 10, 12][i]}
-              fill={`var(--paper-${n.color})`}
-              stroke="rgba(0,0,0,0.25)"
-              strokeWidth="1.5"
-            />
-          ))}
-          <path d="M14 30 L82 30 L74 106 Q48 112 22 106 Z" fill="var(--bin-body)" />
-          <path d="M14 30 L82 30 L74 106 Q48 112 22 106 Z" fill="url(#binShade)" />
-          {[26, 36, 46, 56, 66].map((x) => (
-            <line key={x} x1={x} y1="34" x2={x - 3} y2="104" stroke="rgba(0,0,0,0.22)" strokeWidth="2" />
-          ))}
-          <ellipse cx="48" cy="30" rx="36" ry="7" fill="var(--bin-rim)" />
-          <ellipse cx="48" cy="30" rx="30" ry="4.5" fill="var(--bin-inside)" />
-          <defs>
-            <linearGradient id="binShade" x1="0" x2="1">
-              <stop offset="0" stopColor="rgba(255,255,255,0.18)" />
-              <stop offset="0.5" stopColor="rgba(255,255,255,0)" />
-              <stop offset="1" stopColor="rgba(0,0,0,0.28)" />
-            </linearGradient>
-          </defs>
-        </svg>
+        <BinShape notes={notes} />
         {notes.length > 0 && (
           <span className="absolute -right-1 -top-1 grid h-7 min-w-7 place-items-center rounded-full bg-danger px-2 text-xs font-bold text-white">
             {notes.length}

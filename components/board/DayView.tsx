@@ -9,7 +9,6 @@ import { Clipboard } from "./Clipboard";
 import { DoneTray } from "./DoneTray";
 import { Bin } from "./Bin";
 import { PickupCard } from "./PickupCard";
-import { DropBar } from "./DropBar";
 
 export function DayView({
   dayId,
@@ -43,13 +42,12 @@ export function DayView({
   return (
     <div className="flex flex-1 flex-col gap-4">
       <BrainDump onSubmit={b.addFromDump} />
-      <DropBar show={drop.dragging} over={drop.over} />
 
       <div className="flex flex-1 flex-col gap-4 lg:flex-row">
         <Board
           notes={b.boardNotes}
           dragging={drop.dragging}
-          over={drop.over === "clipboard" || drop.over === "tray" || drop.over === "bin"}
+          over={drop.over}
           onMove={b.move}
           onOpen={b.open}
           onDone={b.done}

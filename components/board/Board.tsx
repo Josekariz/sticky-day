@@ -3,12 +3,14 @@
 import { useRef } from "react";
 import { AnimatePresence } from "framer-motion";
 import type { Note } from "@/lib/core/types";
+import type { DropTarget } from "./useDropTargets";
 import { StickyNote } from "./StickyNote";
+import { DockedTargets } from "./DockedTargets";
 
 type Props = {
   notes: Note[];
   dragging: boolean;
-  over: boolean; // the dragged note is over the clipboard, tray or bin
+  over: DropTarget; // what the dragged note is over
   onMove: (id: string, x: number, y: number) => void;
   onOpen: (id: string) => void;
   onDone: (id: string) => void;
@@ -60,6 +62,7 @@ export function Board({
           />
         ))}
       </AnimatePresence>
+      <DockedTargets show={dragging} over={over} />
     </div>
   );
 }

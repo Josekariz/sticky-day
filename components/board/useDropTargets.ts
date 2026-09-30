@@ -1,13 +1,14 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export type DropTarget = "clipboard" | "bin" | "board" | "tray" | null;
 
-// The first element for a target that is actually on screen. On phones the drop
-// bar comes before the desktop targets in the DOM; from md up it is display:none
-// and measures 0 wide. Measured on every move because the bar slides in after
-// the drag starts.
+type Rects = Partial<Record<Exclude<DropTarget, null>, DOMRect>>;
+
+// The first element for a target that is actually on screen. On phones the docked
+// targets live inside the board, so they come before the clipboard, tray and bin
+// in the DOM and win; from md up they are display:none and measure 0 wide.
 function rectOf(key: Exclude<DropTarget, null>): DOMRect | undefined {
   for (const el of document.querySelectorAll(`[data-drop='${key}']`)) {
     const r = el.getBoundingClientRect();
@@ -16,25 +17,42 @@ function rectOf(key: Exclude<DropTarget, null>): DOMRect | undefined {
   return undefined;
 }
 
+function measureAll(): Rects {
+  return { clipboard: rectOf("clipboard"), tray: rectOf("tray"), bin: rectOf("bin"), board: rectOf("board") };
+}
+
 export function useDropTargets() {
+  const rects = useRef<Rects>({});
   const overRef = useRef<DropTarget>(null);
   const [over, setOver] = useState<DropTarget>(null);
   const [dragging, setDragging] = useState(false);
 
+  // Measure again once the docked targets have mounted, and whenever the window resizes.
+  useEffect(() => {
+    if (!dragging) return;
+    const measure = () => {
+      rects.current = measureAll();
+    };
+    const frame = requestAnimationFrame(measure);
+    window.addEventListener("resize", measure);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("resize", measure);
+    };
+  }, [dragging]);
+
   function start() {
+    rects.current = measureAll();
     setDragging(true);
   }
 
   function move(px: number, py: number) {
-    const hit = (key: Exclude<DropTarget, null>) => {
-      const r = rectOf(key);
-      return !!r && px >= r.left && px <= r.right && py >= r.top && py <= r.bottom;
-    };
+    const hit = (r?: DOMRect) => !!r && px >= r.left && px <= r.right && py >= r.top && py <= r.bottom;
     const t: DropTarget =
-      hit("clipboard") ? "clipboard" :
-      hit("tray") ? "tray" :
-      hit("bin") ? "bin" :
-      hit("board") ? "board" : null;
+      hit(rects.current.clipboard) ? "clipboard" :
+      hit(rects.current.tray) ? "tray" :
+      hit(rects.current.bin) ? "bin" :
+      hit(rects.current.board) ? "board" : null;
     if (t !== overRef.current) {
       overRef.current = t;
       setOver(t);

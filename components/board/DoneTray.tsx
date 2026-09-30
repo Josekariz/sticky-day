@@ -4,6 +4,11 @@ import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { paperVar, type Note } from "@/lib/core/types";
 
+export const TRAY_MESH = {
+  backgroundImage: "radial-gradient(circle, rgba(0,0,0,0.28) 1px, transparent 1.4px)",
+  backgroundSize: "5px 5px",
+};
+
 type Props = {
   notes: Note[]; // status === "done", oldest first
   armed: boolean; // a note is being dragged over me
@@ -29,7 +34,7 @@ export function DoneTray({ notes, armed, onPutBack }: Props) {
         {/* back wall of the tray */}
         <div
           className="absolute inset-x-3 top-4 h-16 rounded-t-lg bg-tray-back"
-          style={{ backgroundImage: "radial-gradient(circle, rgba(0,0,0,0.28) 1px, transparent 1.4px)", backgroundSize: "5px 5px" }}
+          style={TRAY_MESH}
         />
 
         {/* the stacked sheets, oldest at the bottom */}
@@ -57,11 +62,7 @@ export function DoneTray({ notes, armed, onPutBack }: Props) {
           className={`absolute inset-x-2 bottom-4 flex h-12 items-end justify-between rounded-b-lg rounded-t-sm border-t-2 px-3 pb-2 shadow-lg transition-colors ${
             armed ? "border-paper-yellow bg-tray-front-armed" : "border-tray-line bg-tray-front"
           }`}
-          style={{
-            zIndex: 10,
-            backgroundImage: "radial-gradient(circle, rgba(0,0,0,0.28) 1px, transparent 1.4px)",
-            backgroundSize: "5px 5px",
-          }}
+          style={{ zIndex: 10, ...TRAY_MESH }}
         >
           <span className="text-[11px] font-bold uppercase tracking-widest text-on-tray">
             {armed ? "Drop to finish" : "Done"}
