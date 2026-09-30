@@ -1,0 +1,67 @@
+---
+description: Sticky Day architecture rules. Applies to all code in this repo.
+alwaysApply: true
+---
+
+# Sticky Day — architecture rules
+
+A day planner where AI turns a brain dump into sticky notes on a whiteboard.
+Personal, single-user per account. MVP uses the developer's own AI key from env;
+BYOK comes later and must be a one-file change.
+
+## Stack
+
+Next.js (App Router) + TypeScript + Tailwind v4 + Framer Motion.
+Supabase for Google auth and Postgres. Vercel AI SDK (`ai`) for models. Vercel for hosting.
+
+## Routes
+
+`app/(marketing)/` — landing and about, no navbar.
+`app/(app)/` — board, calendar, profile; shares one layout with the navbar and a
+session check that redirects to `/` when signed out.
+
+## Hard rules
+
+1. **`lib/core/` is pure.** No React, no Next, no browser or Node globals. Types,
+   placement maths, rollover logic, Zod schemas.
+
+2. **`lib/ai/model.ts` is the only file that knows providers.** `getModel(config)`
+   returns an AI SDK `LanguageModel`. Tasks in `lib/ai/tasks/*` take a model as an
+   argument and never import a provider package. Adding a provider is one `case`.
+
+3. **AI keys never reach the browser.** Read from `process.env` inside
+   `app/api/ai/*` route handlers only. Never `NEXT_PUBLIC_`. Never logged.
+   Never returned in a response.
+
+4. **Every AI route checks the Supabase session first** and returns 401 without one.
+
+5. **Row-level security is the real security.** Every table has `user_id` and a
+   policy of `user_id = auth.uid()` for select, insert, update, delete. Never use
+   the service role key in code that runs for a user request.
+
+6. **Only today is writable.** Notes on a past day are read-only; enforce with a
+   policy, not only the UI.
+
+7. **One note in focus at a time**, enforced by a partial unique index.
+
+8. **AI output is validated with Zod (`generateObject`) before it touches state or
+   the database.** A parse failure is an expected branch: retry once, then a clear
+   error. Never cast a model response.
+
+9. **Note positions are fractions 0..1** of the board's usable area, never pixels.
+
+10. **Components are props-in, callbacks-out.** State lives in `useBoard`. A
+    component never reaches for data it wasn't handed.
+
+## Style
+
+- TypeScript strict. No `any` without a comment saying why.
+- No hex colours in components; every colour is a token in `globals.css`.
+- Custom CSS classes never reuse a Tailwind utility name (`sticky` broke once).
+- Commit subjects under 72 chars, imperative mood.
+
+## When editing
+
+Make the smallest change that fixes the problem. Show the diff before applying.
+Do not rewrite a component to fix a bug in one function. Do not add packages
+without being asked. This is a learning project: readable beats clever.
