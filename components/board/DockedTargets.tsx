@@ -1,5 +1,6 @@
 "use client";
 
+import { useLayoutEffect, useRef, type RefObject } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import type { DropTarget } from "./useDropTargets";
 import { BinShape } from "./Bin";
@@ -7,16 +8,34 @@ import { TRAY_MESH } from "./DoneTray";
 
 type Target = Exclude<DropTarget, null | "board">;
 
-export function DockedTargets({ show, over }: { show: boolean; over: DropTarget }) {
+type Props = {
+  show: boolean;
+  over: DropTarget;
+  board: RefObject<HTMLDivElement | null>;
+};
+
+export function DockedTargets({ show, over, board }: Props) {
+  const row = useRef<HTMLDivElement>(null);
+
+  // Sit just above the board's top edge, but never off the top of the screen.
+  // Runs before useDropTargets measures the slots (child layout effects run first).
+  useLayoutEffect(() => {
+    const el = row.current;
+    const b = board.current;
+    if (!show || !el || !b) return;
+    el.style.top = `${Math.max(8, b.getBoundingClientRect().top - el.offsetHeight - 8)}px`;
+  }, [show, board]);
+
   return (
     <AnimatePresence>
       {show && (
         <motion.div
+          ref={row}
           aria-hidden
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="pointer-events-none absolute inset-x-0 top-14 z-10 mx-auto flex w-fit gap-5 rounded-2xl bg-board/80 px-3 py-2 backdrop-blur-sm md:hidden"
+          className="pointer-events-none fixed inset-x-0 z-10 mx-auto flex w-fit gap-5 rounded-2xl bg-board/80 px-3 py-2 backdrop-blur-sm md:hidden"
         >
           <Slot target="clipboard"><MiniClipboard armed={over === "clipboard"} /></Slot>
           <Slot target="tray"><MiniTray armed={over === "tray"} /></Slot>

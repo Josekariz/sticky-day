@@ -62,7 +62,7 @@ export function Board({
           />
         ))}
       </AnimatePresence>
-      <DockedTargets show={dragging} over={over} />
+      <DockedTargets show={dragging} over={over} board={boardRef} />
     </div>
   );
 }
