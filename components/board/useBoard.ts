@@ -191,28 +191,24 @@ export function useBoard(initial: Note[], dayId: string, userId: string, capacit
           ? `That's about ${fmtHours(total)}h of work for a ${fmtHours(capacityMinutes)}h day.`
           : null;
 
-      let created: Note[] = [];
-      setNotes((ns) => {
-        created = [];
-        let acc = ns;
-        for (const s of split) {
-          const pos = placeNote(acc.filter((n) => n.status === "board"));
-          const n: Note = {
-            id: crypto.randomUUID(),
-            ...s,
-            actualMinutes: null,
-            spentMs: 0,
-            status: "board",
-            color: randomColor(),
-            rotation: randomRotation(),
-            startedAt: null,
-            ...pos,
-          };
-          created.push(n);
-          acc = [...acc, n];
-        }
-        return acc;
-      });
+      const created: Note[] = [];
+      let board = notes.filter((n) => n.status === "board");
+      for (const s of split) {
+        const n: Note = {
+          id: crypto.randomUUID(),
+          ...s,
+          actualMinutes: null,
+          spentMs: 0,
+          status: "board",
+          color: randomColor(),
+          rotation: randomRotation(),
+          startedAt: null,
+          ...placeNote(board),
+        };
+        created.push(n);
+        board = [...board, n];
+      }
+      setNotes((ns) => [...ns, ...created]);
       insert(created);
       return [warning, overbooked].filter(Boolean).join(" ") || null;
     },

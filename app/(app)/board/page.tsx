@@ -30,7 +30,7 @@ export default async function BoardPage() {
 
     if (prev) {
       const { data: prevNotes } = await supabase.from("notes").select("*").eq("day_id", prev.id);
-      const carried = rollover((prevNotes as NoteRow[] ?? []).map(rowToNote));
+      const carried = rollover((prevNotes as NoteRow[] ?? []).map(rowToNote), () => crypto.randomUUID());
       if (carried.length) {
         await supabase.from("notes").insert(carried.map((n) => noteToRow(n, day!.id, userId)));
       }
