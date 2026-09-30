@@ -11,8 +11,8 @@ export default function AboutPage() {
 
       <div className="grid gap-6 md:grid-cols-2">
         <AboutNote title="Why" color="yellow" rotation={-2}>
-          <p>Every day I have to report at standup, and that means writing things down somewhere. I didn’t want something as bloated as Notion just to track what I do and keep my ideas.</p>
-          <p>So I built a tiny Notion, or Trello: somewhere to organise my things or just jot down random ideas, which then get turned into tasks.</p>
+          <p>Every morning I have to say at standup what I did yesterday and what I’m doing today. I didn’t want Notion for that.</p>
+          <p>I wanted a board I could throw notes at, work through one at a time, and have it write the standup for me.</p>
         </AboutNote>
 
         <AboutNote title="How" color="sky" rotation={2} delay={0.1}>
