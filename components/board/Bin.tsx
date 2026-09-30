@@ -32,7 +32,7 @@ export function Bin({ notes, armed, onRestore, onEmpty }: Props) {
         }
         whileHover={armed ? undefined : { scale: 1.06, rotate: -3 }}
         whileTap={{ scale: 0.96 }}
-        className="fixed bottom-4 right-4 z-30 h-16 w-14 md:bottom-6 md:right-6 md:h-28 md:w-24 drop-shadow-[0_12px_14px_rgba(0,0,0,0.35)]"
+        className="fixed bottom-2 right-4 z-30 h-14 w-12 md:bottom-6 md:right-6 md:h-28 md:w-24 drop-shadow-[0_12px_14px_rgba(0,0,0,0.35)]"
       >
         <svg viewBox="0 0 96 112" className="h-full w-full" aria-hidden>
           {notes.slice(0, 3).map((n, i) => (
