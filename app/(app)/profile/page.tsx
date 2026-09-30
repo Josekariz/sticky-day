@@ -1,3 +1,5 @@
+import { SignOutButton } from "@/components/auth/SignOutButton";
+
 export default function ProfilePage() {
   return (
     <main className="mx-auto flex w-full max-w-lg flex-col gap-6">
@@ -31,7 +33,7 @@ export default function ProfilePage() {
           <div className="font-semibold">Sign out</div>
           <div className="text-sm text-fg-soft">You can sign back in with Google any time.</div>
         </div>
-        <button className="h-11 rounded-xl border border-frame px-5 text-sm font-semibold text-danger">Sign out</button>
+        <SignOutButton />
       </section>
     </main>
   );
