@@ -34,7 +34,7 @@ export function Board({
     <div
       ref={boardRef}
       data-drop="board"
-      className={`relative flex-1 min-h-[520px] rounded-2xl border-[6px] border-frame bg-board ${dragging ? "overflow-visible z-20" : "overflow-hidden"}`}
+      className={`relative flex-1 min-h-[60vh] rounded-2xl border-4 border-frame md:min-h-[520px] md:border-[6px] bg-board ${dragging ? "overflow-visible z-20" : "overflow-hidden"}`}
     >
       {notes.length === 0 && (
         <p className="absolute inset-0 grid place-items-center font-hand text-3xl text-fg-soft">

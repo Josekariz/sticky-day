@@ -4,8 +4,6 @@ import { motion, useMotionValue, type PanInfo } from "framer-motion";
 import { useRef, type RefObject } from "react";
 import { paperVar, type Note } from "@/lib/core/types";
 
-export const NOTE_SIZE = 176; // must match w-44 h-44
-
 type Props = {
   note: Note;
   board: RefObject<HTMLDivElement | null>;
@@ -37,6 +35,7 @@ export function StickyNote({
   // A drag ends with pointerup on the note, which the browser turns into a click.
   // Remember that this gesture was a drag so the click doesn't open the note.
   const dragged = useRef(false);
+  const self = useRef<HTMLDivElement>(null);
 
   function handleDragEnd() {
     const dx = x.get();
@@ -45,21 +44,23 @@ export function StickyNote({
     y.set(0);
     if (onDragEnd(note.id)) return; // it left the board; don't save a position
     const el = board.current;
-    if (!el) return;
+    const me = self.current;
+    if (!el || !me) return;
     onMove(
       note.id,
-      clamp01(note.x + dx / (el.clientWidth - NOTE_SIZE)),
-      clamp01(note.y + dy / (el.clientHeight - NOTE_SIZE)),
+      clamp01(note.x + dx / (el.clientWidth - me.offsetWidth)),
+      clamp01(note.y + dy / (el.clientHeight - me.offsetHeight)),
     );
   }
 
   return (
     <motion.div
+      ref={self}
       drag
       dragMomentum={false}
       style={{
-        left: `calc(${note.x} * (100% - ${NOTE_SIZE}px))`,
-        top: `calc(${note.y} * (100% - ${NOTE_SIZE}px))`,
+        left: `calc(${note.x} * (100% - var(--note-size)))`,
+        top: `calc(${note.y} * (100% - var(--note-size)))`,
         x,
         y,
         rotate: note.rotation,
@@ -81,7 +82,7 @@ export function StickyNote({
       whileHover={{ scale: 1.04, rotate: 0, translateY: -4 }}
       whileDrag={{ scale: 1.08, rotate: 0, zIndex: 50 }}
       transition={{ type: "spring", stiffness: 380, damping: 22 }}
-      className="sticky-note group absolute w-44 h-44 text-ink cursor-grab active:cursor-grabbing"
+      className="sticky-note group absolute size-(--note-size) text-ink cursor-grab active:cursor-grabbing"
     >
       {/* the note face: tap to open */}
       <button
@@ -93,12 +94,12 @@ export function StickyNote({
           }
           onOpen(note.id);
         }}
-        className="relative flex h-full w-full flex-col p-4 pb-3 text-left"
+        className="relative flex h-full w-full flex-col p-3 text-left md:p-4 md:pb-3"
       >
-        <span className="px-7 font-hand text-2xl font-semibold leading-tight line-clamp-3">{note.title}</span>
-        <span className="mt-auto flex items-center gap-1.5 pr-8 text-[11px] font-semibold text-ink-soft">
-          <span className="px-2 py-0.5 rounded-full bg-black/10 tabular-nums">{note.estMinutes} min</span>
-          <span className="px-2 py-0.5 rounded-full bg-black/10 capitalize">{note.energy}</span>
+        <span className="font-hand text-(length:--note-font) font-semibold leading-tight line-clamp-3 md:px-7">{note.title}</span>
+        <span className="mt-auto flex items-center gap-1 pr-5 text-[10px] font-semibold text-ink-soft md:gap-1.5 md:pr-8 md:text-[11px]">
+          <span className="px-1.5 py-0.5 rounded-full bg-black/10 tabular-nums md:px-2">{note.estMinutes} min</span>
+          <span className="px-1.5 py-0.5 rounded-full bg-black/10 capitalize md:px-2">{note.energy}</span>
         </span>
       </button>
 
@@ -106,7 +107,7 @@ export function StickyNote({
         type="button"
         onClick={(e) => { e.stopPropagation(); onTrash(note.id); }}
         aria-label={`Trash "${note.title}"`}
-        className="absolute left-2 top-2 grid h-8 w-8 place-items-center rounded-full bg-black/15 opacity-0 transition-opacity hover:bg-black/30 focus-visible:opacity-100 group-hover:opacity-100"
+        className="absolute left-2 top-2 hidden h-8 w-8 md:grid place-items-center rounded-full bg-black/15 opacity-0 transition-opacity hover:bg-black/30 focus-visible:opacity-100 group-hover:opacity-100"
       >
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
           <path d="M3 6h18" /><path d="M8 6V4h8v2" /><path d="M6 6l1 14h10l1-14" />
@@ -121,7 +122,7 @@ export function StickyNote({
           onDone(note.id);
         }}
         aria-label={`Mark "${note.title}" done`}
-        className="absolute right-2 top-2 grid h-8 w-8 place-items-center rounded-full bg-black/15 opacity-0 transition-opacity hover:bg-black/30 focus-visible:opacity-100 group-hover:opacity-100"
+        className="absolute right-2 top-2 hidden h-8 w-8 md:grid place-items-center rounded-full bg-black/15 opacity-0 transition-opacity hover:bg-black/30 focus-visible:opacity-100 group-hover:opacity-100"
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
           <path d="M20 6 9 17l-5-5" />

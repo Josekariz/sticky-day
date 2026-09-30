@@ -55,7 +55,7 @@ export function DayView({
           onDragMove={drop.move}
           onDragEnd={dropFromBoard}
         />
-        <aside className="flex flex-col gap-5 lg:w-72">
+        <aside className="flex flex-col gap-5 pb-24 md:pb-0 lg:w-72">
           <Clipboard
             notes={b.focusNotes}
             armed={drop.over === "clipboard"}

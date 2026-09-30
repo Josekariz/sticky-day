@@ -21,7 +21,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
   return (
     <>
       <Navbar initials={initials} avatar={avatar} />
-      <div className="flex flex-1 flex-col p-4 md:p-8">{children}</div>
+      <div className="flex flex-1 flex-col overflow-x-clip px-2 py-4 md:overflow-x-visible md:p-8">{children}</div>
     </>
   );
 }

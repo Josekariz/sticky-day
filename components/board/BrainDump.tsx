@@ -37,7 +37,7 @@ export function BrainDump({
     <div className="flex flex-col gap-2">
       <form
         onSubmit={(e) => { e.preventDefault(); void submit(); }}
-        className="flex items-center gap-3 rounded-2xl border border-frame bg-surface px-4 py-2"
+        className="flex flex-wrap items-center gap-3 rounded-2xl border border-frame bg-surface px-4 py-2 md:flex-nowrap"
       >
         <label htmlFor="dump" className="sr-only">What do you want to get done today?</label>
         <input
@@ -63,7 +63,7 @@ export function BrainDump({
         <button
           type="submit"
           disabled={!text.trim() || busy}
-          className="flex h-11 shrink-0 items-center gap-2 rounded-xl bg-fg px-5 text-sm font-semibold text-bg disabled:opacity-60"
+          className="flex h-11 w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-fg px-5 text-sm font-semibold text-bg disabled:opacity-60 md:w-auto"
         >
           {busy && (
             <span className="flex gap-1" aria-hidden>

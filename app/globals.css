@@ -13,6 +13,8 @@
   --surface: #FFFDF8;
   --danger: #B23A22;
   --glow: 0;
+  --note-size: 120px;
+  --note-font: 1.125rem;
 
   /* same in both modes: these sit on paper or are physical objects */
   --on-ink: #FBFAF6;
@@ -52,6 +54,13 @@
   --tray-front-armed: #52607A;
   --tray-line: #1C2027;
   --on-tray: #F2EFE6;
+}
+
+@media (width >= 48rem) {
+  :root {
+    --note-size: 176px;
+    --note-font: 1.5rem;
+  }
 }
 
 @theme inline {
