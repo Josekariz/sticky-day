@@ -14,12 +14,14 @@ export function DayView({
   dayId,
   userId,
   initialNotes,
+  capacityMinutes,
 }: {
   dayId: string;
   userId: string;
   initialNotes: Note[];
+  capacityMinutes: number;
 }) {
-  const b = useBoard(initialNotes, dayId, userId);
+  const b = useBoard(initialNotes, dayId, userId, capacityMinutes);
   const drop = useDropTargets();
 
   function dropFromBoard(id: string): boolean {

@@ -5,6 +5,12 @@ import { MAX_FOCUS, type Note } from "@/lib/core/types";
 import { placeNote, randomColor, randomRotation } from "@/lib/core/placement";
 import { createClient } from "@/lib/supabase/client";
 import { noteToRow, patchToRow } from "@/lib/core/mappers";
+import type { SplitResult } from "@/lib/ai/tasks/split";
+
+function fmtHours(minutes: number) {
+  const h = minutes / 60;
+  return Number.isInteger(h) ? String(h) : h.toFixed(1);
+}
 
 /** Fold running time into spentMs and stop the clock. */
 function pause(n: Note): Note {
@@ -23,7 +29,7 @@ function changedTimerFields(prev: Note, next: Note): Partial<Note> | null {
   return Object.keys(patch).length ? patch : null;
 }
 
-export function useBoard(initial: Note[], dayId: string, userId: string) {
+export function useBoard(initial: Note[], dayId: string, userId: string, capacityMinutes: number) {
   const [notes, setNotes] = useState(initial);
   const [openId, setOpenId] = useState<string | null>(null);
   const supabase = useMemo(() => createClient(), []);
@@ -162,36 +168,53 @@ export function useBoard(initial: Note[], dayId: string, userId: string) {
       update(id, patch);
     },
 
-    /** Placeholder for the AI: one note per comma/newline. Day 3 replaces this with /api/ai/split. */
-    addFromDump(text: string) {
-      const titles = text.split(/[,\n]+/).map((s) => s.trim()).filter(Boolean);
-      if (!titles.length) return;
+    /** AI split via /api/ai/split. Returns a capacity/ambiguity warning, or null. Throws on failure. */
+    async addFromDump(text: string): Promise<string | null> {
+      const res = await fetch("/api/ai/split", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ dump: text, capacityMinutes }),
+      });
+      if (!res.ok) {
+        const err = ((await res.json().catch(() => ({}))) as { error?: string }).error ?? "Something went wrong";
+        throw new Error(err);
+      }
+
+      const { notes: split, warning } = (await res.json()) as SplitResult;
+      if (split.length === 0) {
+        return warning ?? "Couldn't find a task in that.";
+      }
+
+      const total = split.reduce((s, n) => s + n.estMinutes, 0);
+      const overbooked =
+        total > capacityMinutes
+          ? `That's about ${fmtHours(total)}h of work for a ${fmtHours(capacityMinutes)}h day.`
+          : null;
+
       let created: Note[] = [];
       setNotes((ns) => {
         created = [];
         let acc = ns;
-        for (const title of titles) {
+        for (const s of split) {
           const pos = placeNote(acc.filter((n) => n.status === "board"));
-          const note: Note = {
+          const n: Note = {
             id: crypto.randomUUID(),
-            title,
-            detail: "",
-            estMinutes: 30,
+            ...s,
             actualMinutes: null,
-            energy: "medium",
+            spentMs: 0,
             status: "board",
             color: randomColor(),
             rotation: randomRotation(),
             startedAt: null,
-            spentMs: 0,
             ...pos,
           };
-          created.push(note);
-          acc = [...acc, note];
+          created.push(n);
+          acc = [...acc, n];
         }
         return acc;
       });
       insert(created);
+      return [warning, overbooked].filter(Boolean).join(" ") || null;
     },
   };
 }

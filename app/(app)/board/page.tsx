@@ -10,6 +10,13 @@ export default async function BoardPage() {
   const { data: { user } } = await supabase.auth.getUser();
   const userId = user!.id; // layout already redirected if null
 
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("capacity_minutes")
+    .eq("id", userId)
+    .maybeSingle();
+  const capacityMinutes: number = (profile?.capacity_minutes as number | null | undefined) ?? 360;
+
   // today's row, or create it and roll over the most recent day
   let { data: day } = await supabase.from("days").select("id").eq("date", today()).maybeSingle();
 
@@ -34,7 +41,12 @@ export default async function BoardPage() {
 
   return (
     <main className="flex flex-1 flex-col">
-      <DayView dayId={day.id} userId={userId} initialNotes={(rows as NoteRow[] ?? []).map(rowToNote)} />
+      <DayView
+        dayId={day.id}
+        userId={userId}
+        initialNotes={(rows as NoteRow[] ?? []).map(rowToNote)}
+        capacityMinutes={capacityMinutes}
+      />
     </main>
   );
 }
