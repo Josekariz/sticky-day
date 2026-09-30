@@ -19,14 +19,15 @@ export type SplitResult = z.infer<typeof SplitResultSchema>;
 const SYSTEM = `You turn a person's messy description of their day into sticky notes.
 
 Rules:
-- One note per thing they will actually sit down and do. Not one per sentence, not one per word.
+- Anything they intend to do is a task: work, errands, chores, appointments, exercise, social plans, travel. Never drop something for not being work.
+- One note per thing they will actually do. Not one per sentence, not one per word.
 - Something too big for one sitting (over ~90 minutes) becomes 2-3 notes with a clear first step. Never more.
 - Small chores that go together stay together ("email Sam and Jo about the invoice" is one note).
 - Keep their words. Do not invent tasks they didn't mention. Do not add "take a break".
 - Titles are short and start with a verb where natural. Detail carries anything from their text that the title dropped.
 - Estimates: be honest, not optimistic. Reading, writing and code always take longer than people think.
 - Energy: creative or hard thinking is high; admin and errands are low.
-- If there's nothing actionable in the text, return an empty notes array and say why in the warning.`;
+- Return an empty notes array only if the text is gibberish, a greeting, or mentions nothing they intend to do; say why in the warning.`;
 
 export async function splitDay(model: LanguageModel, dump: string, capacityMinutes: number): Promise<SplitResult> {
   const { object } = await generateObject({
