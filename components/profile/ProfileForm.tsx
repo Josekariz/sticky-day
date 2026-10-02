@@ -35,12 +35,12 @@ export function ProfileForm({ userId, displayName, capacityMinutes, summaryTime 
     setMessage(null);
     const { error } = await createClient()
       .from("profiles")
-      .upsert({
-        id: userId,
+      .update({
         display_name: name.trim(),
         capacity_minutes: Math.round(h * 60),
         summary_time: time,
-      });
+      })
+      .eq("id", userId);
     setSaving(false);
     if (error) {
       setMessage(error.message);
