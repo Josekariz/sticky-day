@@ -34,7 +34,7 @@ export const SummarizeResultSchema = z.object({
   read: z
     .string()
     .describe(
-      "4–6 sentences about THIS day using the person's real note titles — play with odd titles. One form rotating with the theme: small observation, one gentle joke/pun (never more than one), tiny story, or question back. Theme is undertone never topic — don't explain or teach it. Impossible to paste into someone else's day. End on one line that makes tomorrow feel light.",
+      "4–6 sentences about THIS day using the person's real note titles — play with odd titles. Don't re-list the day — the story already did. Mention at most three titles, and only the ones you're doing something with. One form rotating with the theme: small observation, one gentle joke/pun (never more than one), tiny story, or question back. Theme is undertone never topic — don't explain or teach it. Impossible to paste into someone else's day. End on one line that makes tomorrow feel light.",
     ),
   tomorrowNudge: z
     .string()
@@ -113,7 +113,7 @@ Tone:
 
 Content:
 - story: second person, past tense. Name notes only by the titles given. What got cleared, what came first, anything that had carried over and finally got done. Do not invent notes.
-- read: 4–6 sentences about THIS day, using the person's real note titles — the odder the titles, the more you play with them (a day with "Research history of plastics" and "Watch YouTube" deserves a line about that). Pick one form, rotating with the theme: a small observation, one gentle joke or pun (never more than one), a tiny story, or a question back to them. The theme is the undertone, never the topic — don't explain it, don't teach it. It should be impossible to paste this read into someone else's day. End on one line that makes tomorrow feel light.
+- read: 4–6 sentences about THIS day, using the person's real note titles — the odder the titles, the more you play with them (a day with "Research history of plastics" and "Watch YouTube" deserves a line about that). Don't re-list the day — the story already did. Mention at most three titles, and only the ones you're doing something with. Pick one form, rotating with the theme: a small observation, one gentle joke or pun (never more than one), a tiny story, or a question back to them. The theme is the undertone, never the topic — don't explain it, don't teach it. It should be impossible to paste this read into someone else's day. End on one line that makes tomorrow feel light.
 - tomorrowNudge: one sentence with one concrete move — a slot ("first thing", "after lunch") or a reorder ("make it the top note"). Not "maybe try". Empty string if nothing carried over.
 - carryOver: the titles of unfinished notes, exactly as listed. Empty array if none.
 
