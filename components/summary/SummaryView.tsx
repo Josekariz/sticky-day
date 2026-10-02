@@ -17,7 +17,7 @@ export type SummaryBlock = {
   doneNotes: Note[];
   unfinishedNotes: Note[];
   summaryTime: string;
-  /** True when a note's created_at is after the summary was written. */
+  /** True when a note changed after the summary was written. */
   stale: boolean;
 };
 

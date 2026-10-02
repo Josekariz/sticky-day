@@ -5,6 +5,7 @@ export type NoteRow = {
   title: string; detail: string; est_minutes: number; actual_minutes: number | null;
   spent_ms: number; energy: Energy; status: NoteStatus; color: PaperColor;
   x: number; y: number; rotation: number; started_at: string | null;
+  completed_at?: string | null;
   carried_from: string | null;
 };
 
@@ -39,7 +40,11 @@ export function patchToRow(p: Partial<Note>): Partial<NoteRow> {
   if (p.actualMinutes !== undefined) r.actual_minutes = p.actualMinutes;
   if (p.spentMs !== undefined) r.spent_ms = p.spentMs;
   if (p.energy !== undefined) r.energy = p.energy;
-  if (p.status !== undefined) r.status = p.status;
+  if (p.status !== undefined) {
+    r.status = p.status;
+    // Track completion time so "Your day" can detect post-summary changes.
+    r.completed_at = p.status === "done" ? new Date().toISOString() : null;
+  }
   if (p.color !== undefined) r.color = p.color;
   if (p.x !== undefined) r.x = p.x;
   if (p.y !== undefined) r.y = p.y;

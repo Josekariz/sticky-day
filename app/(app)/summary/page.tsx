@@ -5,7 +5,11 @@ import { SummaryView, type SummaryBlock } from "@/components/summary/SummaryView
 import { parseStoredSummary } from "@/lib/ai/tasks/summarize";
 import { ensureTodayDay } from "@/lib/ai/writeDaySummary";
 
-type NoteRowWithCreated = NoteRow & { created_at?: string };
+type NoteRowWithTimes = NoteRow & {
+  created_at?: string;
+  completed_at?: string | null;
+  started_at?: string | null;
+};
 
 export default async function SummaryPage() {
   const supabase = await createClient();
@@ -35,15 +39,17 @@ export default async function SummaryPage() {
     .eq("user_id", userId)
     .neq("status", "trashed");
 
-  const noteRows = (rows as NoteRowWithCreated[] | null) ?? [];
+  const noteRows = (rows as NoteRowWithTimes[] | null) ?? [];
   const notes = noteRows.map(rowToNote);
   const summary = parseStoredSummary(day.summary);
 
   let latestNoteMs = 0;
   for (const r of noteRows) {
-    if (!r.created_at) continue;
-    const t = new Date(r.created_at).getTime();
-    if (t > latestNoteMs) latestNoteMs = t;
+    for (const iso of [r.created_at, r.completed_at, r.started_at]) {
+      if (!iso) continue;
+      const t = new Date(iso).getTime();
+      if (Number.isFinite(t) && t > latestNoteMs) latestNoteMs = t;
+    }
   }
   const summaryMs = summary?.createdAt ? new Date(summary.createdAt).getTime() : 0;
   const stale = !!summary?.createdAt && latestNoteMs > summaryMs;
