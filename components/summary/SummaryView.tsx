@@ -6,6 +6,7 @@ import { dayHeading, formatSummaryTime, greetingFor, writtenTime } from "@/lib/c
 import { paperVar, type Note } from "@/lib/core/types";
 import { signOffFor } from "@/lib/core/themes";
 import type { StoredSummary } from "@/lib/ai/tasks/summarize";
+import { StoredSummarySchema } from "@/lib/ai/tasks/summarize";
 
 export type SummaryBlock = {
   date: string;
@@ -105,6 +106,8 @@ export function SummaryView({ data }: { data: SummaryBlock }) {
         const err = ((await res.json().catch(() => ({}))) as { error?: string }).error ?? "Something went wrong";
         throw new Error(err);
       }
+      const parsed = StoredSummarySchema.safeParse(await res.json());
+      if (!parsed.success) throw new Error("Something went wrong");
       router.refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong");

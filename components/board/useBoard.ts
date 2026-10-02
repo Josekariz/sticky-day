@@ -5,7 +5,7 @@ import { MAX_FOCUS, type Note } from "@/lib/core/types";
 import { placeNote, randomColor, randomRotation } from "@/lib/core/placement";
 import { createClient } from "@/lib/supabase/client";
 import { noteToRow, patchToRow } from "@/lib/core/mappers";
-import type { SplitResult } from "@/lib/ai/tasks/split";
+import { SplitResultSchema } from "@/lib/ai/tasks/split";
 
 function fmtHours(minutes: number) {
   const h = minutes / 60;
@@ -180,7 +180,9 @@ export function useBoard(initial: Note[], dayId: string, userId: string, capacit
         throw new Error(err);
       }
 
-      const { notes: split, warning } = (await res.json()) as SplitResult;
+      const parsed = SplitResultSchema.safeParse(await res.json());
+      if (!parsed.success) throw new Error("Something went wrong");
+      const { notes: split, warning } = parsed.data;
       if (split.length === 0) {
         return warning ?? "Couldn't find a task in that.";
       }
