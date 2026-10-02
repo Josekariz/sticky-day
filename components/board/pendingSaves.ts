@@ -22,3 +22,7 @@ export function flushPendingSaves(timeoutMs = 1000): Promise<void> {
     }),
   ]);
 }
+
+export function hasPendingSaves(): boolean {
+  return pending.size > 0;
+}

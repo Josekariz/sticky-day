@@ -5,6 +5,7 @@ import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import { dayHeading, writtenCaption } from "@/lib/core/date";
 import type { NoteStatus } from "@/lib/core/types";
+import { NavTopProgress, PendingLabel } from "@/components/nav/PendingNav";
 
 export type DayDrawerNote = {
   title: string;
@@ -100,7 +101,8 @@ export function DayDrawer({
                 href="/board"
                 className="inline-flex h-11 items-center justify-center rounded-xl bg-fg px-4 text-sm font-semibold text-bg"
               >
-                Go to board
+                <NavTopProgress />
+                <PendingLabel>Go to board</PendingLabel>
               </Link>
             </footer>
           )}
