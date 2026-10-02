@@ -1,2 +1,112 @@
-// summarizeDay(model, notes) with Zod schema
-export {};
+import { generateObject, type LanguageModel } from "ai";
+import { z } from "zod";
+
+const DoneNoteSchema = z.object({
+  title: z.string(),
+  estMinutes: z.number().int(),
+  actualMinutes: z.number().int(),
+  carriedFrom: z.string().nullable(),
+});
+
+const UnfinishedNoteSchema = z.object({
+  title: z.string(),
+  estMinutes: z.number().int(),
+  spentMs: z.number().int(),
+  carriedFrom: z.string().nullable(),
+});
+
+const TrashedNoteSchema = z.object({
+  title: z.string(),
+});
+
+export const SummarizeInputSchema = z.object({
+  date: z.string(),
+  capacityMinutes: z.number().int(),
+  done: z.array(DoneNoteSchema),
+  unfinished: z.array(UnfinishedNoteSchema),
+  trashed: z.array(TrashedNoteSchema),
+});
+
+export type SummarizeInput = z.infer<typeof SummarizeInputSchema>;
+
+export const SummarizeResultSchema = z.object({
+  recap: z
+    .string()
+    .describe("Two to four sentences, second person, plain prose. No bullet points, no emoji, no praise-padding."),
+  carryOver: z
+    .array(z.string())
+    .describe("Titles from unfinished the person should keep tomorrow."),
+  dropSuggestions: z
+    .array(z.string())
+    .describe(
+      "Titles from unfinished that have been carried two or more days and may be worth dropping. Empty if none.",
+    ),
+});
+
+export type SummarizeResult = z.infer<typeof SummarizeResultSchema>;
+
+const SYSTEM = `You write a short end-of-day recap for one person's sticky-note board.
+
+Rules:
+- Second person ("you"). Two to four sentences. Plain prose — no bullet points, no emoji, no praise-padding, no pep talk.
+- Refer to notes only by the titles given. Do not invent tasks.
+- Do not do arithmetic. Totals (done count, minutes worked, estimate drift) are computed in code and passed in the prompt — use those numbers as given.
+- Mention estimate accuracy when it is off by a lot (the prompt will say so). Otherwise leave it alone.
+- carryOver: pick unfinished titles worth keeping tomorrow. Prefer things they started or that still matter.
+- dropSuggestions: only titles from unfinished whose carriedFrom date is two or more days before today. Empty array if none qualify. Suggest dropping, do not insist.
+- Never moralise. No "you should have", no guilt, no productivity lecturing.
+- Trashed items may be acknowledged briefly if useful; do not dwell on them.`;
+
+function driftLabel(done: SummarizeInput["done"]): { minutesWorked: number; drift: number; driftNote: string } {
+  const minutesWorked = done.reduce((s, n) => s + n.actualMinutes, 0);
+  const drift = done.reduce((s, n) => s + (n.actualMinutes - n.estMinutes), 0);
+  const abs = Math.abs(drift);
+  const significant = abs >= 30 || (done.length > 0 && abs >= minutesWorked * 0.25 && abs >= 15);
+  const driftNote = significant
+    ? drift > 0
+      ? `Estimate drift: about ${drift} minutes over (estimates were low).`
+      : `Estimate drift: about ${abs} minutes under (estimates were high).`
+    : "Estimate drift: close enough — no need to call out accuracy.";
+  return { minutesWorked, drift, driftNote };
+}
+
+function daysBetween(from: string, to: string): number {
+  const [fy, fm, fd] = from.split("-").map(Number);
+  const [ty, tm, td] = to.split("-").map(Number);
+  const a = Date.UTC(fy, fm - 1, fd);
+  const b = Date.UTC(ty, tm - 1, td);
+  return Math.round((b - a) / 86_400_000);
+}
+
+export async function summarizeDay(model: LanguageModel, input: SummarizeInput): Promise<SummarizeResult> {
+  const { minutesWorked, driftNote } = driftLabel(input.done);
+  const longCarries = input.unfinished
+    .filter((n) => n.carriedFrom != null && daysBetween(n.carriedFrom, input.date) >= 2)
+    .map((n) => n.title);
+
+  const { object } = await generateObject({
+    model,
+    schema: SummarizeResultSchema,
+    system: SYSTEM,
+    prompt: `Date: ${input.date}
+Capacity: ${input.capacityMinutes} minutes.
+
+Totals (computed — do not recalculate):
+- Done: ${input.done.length} notes
+- Minutes worked: ${minutesWorked}
+- ${driftNote}
+
+Done:
+${input.done.length ? input.done.map((n) => `- "${n.title}" (est ${n.estMinutes} min, took ${n.actualMinutes}${n.carriedFrom ? `, carried from ${n.carriedFrom}` : ""})`).join("\n") : "(none)"}
+
+Unfinished:
+${input.unfinished.length ? input.unfinished.map((n) => `- "${n.title}" (est ${n.estMinutes} min, spent ${Math.round(n.spentMs / 60000)} min${n.carriedFrom ? `, carried from ${n.carriedFrom}` : ", new today"})`).join("\n") : "(none)"}
+
+Eligible for dropSuggestions (carried ≥ 2 days): ${longCarries.length ? longCarries.map((t) => `"${t}"`).join(", ") : "(none)"}
+
+Trashed:
+${input.trashed.length ? input.trashed.map((n) => `- "${n.title}"`).join("\n") : "(none)"}`,
+    temperature: 0.4,
+  });
+  return object;
+}

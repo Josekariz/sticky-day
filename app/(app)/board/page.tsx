@@ -18,11 +18,15 @@ export default async function BoardPage() {
   const capacityMinutes: number = (profile?.capacity_minutes as number | null | undefined) ?? 360;
 
   // today's row, or create it and roll over the most recent day
-  let { data: day } = await supabase.from("days").select("id").eq("date", today()).maybeSingle();
+  let { data: day } = await supabase
+    .from("days")
+    .select("id, summary")
+    .eq("date", today())
+    .maybeSingle();
 
   if (!day) {
     const { data: created } = await supabase
-      .from("days").insert({ user_id: userId, date: today() }).select("id").single();
+      .from("days").insert({ user_id: userId, date: today() }).select("id, summary").single();
     day = created!;
 
     const { data: prev } = await supabase
@@ -57,6 +61,7 @@ export default async function BoardPage() {
         userId={userId}
         initialNotes={(rows as NoteRow[] ?? []).map(rowToNote)}
         capacityMinutes={capacityMinutes}
+        initialSummary={(day.summary as string | null | undefined) ?? null}
       />
     </main>
   );

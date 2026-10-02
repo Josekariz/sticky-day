@@ -15,11 +15,13 @@ export function DayView({
   userId,
   initialNotes,
   capacityMinutes,
+  initialSummary,
 }: {
   dayId: string;
   userId: string;
   initialNotes: Note[];
   capacityMinutes: number;
+  initialSummary: string | null;
 }) {
   const b = useBoard(initialNotes, dayId, userId, capacityMinutes);
   const drop = useDropTargets();
@@ -68,8 +70,10 @@ export function DayView({
             onDragEnd={dropFromClipboard}
           />
           <DoneTray
+            dayId={dayId}
             notes={b.doneNotes}
             armed={drop.over === "tray"}
+            initialSummary={initialSummary}
             onPutBack={b.restore}
           />
         </aside>

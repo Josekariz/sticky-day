@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { paperVar, type Note } from "@/lib/core/types";
+import type { SummarizeResult } from "@/lib/ai/tasks/summarize";
 
 export const TRAY_MESH = {
   backgroundImage: "radial-gradient(circle, rgba(0,0,0,0.28) 1px, transparent 1.4px)",
@@ -10,15 +11,47 @@ export const TRAY_MESH = {
 };
 
 type Props = {
+  dayId: string;
   notes: Note[]; // status === "done", oldest first
   armed: boolean; // a note is being dragged over me
+  initialSummary: string | null;
   onPutBack: (id: string) => void;
 };
 
-export function DoneTray({ notes, armed, onPutBack }: Props) {
+export function DoneTray({ dayId, notes, armed, initialSummary, onPutBack }: Props) {
   const [open, setOpen] = useState(false);
+  const [recap, setRecap] = useState<string | null>(initialSummary);
+  const [carryOver, setCarryOver] = useState<string[]>([]);
+  const [dropSuggestions, setDropSuggestions] = useState<string[]>([]);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const stack = notes.slice(-6); // never draw more than six sheets
   const worked = notes.reduce((s, n) => s + (n.actualMinutes ?? 0), 0);
+
+  async function writeSummary(force: boolean) {
+    if (busy) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/ai/summarize", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ dayId, force }),
+      });
+      if (!res.ok) {
+        const err = ((await res.json().catch(() => ({}))) as { error?: string }).error ?? "Something went wrong";
+        throw new Error(err);
+      }
+      const data = (await res.json()) as SummarizeResult;
+      setRecap(data.recap);
+      setCarryOver(data.carryOver);
+      setDropSuggestions(data.dropSuggestions);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Something went wrong");
+    } finally {
+      setBusy(false);
+    }
+  }
 
   return (
     <>
@@ -88,7 +121,7 @@ export function DoneTray({ notes, armed, onPutBack }: Props) {
               onClick={() => setOpen(false)}
             />
             <motion.aside
-              className="fixed right-0 top-0 z-50 flex h-full w-full max-w-md flex-col gap-4 bg-surface p-6 shadow-2xl"
+              className="fixed right-0 top-0 z-50 flex h-full w-full max-w-md flex-col gap-4 overflow-y-auto bg-surface p-6 shadow-2xl"
               initial={{ x: "100%" }}
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
@@ -144,7 +177,51 @@ export function DoneTray({ notes, armed, onPutBack }: Props) {
                 )}
               </ul>
 
-              <p className="mt-auto text-xs text-fg-soft">The recap and carry-over land here once the AI is wired.</p>
+              <section className="mt-auto flex flex-col gap-3 border-t border-frame pt-4">
+                {recap ? (
+                  <>
+                    <p className="text-sm leading-relaxed text-fg">{recap}</p>
+                    {carryOver.length > 0 && (
+                      <div className="flex flex-col gap-1">
+                        <h3 className="text-[11px] font-bold uppercase tracking-widest text-fg-soft">Carry over</h3>
+                        <ul className="flex flex-col gap-0.5 text-sm text-fg">
+                          {carryOver.map((t) => (
+                            <li key={t}>• {t}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {dropSuggestions.length > 0 && (
+                      <div className="flex flex-col gap-1">
+                        <h3 className="text-[11px] font-bold uppercase tracking-widest text-fg-soft">Maybe drop</h3>
+                        <ul className="flex flex-col gap-0.5 text-sm text-fg-soft">
+                          {dropSuggestions.map((t) => (
+                            <li key={t}>• {t}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => void writeSummary(true)}
+                      className="h-11 self-start rounded-xl border border-frame px-5 text-sm font-semibold disabled:opacity-60"
+                    >
+                      {busy ? "Rewriting…" : "Rewrite"}
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => void writeSummary(false)}
+                    className="h-11 self-start rounded-xl bg-fg px-5 text-sm font-semibold text-bg disabled:opacity-60"
+                  >
+                    {busy ? "Writing…" : "Write today’s summary"}
+                  </button>
+                )}
+                {error && <p className="text-sm text-danger">{error}</p>}
+              </section>
             </motion.aside>
           </>
         )}

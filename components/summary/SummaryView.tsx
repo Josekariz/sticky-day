@@ -2,22 +2,25 @@
 
 import { useState } from "react";
 
-const FAKE = {
-  yesterday: {
-    done: ["Reply to client email", "Review PR #42", "Book dentist"],
-    carried: ["Finish XML markup for Act 12"],
-  },
-  today: ["Finish XML markup for Act 12", "Write TikTok script", "Gym", "Update portfolio link"],
-  blockers: ["Waiting on the validator fix before Act 12 can ship"],
+export type SummaryData = {
+  yesterdayDone: string[];
+  yesterdayCarried: string[];
+  yesterdaySummary: string | null;
+  today: string[];
+  blockers: string[];
 };
 
-function toText() {
-  const y = FAKE.yesterday;
+function toText(data: SummaryData) {
+  const yDone = data.yesterdayDone;
+  const yCarried = data.yesterdayCarried;
   return [
-    `Yesterday: ${y.done.join(", ")}.${y.carried.length ? ` Didn't get to: ${y.carried.join(", ")}.` : ""}`,
-    `Today: ${FAKE.today.join(", ")}.`,
-    FAKE.blockers.length ? `Blocked: ${FAKE.blockers.join("; ")}.` : "No blockers.",
-  ].join("\n");
+    data.yesterdaySummary,
+    `Yesterday: ${yDone.length ? yDone.join(", ") : "nothing done"}.${yCarried.length ? ` Didn't get to: ${yCarried.join(", ")}.` : ""}`,
+    `Today: ${data.today.length ? data.today.join(", ") : "nothing on the board yet"}.`,
+    data.blockers.length ? `Blocked: ${data.blockers.join("; ")}.` : "No blockers.",
+  ]
+    .filter(Boolean)
+    .join("\n");
 }
 
 function Section({ title, items, muted }: { title: string; items: string[]; muted?: boolean }) {
@@ -37,21 +40,27 @@ function Section({ title, items, muted }: { title: string; items: string[]; mute
   );
 }
 
-export function SummaryView() {
+export function SummaryView({ data }: { data: SummaryData }) {
   const [copied, setCopied] = useState(false);
 
   async function copy() {
-    await navigator.clipboard.writeText(toText());
+    await navigator.clipboard.writeText(toText(data));
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
   }
 
   return (
     <div className="flex flex-col gap-6 rounded-2xl border border-frame bg-surface p-6">
-      <Section title="Yesterday · done" items={FAKE.yesterday.done} muted />
-      <Section title="Yesterday · carried over" items={FAKE.yesterday.carried} />
-      <Section title="Today" items={FAKE.today} />
-      <Section title="Blockers" items={FAKE.blockers} />
+      {data.yesterdaySummary && (
+        <section className="flex flex-col gap-2">
+          <h2 className="text-[11px] font-bold uppercase tracking-widest text-fg-soft">Yesterday · recap</h2>
+          <p className="text-base leading-relaxed text-fg">{data.yesterdaySummary}</p>
+        </section>
+      )}
+      <Section title="Yesterday · done" items={data.yesterdayDone} muted />
+      <Section title="Yesterday · carried over" items={data.yesterdayCarried} />
+      <Section title="Today" items={data.today} />
+      <Section title="Blockers" items={data.blockers} />
 
       <div className="flex items-center gap-3 border-t border-frame pt-4">
         <button onClick={copy} className="h-11 rounded-xl bg-fg px-5 text-sm font-semibold text-bg">
