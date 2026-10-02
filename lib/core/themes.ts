@@ -11,10 +11,28 @@ export const THEMES = [
   "rest counts as a note",
 ] as const;
 
+export const SIGN_OFFS = [
+  "See you tomorrow 🌙",
+  "Same board, fresh start ☀️",
+  "Rest well, the notes will wait.",
+  "That's enough for today ✨",
+  "Tomorrow gets the leftovers 🌱",
+  "Board's here when you are ☕",
+] as const;
+
+function dayNum(isoDate: string): number {
+  const [y, m, d] = isoDate.split("-").map(Number);
+  return Math.floor(Date.UTC(y, m - 1, d) / 86_400_000);
+}
+
 /** Deterministic theme for a YYYY-MM-DD date. Consecutive days never share one. */
 export function themeFor(isoDate: string): string {
-  const [y, m, d] = isoDate.split("-").map(Number);
-  // Days since a fixed epoch; consecutive dates differ by 1, so % length never repeats next door.
-  const dayNum = Math.floor(Date.UTC(y, m - 1, d) / 86_400_000);
-  return THEMES[((dayNum % THEMES.length) + THEMES.length) % THEMES.length];
+  const n = dayNum(isoDate);
+  return THEMES[((n % THEMES.length) + THEMES.length) % THEMES.length];
+}
+
+/** Deterministic handwritten sign-off for a YYYY-MM-DD date. */
+export function signOffFor(isoDate: string): string {
+  const n = dayNum(isoDate);
+  return SIGN_OFFS[((n % SIGN_OFFS.length) + SIGN_OFFS.length) % SIGN_OFFS.length];
 }

@@ -14,13 +14,17 @@ export default async function SummaryPage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("timezone, summary_time")
+    .select("display_name, timezone, summary_time")
     .eq("id", userId)
     .maybeSingle();
 
   const timezone = (profile?.timezone as string | null | undefined) ?? "UTC";
   const summaryTime = String(profile?.summary_time ?? "18:00");
   const today = todayFor(timezone);
+
+  const googleName: string = user?.user_metadata.full_name ?? user?.email?.split("@")[0] ?? "";
+  const displayName: string = (profile?.display_name as string | null | undefined)?.trim() || googleName;
+  const firstName = displayName.split(/\s+/)[0] || null;
 
   const day = await ensureTodayDay(supabase, userId, today);
 
@@ -47,6 +51,7 @@ export default async function SummaryPage() {
   const data: SummaryBlock = {
     date: today,
     dayId: day.id,
+    firstName,
     summary,
     doneNotes: notes.filter((n) => n.status === "done"),
     unfinishedNotes: notes.filter((n) => n.status === "board" || n.status === "focus"),
@@ -55,7 +60,7 @@ export default async function SummaryPage() {
   };
 
   return (
-    <main className="mx-auto flex w-full max-w-2xl flex-col gap-6">
+    <main className="flex flex-1 flex-col py-2">
       <SummaryView data={data} />
     </main>
   );

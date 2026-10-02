@@ -3,13 +3,14 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { dayHeading, formatSummaryTime, writtenTime } from "@/lib/core/date";
-import type { Note } from "@/lib/core/types";
+import { paperVar, type Note } from "@/lib/core/types";
+import { signOffFor } from "@/lib/core/themes";
 import type { StoredSummary } from "@/lib/ai/tasks/summarize";
-import { StickyNote } from "@/components/board/StickyNote";
 
 export type SummaryBlock = {
   date: string;
   dayId: string;
+  firstName: string | null;
   summary: StoredSummary | null;
   doneNotes: Note[];
   unfinishedNotes: Note[];
@@ -21,26 +22,55 @@ export type SummaryBlock = {
 function toText(data: SummaryBlock): string {
   if (!data.summary) return "";
   const s = data.summary;
+  const greeting = data.firstName ? `Evening, ${data.firstName}` : "Evening";
   const lines = [
+    greeting,
     dayHeading(data.date),
     "",
+    "Today you…",
     s.story,
     "",
-    "What you did",
-    ...(data.doneNotes.length ? data.doneNotes.map((n) => `• ${n.title}`) : ["• (none)"]),
+    ...(data.doneNotes.length ? data.doneNotes.map((n) => `• ${n.title}`) : []),
     "",
+    "Something to read",
     s.read,
   ];
   if (data.unfinishedNotes.length || s.tomorrowNudge) {
-    lines.push(
-      "",
-      "Tomorrow",
-      ...data.unfinishedNotes.map((n) => `• ${n.title}`),
-    );
+    lines.push("", "Tomorrow", ...data.unfinishedNotes.map((n) => `• ${n.title}`));
     if (s.tomorrowNudge) lines.push("", s.tomorrowNudge);
   }
+  lines.push("", signOffFor(data.date));
   if (s.createdAt) lines.push("", writtenTime(s.createdAt));
   return lines.join("\n");
+}
+
+function NoteLine({ note, tick }: { note: Note; tick?: boolean }) {
+  return (
+    <li className="flex items-center gap-2.5 font-hand text-[20px] leading-snug text-fg">
+      <span
+        className="size-2.5 shrink-0 rounded-[2px]"
+        style={{ backgroundColor: paperVar(note.color) }}
+        aria-hidden
+      />
+      <span className="min-w-0">{note.title}</span>
+      {tick && (
+        <svg
+          className="ml-0.5 shrink-0 text-fg-soft"
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden
+        >
+          <path d="M20 6 9 17l-5-5" />
+        </svg>
+      )}
+    </li>
+  );
 }
 
 export function SummaryView({ data }: { data: SummaryBlock }) {
@@ -80,7 +110,7 @@ export function SummaryView({ data }: { data: SummaryBlock }) {
 
   if (!data.summary) {
     return (
-      <div className="flex flex-col gap-4 rounded-2xl border border-frame bg-surface p-6">
+      <div className="mx-auto flex w-full max-w-[35rem] flex-col gap-4 rounded-2xl border border-frame bg-surface p-6">
         <p className="text-base text-fg">
           Writes itself at {formatSummaryTime(data.summaryTime)}
         </p>
@@ -99,43 +129,43 @@ export function SummaryView({ data }: { data: SummaryBlock }) {
 
   const s = data.summary;
   const showTomorrow = data.unfinishedNotes.length > 0 || !!s.tomorrowNudge;
+  const greeting = data.firstName ? `Evening, ${data.firstName}` : "Evening";
 
   return (
-    <div className="flex flex-col gap-10">
+    <div className="mx-auto flex w-full max-w-[35rem] flex-col gap-10">
       <header className="flex flex-col gap-1">
-        <h1 className="font-hand text-5xl font-bold">Your day</h1>
+        <h1 className="font-hand text-5xl font-bold">{greeting}</h1>
         <p className="text-sm text-fg-soft">{dayHeading(data.date)}</p>
       </header>
 
       <section className="flex flex-col gap-4">
-        <h2 className="text-[11px] font-bold uppercase tracking-widest text-fg-soft">What you did</h2>
-        {data.doneNotes.length > 0 ? (
-          <div className="flex flex-wrap gap-3">
-            {data.doneNotes.map((n) => (
-              <StickyNote key={n.id} note={n} readOnly faded />
-            ))}
-          </div>
-        ) : (
-          <p className="text-sm text-fg-soft">Nothing finished yet.</p>
-        )}
+        <h2 className="font-hand text-2xl font-semibold text-fg">Today you…</h2>
         {s.story && <p className="text-base leading-relaxed text-fg">{s.story}</p>}
+        {data.doneNotes.length > 0 && (
+          <ul className="flex flex-col gap-2">
+            {data.doneNotes.map((n) => (
+              <NoteLine key={n.id} note={n} tick />
+            ))}
+          </ul>
+        )}
       </section>
 
       {s.read && (
-        <section className="py-2">
-          <p className="text-lg leading-relaxed text-fg">{s.read}</p>
+        <section className="flex flex-col gap-3">
+          <h2 className="font-hand text-2xl font-semibold text-fg">Something to read</h2>
+          <p className="text-[17px] leading-[1.6] text-fg">{s.read}</p>
         </section>
       )}
 
       {showTomorrow && (
         <section className="flex flex-col gap-4">
-          <h2 className="text-[11px] font-bold uppercase tracking-widest text-fg-soft">Tomorrow</h2>
+          <h2 className="font-hand text-2xl font-semibold text-fg">Tomorrow</h2>
           {data.unfinishedNotes.length > 0 && (
-            <div className="flex flex-wrap gap-3">
+            <ul className="flex flex-col gap-2">
               {data.unfinishedNotes.map((n) => (
-                <StickyNote key={n.id} note={n} readOnly />
+                <NoteLine key={n.id} note={n} />
               ))}
-            </div>
+            </ul>
           )}
           {s.tomorrowNudge && (
             <p className="text-base leading-relaxed text-fg">{s.tomorrowNudge}</p>
@@ -143,13 +173,15 @@ export function SummaryView({ data }: { data: SummaryBlock }) {
         </section>
       )}
 
+      <p className="font-hand text-xl text-fg">{signOffFor(data.date)}</p>
+
       <div className="flex flex-col gap-2">
         {s.createdAt && (
           <p className="text-xs text-fg-soft">{writtenTime(s.createdAt)}</p>
         )}
         {data.stale && (
           <p className="text-sm text-fg-soft">
-            Things changed since this was written.{" "}
+            Things changed since this was written ·{" "}
             <button
               type="button"
               disabled={busy}

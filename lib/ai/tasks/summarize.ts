@@ -29,17 +29,17 @@ export const SummarizeResultSchema = z.object({
   story: z
     .string()
     .describe(
-      "Two to three sentences, second person, past tense, warm. Names notes by title. What got cleared, what came first, anything that had carried over and finally got done.",
+      "Two to three short sentences, second person, past tense — like a close friend texting. Names notes by title. What got cleared, what came first, anything that had carried over and finally got done.",
     ),
   read: z
     .string()
     .describe(
-      "Four to six sentences on the day's theme, written about THIS day's notes so it could not be reused for another day. Kind, plain, no advice-column voice, no 'you should'. If nothing was done, write about that kindly.",
+      "A short warm read on the day's theme, about THIS day's notes only. End with one short line that makes tomorrow feel worth showing up for. Kind, playful, no 'you should'.",
     ),
   tomorrowNudge: z
     .string()
     .describe(
-      "One sentence, specific, drawn from what carried over or a pattern (same note carried twice; many added, few finished). Empty string if nothing carried over.",
+      "One sentence, specific, drawn from what carried over or a pattern. Empty string if nothing carried over.",
     ),
   carryOver: z
     .array(z.string())
@@ -77,17 +77,24 @@ export function summaryStory(s: StoredSummary): string {
   return s.story || s.recap || "";
 }
 
-const SYSTEM = `You write a short end-of-day reflection for one person's sticky-note board — something they read alone, not a team report.
+const SYSTEM = `You write a short end-of-day note for one person's sticky-note board.
 
-Rules:
-- story: second person ("you"), past tense, warm, 2–3 sentences. Name notes only by the titles given. What got cleared, what came first, anything that had carried over and finally got done. Do not invent notes.
-- read: 4–6 sentences on the theme provided, grounded in THIS day's notes so the piece could not be pasted onto another day. Kind and plain. No advice-column voice, no "you should", no pep talk. If nothing was done, write about that kindly.
-- tomorrowNudge: one sentence, specific, from what carried over or a clear pattern (a note carried twice; many added and few finished). Empty string if nothing carried over.
+Tone:
+- Write like a close friend texting at the end of the day — warm, relaxed, a bit playful.
+- Never corporate, never a coach, never an advice column.
+- Use 1–3 sensible emojis across the whole output where they land naturally (🌙 🫶 ☕ 🌱 ✨ 💪 🧹). Never in every sentence.
+- Short sentences are fine.
+
+Content:
+- story: second person, past tense. Name notes only by the titles given. What got cleared, what came first, anything that had carried over and finally got done. Do not invent notes.
+- read: on the theme provided, grounded in THIS day's notes so it could not be reused for another day. End with one short line that makes tomorrow feel worth showing up for. If nothing was done, say so kindly.
+- tomorrowNudge: one sentence, specific, from what carried over or a clear pattern. Empty string if nothing carried over.
 - carryOver: the titles of unfinished notes, exactly as listed. Empty array if none.
+
+Hard rules:
 - Never write minutes, estimates, percentages, or counts.
-- No praise inflation. No exclamation marks.
-- Never mention deleted or trashed notes. They are out of scope.
-- Never moralise.`;
+- No "you should". If the day went badly, say so kindly and make tomorrow sound easy.
+- Never mention deleted or trashed notes. They are out of scope.`;
 
 export async function summarizeDay(model: LanguageModel, input: SummarizeInput): Promise<SummarizeResult> {
   const { object } = await generateObject({
@@ -102,7 +109,7 @@ ${input.done.length ? input.done.map((n) => `- "${n.title}"${n.carriedFrom ? ` (
 
 Unfinished:
 ${input.unfinished.length ? input.unfinished.map((n) => `- "${n.title}"${n.carriedFrom ? ` (carried from ${n.carriedFrom})` : " (new today)"}`).join("\n") : "(none)"}`,
-    temperature: 0.5,
+    temperature: 0.7,
   });
   return object;
 }
