@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { writtenCaption } from "@/lib/core/date";
 import type { StoredSummary } from "@/lib/ai/tasks/summarize";
 
 export type SummaryData = {
@@ -56,6 +57,9 @@ export function SummaryView({ data }: { data: SummaryData }) {
         <section className="flex flex-col gap-2">
           <h2 className="text-[11px] font-bold uppercase tracking-widest text-fg-soft">Yesterday · recap</h2>
           <p className="text-base leading-relaxed text-fg">{data.yesterdaySummary.recap}</p>
+          {data.yesterdaySummary.createdAt && (
+            <p className="text-xs text-fg-soft">{writtenCaption(data.yesterdaySummary.createdAt)}</p>
+          )}
         </section>
       )}
       <Section title="Yesterday · done" items={data.yesterdayDone} muted />

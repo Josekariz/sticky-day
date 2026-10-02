@@ -46,7 +46,8 @@ export async function POST(req: Request) {
     .from("notes")
     .select("*, carried_from")
     .eq("day_id", dayId)
-    .eq("user_id", user.id);
+    .eq("user_id", user.id)
+    .neq("status", "trashed");
 
   const notes = ((noteRows as NoteRow[] | null) ?? []).map(rowToNote);
 
@@ -74,7 +75,6 @@ export async function POST(req: Request) {
         spentMs: n.spentMs,
         carriedFrom: n.carriedFrom,
       })),
-    trashed: notes.filter((n) => n.status === "trashed").map((n) => ({ title: n.title })),
   };
 
   try {

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { paperVar, type Note } from "@/lib/core/types";
+import { writtenCaption } from "@/lib/core/date";
 import type { StoredSummary } from "@/lib/ai/tasks/summarize";
 
 export const TRAY_MESH = {
@@ -179,6 +180,9 @@ export function DoneTray({ dayId, notes, armed, initialSummary, onPutBack }: Pro
                 {recap ? (
                   <>
                     <p className="text-sm leading-relaxed text-fg">{recap}</p>
+                    {summary?.createdAt && (
+                      <p className="text-xs text-fg-soft">{writtenCaption(summary.createdAt)}</p>
+                    )}
                     {carryOver.length > 0 && (
                       <div className="flex flex-col gap-1">
                         <h3 className="text-[11px] font-bold uppercase tracking-widest text-fg-soft">Carry over</h3>

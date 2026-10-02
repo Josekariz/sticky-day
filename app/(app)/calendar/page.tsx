@@ -49,11 +49,13 @@ export default async function CalendarPage({
   const days: CalendarDay[] = (rows ?? []).map((row) => {
     const notes = (row.notes ?? []) as { status: string }[];
     const active = notes.filter((n) => n.status !== "trashed");
+    const stored = parseStoredSummary(row.summary);
     return {
       date: row.date as string,
       done: active.filter((n) => n.status === "done").length,
       total: active.length,
-      summary: parseStoredSummary(row.summary)?.recap ?? null,
+      summary: stored?.recap ?? null,
+      summaryCreatedAt: stored?.createdAt ?? null,
     };
   });
 

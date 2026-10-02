@@ -107,13 +107,13 @@ export function StickyNote({
       >
         {carried && (
           <span
-            className="pointer-events-none absolute left-2 top-1.5 text-[9px] font-semibold tracking-wide text-ink-soft/80 md:left-2.5 md:top-2 md:text-[10px]"
+            className="pointer-events-none absolute bottom-9 left-3 text-[9px] font-semibold tracking-wide text-ink-soft/80 md:bottom-10 md:left-4 md:text-[10px]"
             aria-hidden
           >
             from {weekdayShort(note.carriedFrom!)}
           </span>
         )}
-        <span className={`font-hand text-(length:--note-font) font-semibold leading-tight line-clamp-3 md:px-7 ${carried ? "mt-3 md:mt-3.5" : ""}`}>{note.title}</span>
+        <span className="font-hand text-(length:--note-font) font-semibold leading-tight line-clamp-3 md:px-7">{note.title}</span>
         <span className="mt-auto flex items-center gap-1 pr-5 text-[10px] font-semibold text-ink-soft md:gap-1.5 md:pr-8 md:text-[11px]">
           <span className="px-1.5 py-0.5 rounded-full bg-black/10 tabular-nums md:px-2">{note.estMinutes} min</span>
           <span className="px-1.5 py-0.5 rounded-full bg-black/10 capitalize md:px-2">{note.energy}</span>

@@ -15,16 +15,11 @@ const UnfinishedNoteSchema = z.object({
   carriedFrom: z.string().nullable(),
 });
 
-const TrashedNoteSchema = z.object({
-  title: z.string(),
-});
-
 export const SummarizeInputSchema = z.object({
   date: z.string(),
   capacityMinutes: z.number().int(),
   done: z.array(DoneNoteSchema),
   unfinished: z.array(UnfinishedNoteSchema),
-  trashed: z.array(TrashedNoteSchema),
 });
 
 export type SummarizeInput = z.infer<typeof SummarizeInputSchema>;
@@ -47,7 +42,7 @@ export type SummarizeResult = z.infer<typeof SummarizeResultSchema>;
 
 export const StoredSummarySchema = SummarizeResultSchema.extend({
   model: z.string(),
-  createdAt: z.string(),
+  createdAt: z.string().optional(),
 });
 
 export type StoredSummary = z.infer<typeof StoredSummarySchema>;
@@ -66,9 +61,9 @@ Rules:
 - Do not do arithmetic. Totals (done count, minutes worked, estimate drift) are computed in code and passed in the prompt — use those numbers as given.
 - Mention estimate accuracy when it is off by a lot (the prompt will say so). Otherwise leave it alone.
 - carryOver: pick unfinished titles worth keeping tomorrow. Prefer things they started or that still matter.
-- dropSuggestions: only titles from unfinished whose carriedFrom date is two or more days before today. Empty array if none qualify. Suggest dropping, do not insist.
-- Never moralise. No "you should have", no guilt, no productivity lecturing.
-- Trashed items may be acknowledged briefly if useful; do not dwell on them.`;
+- dropSuggestions: only titles from unfinished (board/focus) whose carriedFrom date is two or more days before today. Empty array if none qualify. Suggest dropping, do not insist.
+- Never mention deleted or trashed notes. The recap is only about work done and work left unfinished — not about throwing notes away.
+- Never moralise. No "you should have", no guilt, no productivity lecturing.`;
 
 function driftLabel(done: SummarizeInput["done"]): { minutesWorked: number; drift: number; driftNote: string } {
   const minutesWorked = done.reduce((s, n) => s + n.actualMinutes, 0);
@@ -115,10 +110,7 @@ ${input.done.length ? input.done.map((n) => `- "${n.title}" (est ${n.estMinutes}
 Unfinished:
 ${input.unfinished.length ? input.unfinished.map((n) => `- "${n.title}" (est ${n.estMinutes} min, spent ${Math.round(n.spentMs / 60000)} min${n.carriedFrom ? `, carried from ${n.carriedFrom}` : ", new today"})`).join("\n") : "(none)"}
 
-Eligible for dropSuggestions (carried ≥ 2 days): ${longCarries.length ? longCarries.map((t) => `"${t}"`).join(", ") : "(none)"}
-
-Trashed:
-${input.trashed.length ? input.trashed.map((n) => `- "${n.title}"`).join("\n") : "(none)"}`,
+Eligible for dropSuggestions (carried ≥ 2 days): ${longCarries.length ? longCarries.map((t) => `"${t}"`).join(", ") : "(none)"}`,
     temperature: 0.4,
   });
   return object;

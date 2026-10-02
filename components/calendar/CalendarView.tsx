@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import { writtenCaption } from "@/lib/core/date";
 import type { NoteStatus } from "@/lib/core/types";
 
 export type CalendarDay = {
@@ -10,6 +11,7 @@ export type CalendarDay = {
   done: number;
   total: number;
   summary: string | null;
+  summaryCreatedAt: string | null;
 };
 
 type DayNote = {
@@ -107,6 +109,7 @@ export function CalendarView({
   const done = info?.done ?? 0;
   const total = info?.total ?? 0;
   const summary = info?.summary ?? null;
+  const summaryCreatedAt = info?.summaryCreatedAt ?? null;
 
   const doneNotes = notes?.filter((n) => n.status === "done") ?? [];
   const unfinishedNotes = notes?.filter((n) => n.status === "board" || n.status === "focus") ?? [];
@@ -223,9 +226,12 @@ export function CalendarView({
             )}
 
             {summary && (
-              <p className="rounded-xl bg-bg p-4 text-sm leading-relaxed text-fg-soft">
-                {summary}
-              </p>
+              <div className="rounded-xl bg-bg p-4">
+                <p className="text-sm leading-relaxed text-fg-soft">{summary}</p>
+                {summaryCreatedAt && (
+                  <p className="mt-2 text-xs text-fg-soft">{writtenCaption(summaryCreatedAt)}</p>
+                )}
+              </div>
             )}
 
             {loading ? (
