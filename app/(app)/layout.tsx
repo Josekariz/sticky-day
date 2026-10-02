@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Navbar } from "@/components/nav/Navbar";
 import { SyncTimezone } from "@/components/profile/SyncTimezone";
 import { isSummaryDue, todayFor } from "@/lib/core/date";
+import { resolveDisplayName } from "@/lib/core/name";
 import { isSummaryBusy, parseStoredSummary } from "@/lib/ai/tasks/summarize";
 import { writeDaySummary } from "@/lib/ai/writeDaySummary";
 
@@ -41,8 +42,11 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
     }
   }
 
-  const googleName: string = user.user_metadata.full_name ?? user.email?.split("@")[0] ?? "?";
-  const name: string = (profile?.display_name as string | null | undefined)?.trim() || googleName;
+  const name = resolveDisplayName(
+    profile?.display_name as string | null | undefined,
+    user.user_metadata ?? {},
+    user.email,
+  ) || "?";
   const initials = name.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
   const avatar: string | null = user.user_metadata.avatar_url ?? null;
 

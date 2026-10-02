@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { rowToNote, type NoteRow } from "@/lib/core/mappers";
 import { todayFor } from "@/lib/core/date";
+import { firstNameOf, resolveDisplayName } from "@/lib/core/name";
 import { SummaryView, type SummaryBlock } from "@/components/summary/SummaryView";
 import { parseStoredSummary } from "@/lib/ai/tasks/summarize";
 import { ensureTodayDay } from "@/lib/ai/writeDaySummary";
@@ -26,9 +27,12 @@ export default async function SummaryPage() {
   const summaryTime = String(profile?.summary_time ?? "18:00");
   const today = todayFor(timezone);
 
-  const googleName: string = user?.user_metadata.full_name ?? user?.email?.split("@")[0] ?? "";
-  const displayName: string = (profile?.display_name as string | null | undefined)?.trim() || googleName;
-  const firstName = displayName.split(/\s+/)[0] || null;
+  const displayName = resolveDisplayName(
+    profile?.display_name as string | null | undefined,
+    user?.user_metadata ?? {},
+    user?.email,
+  );
+  const firstName = firstNameOf(displayName);
 
   const day = await ensureTodayDay(supabase, userId, today);
 

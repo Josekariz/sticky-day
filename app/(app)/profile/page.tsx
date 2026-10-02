@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { resolveDisplayName } from "@/lib/core/name";
 import { SignOutButton } from "@/components/auth/SignOutButton";
 import { ProfileForm } from "@/components/profile/ProfileForm";
 
@@ -13,8 +14,11 @@ export default async function ProfilePage() {
     .eq("id", userId)
     .maybeSingle();
 
-  const googleName: string = user?.user_metadata.full_name ?? user?.email?.split("@")[0] ?? "";
-  const displayName: string = (profile?.display_name as string | null | undefined)?.trim() || googleName;
+  const displayName = resolveDisplayName(
+    profile?.display_name as string | null | undefined,
+    user?.user_metadata ?? {},
+    user?.email,
+  );
   const capacityMinutes: number = (profile?.capacity_minutes as number | null | undefined) ?? 360;
   const summaryTime: string = String(profile?.summary_time ?? "18:00");
   const avatar: string | null = user?.user_metadata.avatar_url ?? null;
