@@ -96,8 +96,8 @@ export function CalendarView({
   ];
 
   return (
-    <div className="flex flex-1 flex-col gap-6 lg:flex-row">
-      <section className="flex w-full max-w-lg flex-col gap-4 rounded-2xl border border-frame bg-surface p-5">
+    <div className={`flex flex-col items-center gap-3 ${selected ? "md:pr-[28rem]" : ""}`}>
+      <section className="flex w-full max-w-[35rem] flex-col gap-4 rounded-2xl border border-frame bg-surface p-5">
         <div className="flex items-center justify-between">
           <Link
             href={prevHref}
@@ -129,7 +129,8 @@ export function CalendarView({
             if (d === null) return <div key={`e${i}`} />;
             const date = dayKey(year, month, d);
             const pair = byDate.get(date);
-            const frac = pair && pair.total > 0 ? pair.done / pair.total : 0;
+            const hasNotes = !!pair && pair.total > 0;
+            const frac = hasNotes ? pair.done / pair.total : 0;
             const isSel = date === selected;
             const isTodayCell = date === today;
             const isFuture = date > today;
@@ -154,7 +155,7 @@ export function CalendarView({
                 }`}
               >
                 <span>{d}</span>
-                {pair && pair.total > 0 ? (
+                {hasNotes ? (
                   <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden>
                     <circle
                       cx="12" cy="12" r="9" fill="none"
@@ -177,7 +178,7 @@ export function CalendarView({
       </section>
 
       {!selected && (
-        <p className="self-start text-sm text-fg-soft lg:pt-2">Pick a day to see how it went.</p>
+        <p className="text-center text-sm text-fg-soft">Pick a day to see how it went.</p>
       )}
 
       <DayDrawer

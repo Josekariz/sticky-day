@@ -115,8 +115,8 @@ export function StickyNote({
         )}
         <span className="font-hand text-(length:--note-font) font-semibold leading-tight line-clamp-3 md:px-7">{note.title}</span>
         <span className="mt-auto flex items-center gap-1 pr-5 text-[10px] font-semibold text-ink-soft md:gap-1.5 md:pr-8 md:text-[11px]">
-          <span className="px-1.5 py-0.5 rounded-full bg-black/10 tabular-nums md:px-2">{note.estMinutes} min</span>
-          <span className="px-1.5 py-0.5 rounded-full bg-black/10 capitalize md:px-2">{note.energy}</span>
+          <span className="whitespace-nowrap px-1 py-0.5 rounded-full bg-black/10 tabular-nums md:px-1.5">{note.estMinutes} min</span>
+          <span className="whitespace-nowrap px-1 py-0.5 rounded-full bg-black/10 capitalize md:px-1.5">{note.energy}</span>
         </span>
       </button>
 

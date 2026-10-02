@@ -50,65 +50,56 @@ export function DayDrawer({
   return (
     <AnimatePresence>
       {open && date && (
-        <>
-          <motion.div
-            className="fixed inset-0 z-40 bg-black/30"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-          />
-          <motion.aside
-            className="fixed right-0 top-0 z-50 flex h-full w-full max-w-md flex-col gap-4 overflow-y-auto bg-surface p-6 shadow-2xl"
-            initial={{ x: "100%" }}
-            animate={{ x: 0 }}
-            exit={{ x: "100%" }}
-            transition={{ type: "spring", stiffness: 300, damping: 30 }}
-          >
-            <header className="flex items-start justify-between gap-3">
-              <h2 className="font-hand text-4xl font-bold">{dayHeading(date)}</h2>
-              <button
-                type="button"
-                onClick={onClose}
-                aria-label="Close"
-                className="h-11 w-11 shrink-0 rounded-full border border-frame"
-              >
-                ✕
-              </button>
-            </header>
+        <motion.aside
+          className="fixed right-0 top-0 z-50 flex h-full w-full max-w-md flex-col gap-4 overflow-y-auto bg-surface p-6 shadow-2xl"
+          initial={{ x: "100%" }}
+          animate={{ x: 0 }}
+          exit={{ x: "100%" }}
+          transition={{ type: "spring", stiffness: 300, damping: 30 }}
+        >
+          <header className="flex items-start justify-between gap-3">
+            <h2 className="font-hand text-4xl font-bold">{dayHeading(date)}</h2>
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Close"
+              className="h-11 w-11 shrink-0 rounded-full border border-frame"
+            >
+              ✕
+            </button>
+          </header>
 
-            {summary && (
-              <div className="flex flex-col gap-2">
-                <p className="text-sm leading-relaxed text-fg">{summary}</p>
-                {summaryCreatedAt && (
-                  <p className="text-xs text-fg-soft">{writtenCaption(summaryCreatedAt)}</p>
-                )}
-              </div>
-            )}
+          {summary && (
+            <div className="flex flex-col gap-2">
+              <p className="text-sm leading-relaxed text-fg">{summary}</p>
+              {summaryCreatedAt && (
+                <p className="text-xs text-fg-soft">{writtenCaption(summaryCreatedAt)}</p>
+              )}
+            </div>
+          )}
 
-            {loading ? (
-              <p className="text-sm text-fg-soft">Loading notes…</p>
-            ) : (
-              <div className="flex flex-col gap-5">
-                <NoteGroup label="Done" items={doneNotes} mode="done" />
-                <NoteGroup label="Unfinished" items={unfinishedNotes} mode="plain" />
-                <NoteGroup label="Trashed" items={trashedNotes} mode="plain" />
-                {!summary && notes && notes.length === 0 && (
-                  <p className="py-8 text-center font-hand text-2xl text-fg-soft">Nothing logged.</p>
-                )}
-              </div>
-            )}
+          {loading ? (
+            <p className="text-sm text-fg-soft">Loading notes…</p>
+          ) : (
+            <div className="flex flex-col gap-5">
+              <NoteGroup label="Done" items={doneNotes} mode="done" />
+              <NoteGroup label="Unfinished" items={unfinishedNotes} mode="plain" />
+              <NoteGroup label="Trashed" items={trashedNotes} mode="plain" />
+              {!summary && notes && notes.length === 0 && (
+                <p className="py-8 text-center font-hand text-2xl text-fg-soft">Nothing logged.</p>
+              )}
+            </div>
+          )}
 
-            {isToday && (
-              <Link
-                href="/board"
-                className="mt-auto h-11 self-start rounded-xl bg-fg px-5 text-sm font-semibold text-bg"
-              >
-                Go to board
-              </Link>
-            )}
-          </motion.aside>
-        </>
+          {isToday && (
+            <Link
+              href="/board"
+              className="mt-auto h-11 self-start rounded-xl bg-fg px-5 text-sm font-semibold text-bg"
+            >
+              Go to board
+            </Link>
+          )}
+        </motion.aside>
       )}
     </AnimatePresence>
   );
