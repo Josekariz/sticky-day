@@ -33,7 +33,21 @@ export async function ensureTodayDay(
     .insert({ user_id: userId, date: todayDate })
     .select("id, summary")
     .single();
-  if (error || !created) throw error ?? new Error("Could not create today");
+
+  if (error) {
+    // Concurrent tab won the unique(user_id, date) race — re-select, no rollover.
+    if (error.code === "23505") {
+      const { data: existing } = await supabase
+        .from("days")
+        .select("id, summary")
+        .eq("user_id", userId)
+        .eq("date", todayDate)
+        .maybeSingle();
+      if (existing) return existing as { id: string; summary: unknown };
+    }
+    throw error;
+  }
+  if (!created) throw new Error("Could not create today");
   day = created;
 
   const { data: prev } = await supabase
