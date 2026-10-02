@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "split:regression": "tsx scripts/split-regression.ts"
   },
   "dependencies": {
     "@ai-sdk/google": "^4.0.80",
