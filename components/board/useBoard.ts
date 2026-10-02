@@ -36,7 +36,7 @@ export function useBoard(initial: Note[], dayId: string, userId: string, capacit
 
   // fire-and-forget writes; UI has already updated
   const save = (id: string, patch: Partial<Note>) =>
-    supabase.from("notes").update(patchToRow(patch)).eq("id", id)
+    supabase.from("notes").update(patchToRow(patch)).eq("id", id).eq("user_id", userId)
       .then(({ error }) => error && console.error("save failed", id, error.message));
 
   const insert = (ns: Note[]) =>
@@ -44,7 +44,7 @@ export function useBoard(initial: Note[], dayId: string, userId: string, capacit
       .then(({ error }) => error && console.error("insert failed", error.message));
 
   const remove = (ids: string[]) =>
-    supabase.from("notes").delete().in("id", ids)
+    supabase.from("notes").delete().in("id", ids).eq("user_id", userId)
       .then(({ error }) => error && console.error("delete failed", error.message));
 
   const update = (id: string, patch: Partial<Note>) => {
