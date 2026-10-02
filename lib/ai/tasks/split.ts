@@ -23,6 +23,8 @@ Rules:
 - One note per thing they will actually do. Not one per sentence, not one per word.
 - Something too big for one sitting (over ~90 minutes) becomes 2-3 notes with a clear first step. Never more.
 - Small chores that go together stay together ("email Sam and Jo about the invoice" is one note).
+- Combine two items only when the person's own words link them ("and", "on the way", "while I'm there"). Never merge items just because they could be done together. When in doubt, keep them separate.
+- "Then", "after that", "afterwards", "first … then", numbered steps: each one is its own note.
 - Keep their words. Do not invent tasks they didn't mention. Do not add "take a break".
 - Titles are short and start with a verb where natural. Detail carries anything from their text that the title dropped.
 - Estimates: be honest, not optimistic. Reading, writing and code always take longer than people think.
