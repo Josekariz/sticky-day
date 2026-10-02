@@ -203,6 +203,7 @@ export function useBoard(initial: Note[], dayId: string, userId: string, capacit
           color: randomColor(),
           rotation: randomRotation(),
           startedAt: null,
+          carriedFrom: null,
           ...placeNote(board),
         };
         created.push(n);

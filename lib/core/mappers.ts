@@ -5,6 +5,7 @@ export type NoteRow = {
   title: string; detail: string; est_minutes: number; actual_minutes: number | null;
   spent_ms: number; energy: Energy; status: NoteStatus; color: PaperColor;
   x: number; y: number; rotation: number; started_at: string | null;
+  carried_from: string | null;
 };
 
 export function rowToNote(r: NoteRow): Note {
@@ -14,6 +15,7 @@ export function rowToNote(r: NoteRow): Note {
     energy: r.energy, status: r.status, color: r.color,
     x: r.x, y: r.y, rotation: r.rotation,
     startedAt: r.started_at ? new Date(r.started_at).getTime() : null,
+    carriedFrom: r.carried_from,
   };
 }
 
@@ -24,6 +26,7 @@ export function noteToRow(n: Note, dayId: string, userId: string): NoteRow {
     spent_ms: n.spentMs, energy: n.energy, status: n.status, color: n.color,
     x: n.x, y: n.y, rotation: n.rotation,
     started_at: n.startedAt ? new Date(n.startedAt).toISOString() : null,
+    carried_from: n.carriedFrom,
   };
 }
 
@@ -42,5 +45,6 @@ export function patchToRow(p: Partial<Note>): Partial<NoteRow> {
   if (p.y !== undefined) r.y = p.y;
   if (p.rotation !== undefined) r.rotation = p.rotation;
   if (p.startedAt !== undefined) r.started_at = p.startedAt ? new Date(p.startedAt).toISOString() : null;
+  if (p.carriedFrom !== undefined) r.carried_from = p.carriedFrom;
   return r;
 }

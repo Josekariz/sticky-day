@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { paperVar, MAX_FOCUS, type Note } from "@/lib/core/types";
+import { weekdayShort } from "@/lib/core/date";
 import { centreOf } from "./useDropTargets";
 
 type Props = {
@@ -65,6 +66,7 @@ export function Clipboard({
           const live = !!n.startedAt;
           const elapsed = n.spentMs + (live ? now - n.startedAt! : 0);
           const left = n.estMinutes * 60_000 - elapsed;
+          const carried = !!n.carriedFrom;
           return (
             <motion.div
               key={n.id}
@@ -90,9 +92,18 @@ export function Clipboard({
                 backgroundColor: paperVar(n.color),
                 ["--paper" as string]: paperVar(n.color),
                 rotate: live ? "-1.5deg" : "1deg",
+                filter: carried ? "saturate(0.55)" : undefined,
               }}
             >
-              <div className="relative font-hand text-xl font-semibold leading-tight">{n.title}</div>
+              {carried && (
+                <span
+                  className="pointer-events-none absolute left-2 top-1.5 text-[9px] font-semibold tracking-wide text-ink-soft/80"
+                  aria-hidden
+                >
+                  from {weekdayShort(n.carriedFrom!)}
+                </span>
+              )}
+              <div className={`relative font-hand text-xl font-semibold leading-tight ${carried ? "mt-3" : ""}`}>{n.title}</div>
               <div className="relative mt-2 flex items-baseline justify-between">
                 <span className="text-2xl font-bold tabular-nums leading-none">{fmt(elapsed)}</span>
                 <span className={`text-[11px] ${left < 0 ? "text-danger" : "text-ink-soft"}`}>

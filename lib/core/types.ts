@@ -25,6 +25,7 @@ export type Note = {
   rotation: number;
   startedAt: number | null; // epoch ms while this focus note's timer is running
   spentMs: number; // accumulated focus time across pauses
+  carriedFrom: string | null; // YYYY-MM-DD of the day first written; set on rollover
 };
 
 export const MAX_FOCUS = 3;

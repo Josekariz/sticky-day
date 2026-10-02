@@ -26,18 +26,29 @@ export default async function BoardPage() {
     day = created!;
 
     const { data: prev } = await supabase
-      .from("days").select("id").lt("date", today()).order("date", { ascending: false }).limit(1).maybeSingle();
+      .from("days").select("id, date").lt("date", today()).order("date", { ascending: false }).limit(1).maybeSingle();
 
     if (prev) {
-      const { data: prevNotes } = await supabase.from("notes").select("*").eq("day_id", prev.id);
-      const carried = rollover((prevNotes as NoteRow[] ?? []).map(rowToNote), () => crypto.randomUUID());
+      const { data: prevNotes } = await supabase
+        .from("notes")
+        .select("*, carried_from")
+        .eq("day_id", prev.id);
+      const carried = rollover(
+        (prevNotes as NoteRow[] ?? []).map(rowToNote),
+        () => crypto.randomUUID(),
+        prev.date as string,
+      );
       if (carried.length) {
         await supabase.from("notes").insert(carried.map((n) => noteToRow(n, day!.id, userId)));
       }
     }
   }
 
-  const { data: rows } = await supabase.from("notes").select("*").eq("day_id", day.id).order("created_at");
+  const { data: rows } = await supabase
+    .from("notes")
+    .select("*, carried_from")
+    .eq("day_id", day.id)
+    .order("created_at");
 
   return (
     <main className="flex flex-1 flex-col">
