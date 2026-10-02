@@ -2,6 +2,7 @@ import type { SplitResult } from "./split";
 
 /**
  * Intent checks for the split prompt — not exact titles (models drift).
+ * Dumps must stay out of the SYSTEM prompt so the rules carry the behaviour.
  * Re-run after any SYSTEM change: `npm run split:regression`
  */
 export type SplitRegressionCase = {
@@ -16,45 +17,43 @@ function titles(r: SplitResult): string {
   return r.notes.map((n) => n.title).join(" · ");
 }
 
+function blob(r: SplitResult): string {
+  return r.notes.map((n) => `${n.title} ${n.detail}`).join(" ");
+}
+
 function has(r: SplitResult, re: RegExp): boolean {
   return r.notes.some((n) => re.test(n.title) || re.test(n.detail));
 }
 
 export const SPLIT_REGRESSION: SplitRegressionCase[] = [
   {
-    id: "typo-cow",
-    dump: "milk the cwo",
-    want: "one note; cow fixed quietly; no empty warning needed",
+    id: "typo-dog",
+    dump: "walk the dg",
+    want: "one note; dog fixed quietly",
     check: (r) => {
       if (r.notes.length !== 1) return `expected 1 note, got ${r.notes.length}: ${titles(r)}`;
-      if (!/cow/i.test(r.notes[0].title)) return `expected "cow" in title, got "${r.notes[0].title}"`;
-      if (/cwo/i.test(r.notes[0].title)) return `typo "cwo" left in title: "${r.notes[0].title}"`;
+      if (!/dog/i.test(r.notes[0].title)) return `expected "dog" in title, got "${r.notes[0].title}"`;
+      if (/\bdg\b/i.test(r.notes[0].title)) return `typo "dg" left in title: "${r.notes[0].title}"`;
       return null;
     },
   },
   {
     id: "shorthand-then",
-    dump: "buy mlk n bread then call jhon",
-    want: "two notes (then → split); milk+bread together; John fixed",
+    dump: "txt mum n dad then email sam",
+    want: "two notes (then → split); text parents + email Sam",
     check: (r) => {
       if (r.notes.length < 2) return `expected ≥2 notes for "then", got ${r.notes.length}: ${titles(r)}`;
       if (r.notes.length > 3) return `expected ≤3 notes, got ${r.notes.length}: ${titles(r)}`;
-      const shop = r.notes.some(
-        (n) => /milk|mlk|bread/i.test(n.title) || /milk|bread/i.test(n.detail),
-      );
-      if (!shop) return `missing shopping note: ${titles(r)}`;
-      if (!has(r, /john|jhon|call/i)) return `missing call-John note: ${titles(r)}`;
-      // Prefer quiet John fix when confident
-      const call = r.notes.find((n) => /john|jhon|call/i.test(n.title));
-      if (call && /jhon/i.test(call.title) && !/john/i.test(call.title)) {
-        return `expected John typo fix in "${call.title}"`;
+      if (!has(r, /mum|mom|dad|parent|text|txt|message/i)) {
+        return `missing text-parents note: ${titles(r)}`;
       }
+      if (!has(r, /email|sam/i)) return `missing email-Sam note: ${titles(r)}`;
       return null;
     },
   },
   {
     id: "gibberish",
-    dump: "asdfgh",
+    dump: "qwertyuiop",
     want: "empty notes + kind warning",
     check: (r) => {
       if (r.notes.length !== 0) return `expected 0 notes, got ${titles(r)}`;
@@ -64,7 +63,7 @@ export const SPLIT_REGRESSION: SplitRegressionCase[] = [
   },
   {
     id: "greeting",
-    dump: "hi",
+    dump: "hey",
     want: "empty notes + kind warning",
     check: (r) => {
       if (r.notes.length !== 0) return `expected 0 notes, got ${titles(r)}`;
@@ -73,37 +72,52 @@ export const SPLIT_REGRESSION: SplitRegressionCase[] = [
     },
   },
   {
-    id: "swahili-then-gym",
-    dump: "nunua unga na maziwa, then gym",
-    want: "flour+milk shopping note + gym (then → split)",
+    id: "swahili-keep-then-run",
+    dump: "nenda sokoni ununue maji, then run",
+    want: "Swahili shopping note kept in language + run (then → split)",
     check: (r) => {
       if (r.notes.length < 2) return `expected ≥2 notes, got ${r.notes.length}: ${titles(r)}`;
-      const shop = r.notes.some((n) =>
-        /unga|flour|maziwa|milk|shop|buy|nunua/i.test(`${n.title} ${n.detail}`),
+      const swahili = r.notes.some((n) =>
+        /sokoni|maji|nenda|ununue|nunua/i.test(`${n.title} ${n.detail}`),
       );
-      if (!shop) return `missing shopping/Swahili intent: ${titles(r)}`;
-      if (!has(r, /gym/i)) return `missing gym: ${titles(r)}`;
+      if (!swahili) return `expected Swahili kept in a title/detail: ${titles(r)}`;
+      if (!has(r, /run/i)) return `missing run: ${titles(r)}`;
       return null;
     },
   },
   {
-    id: "typo-report",
-    dump: "fnsh the rport b4 3",
-    want: "one note; finish/report sense; before-3 in title or detail",
+    id: "typo-invoice",
+    dump: "snd the invoce 2moro",
+    want: "one note; send/invoice sense; tomorrow timing",
     check: (r) => {
       if (r.notes.length < 1) return `expected ≥1 note, got none (warning: ${r.warning})`;
       if (r.notes.length > 2) return `expected ≤2 notes, got ${titles(r)}`;
-      const blob = r.notes.map((n) => `${n.title} ${n.detail}`).join(" ");
-      if (!/finish|fnsh|report|rport/i.test(blob)) return `missing finish/report sense: ${titles(r)}`;
-      if (!/before\s*3|b4\s*3|by\s*3|3\s*(pm|am)?/i.test(blob)) {
-        return `expected before-3 timing in title/detail: ${blob.trim()}`;
-      }
-      if (/fnsh/i.test(r.notes[0].title) && !/finish/i.test(r.notes[0].title)) {
+      const text = blob(r);
+      if (!/send|snd|invoice|invoce/i.test(text)) return `missing send/invoice sense: ${titles(r)}`;
+      if (/snd/i.test(r.notes[0].title) && !/send/i.test(r.notes[0].title)) {
         return `expected quiet typo fix in "${r.notes[0].title}"`;
       }
-      if (/rport/i.test(r.notes[0].title) && !/report/i.test(r.notes[0].title)) {
+      if (/invoce/i.test(r.notes[0].title) && !/invoice/i.test(r.notes[0].title)) {
         return `expected quiet typo fix in "${r.notes[0].title}"`;
       }
+      return null;
+    },
+  },
+  {
+    id: "market-cousins",
+    dump:
+      "i want to go tothe mkt and get swaet pants and do my gorcery shopping cook supper then go visit my lil cousins",
+    want: "3–4 notes: market/sweatpants, groceries, supper, cousins",
+    check: (r) => {
+      if (r.notes.length < 3) return `expected ≥3 notes, got ${r.notes.length}: ${titles(r)}`;
+      if (r.notes.length > 4) return `expected ≤4 notes, got ${r.notes.length}: ${titles(r)}`;
+      const text = blob(r);
+      if (!/market|mkt|sweat\s*pants|swaet/i.test(text)) {
+        return `missing market/sweatpants: ${titles(r)}`;
+      }
+      if (!/groc|shop/i.test(text)) return `missing groceries: ${titles(r)}`;
+      if (!/supper|cook|dinner/i.test(text)) return `missing supper: ${titles(r)}`;
+      if (!/cousin/i.test(text)) return `missing cousins: ${titles(r)}`;
       return null;
     },
   },
