@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { QuotaExceededError } from "@/lib/ai/spendAiCall";
 import { writeDaySummary } from "@/lib/ai/writeDaySummary";
 
 const Body = z.object({
@@ -16,11 +17,17 @@ export async function POST(req: Request) {
   if (!parsed.success) return Response.json({ error: "Bad request" }, { status: 400 });
 
   try {
+    const force = parsed.data.force;
     const result = await writeDaySummary(supabase, user.id, parsed.data.dayId, {
-      force: parsed.data.force,
+      force,
+      // Auto layout write does not count; manual force does.
+      countTowardQuota: force,
     });
     return Response.json(result);
   } catch (e) {
+    if (e instanceof QuotaExceededError) {
+      return Response.json({ error: e.message }, { status: 429 });
+    }
     const msg = e instanceof Error ? e.message : "Couldn't write the summary. Try again.";
     if (msg === "Day not found") return Response.json({ error: msg }, { status: 404 });
     console.error("summarize failed", e);

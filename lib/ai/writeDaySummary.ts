@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { withFallback } from "@/lib/ai/model";
+import { spendAiCall } from "@/lib/ai/spendAiCall";
 import {
   parseStoredSummary,
   summarizeDay,
@@ -66,9 +67,10 @@ export async function writeDaySummary(
   supabase: SupabaseClient,
   userId: string,
   dayId: string,
-  opts: { force?: boolean } = {},
+  opts: { force?: boolean; countTowardQuota?: boolean } = {},
 ): Promise<StoredSummary> {
   const force = opts.force ?? false;
+  const countTowardQuota = opts.countTowardQuota ?? false;
 
   const { data: day, error: dayErr } = await supabase
     .from("days")
@@ -123,6 +125,8 @@ export async function writeDaySummary(
         carriedFrom: n.carriedFrom,
       })),
   };
+
+  if (countTowardQuota) await spendAiCall(supabase, userId);
 
   const theme = input.theme;
   const result: StoredSummary = await withFallback(async (model, modelId) => ({

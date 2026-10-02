@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { withFallback } from "@/lib/ai/model";
+import { QuotaExceededError, spendAiCall } from "@/lib/ai/spendAiCall";
 import { splitDay } from "@/lib/ai/tasks/split";
 
 const Body = z.object({
@@ -17,11 +18,15 @@ export async function POST(req: Request) {
   if (!parsed.success) return Response.json({ error: "Bad request" }, { status: 400 });
 
   try {
+    await spendAiCall(supabase, user.id);
     const result = await withFallback((model) =>
       splitDay(model, parsed.data.dump, parsed.data.capacityMinutes),
     );
     return Response.json(result);
   } catch (e) {
+    if (e instanceof QuotaExceededError) {
+      return Response.json({ error: e.message }, { status: 429 });
+    }
     console.error("split failed", e);
     return Response.json({ error: "Couldn't break that down. Try again." }, { status: 502 });
   }
