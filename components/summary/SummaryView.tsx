@@ -41,7 +41,7 @@ function toText(data: SummaryBlock): string {
     "Something to read",
     s.read,
   ];
-  if (data.unfinishedNotes.length || s.tomorrowNudge) {
+  if (data.unfinishedNotes.length > 0) {
     lines.push("", "Tomorrow", ...data.unfinishedNotes.map((n) => `• ${n.title}`));
     if (s.tomorrowNudge) lines.push("", s.tomorrowNudge);
   }
@@ -136,7 +136,7 @@ export function SummaryView({ data }: { data: SummaryBlock }) {
   }
 
   const s = data.summary;
-  const showTomorrow = data.unfinishedNotes.length > 0 || !!s.tomorrowNudge;
+  const showTomorrow = data.unfinishedNotes.length > 0;
   const greeting = greetingLine(data);
 
   return (
