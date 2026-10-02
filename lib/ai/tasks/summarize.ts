@@ -34,7 +34,7 @@ export const SummarizeResultSchema = z.object({
   read: z
     .string()
     .describe(
-      "Open on the day's theme; at most one note title as an example. Must not restate story. End with one short line that makes tomorrow feel worth showing up for.",
+      "4–6 sentences about THIS day using the person's real note titles — play with odd titles. One form rotating with the theme: small observation, one gentle joke/pun (never more than one), tiny story, or question back. Theme is undertone never topic — don't explain or teach it. Impossible to paste into someone else's day. End on one line that makes tomorrow feel light.",
     ),
   tomorrowNudge: z
     .string()
@@ -113,7 +113,7 @@ Tone:
 
 Content:
 - story: second person, past tense. Name notes only by the titles given. What got cleared, what came first, anything that had carried over and finally got done. Do not invent notes.
-- read: open on the day's theme, not on a recap of the work. Use at most one note title as an example. If the draft would restate story, rewrite it. End with one short line that makes tomorrow feel worth showing up for. If nothing was done, say so kindly.
+- read: 4–6 sentences about THIS day, using the person's real note titles — the odder the titles, the more you play with them (a day with "Research history of plastics" and "Watch YouTube" deserves a line about that). Pick one form, rotating with the theme: a small observation, one gentle joke or pun (never more than one), a tiny story, or a question back to them. The theme is the undertone, never the topic — don't explain it, don't teach it. It should be impossible to paste this read into someone else's day. End on one line that makes tomorrow feel light.
 - tomorrowNudge: one sentence with one concrete move — a slot ("first thing", "after lunch") or a reorder ("make it the top note"). Not "maybe try". Empty string if nothing carried over.
 - carryOver: the titles of unfinished notes, exactly as listed. Empty array if none.
 
@@ -121,7 +121,13 @@ Hard rules:
 - Never invent details the notes don't contain (no "stroll", "treat", "dove in", or similar colour). Describe only what the titles say.
 - Never write minutes, estimates, percentages, or counts.
 - No "you should". If the day went badly, say so kindly and make tomorrow sound easy.
-- Never mention deleted or trashed notes. They are out of scope.`;
+- Never mention deleted or trashed notes. They are out of scope.
+
+Examples of tone (never copy their content):
+Day: done "Pick up clothes from tailor", "Research history of plastics"; unfinished "Play CODM", "Get umbrella". Theme: small notes beat big intentions.
+Read: "You went to the tailor and then read about the history of plastics, which is either a very productive afternoon or the start of a documentary. CODM waited. The umbrella waited too, which is fine until it isn't. Small notes have a way of looking silly right up until you've done three of them. Tomorrow: umbrella first, then you've earned the game. 🌂"
+Day: nothing done; unfinished "Fix the leaking tap", "Call the insurance people", "Start the tax return". Theme: what a half-done day actually means.
+Read: "Nothing moved today, and the three things on the board are the three things nobody wants to do — a tap, an insurer, and a tax return walk into a Friday. Writing them down was the move; now they're on paper instead of circling. Tomorrow pick the tap. It's the only one that can't put you on hold. 🔧"`;
 
 export async function summarizeDay(model: LanguageModel, input: SummarizeInput): Promise<SummarizeResult> {
   const { object } = await generateObject({
