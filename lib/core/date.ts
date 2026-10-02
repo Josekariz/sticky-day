@@ -57,7 +57,9 @@ export function todayFor(tz: string, now = new Date()): string {
 export function isSummaryDue(now: Date, tz: string, summaryTime: string): boolean {
   const { h, min } = zonedParts(now, tz);
   const [sh, sm] = summaryTime.slice(0, 5).split(":").map(Number);
-  return h * 60 + min >= sh * 60 + sm;
+  const dueH = Number.isFinite(sh) ? sh : 18;
+  const dueM = Number.isFinite(sm) ? sm : 0;
+  return h * 60 + min >= dueH * 60 + dueM;
 }
 
 /**
@@ -92,10 +94,23 @@ export function writtenCaption(iso: string, tz?: string): string {
   }
 }
 
-/** Time-only caption, e.g. "Written 18:05", in local time. */
-export function writtenTime(iso: string): string {
+/** Time-only caption, e.g. "Written 18:05", in `tz` (or local if omitted). */
+export function writtenTime(iso: string, tz?: string): string {
   const d = new Date(iso);
-  return `Written ${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+  const opts: Intl.DateTimeFormatOptions = {
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  };
+  if (tz) opts.timeZone = tz;
+  try {
+    const parts = new Intl.DateTimeFormat("en-US", opts).formatToParts(d);
+    const get = (type: Intl.DateTimeFormatPartTypes) =>
+      parts.find((p) => p.type === type)?.value ?? "00";
+    return `Written ${get("hour")}:${get("minute")}`;
+  } catch {
+    return writtenTime(iso);
+  }
 }
 
 /** HH:MM display for a Postgres `time` / input value. */

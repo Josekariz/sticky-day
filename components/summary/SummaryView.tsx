@@ -46,7 +46,7 @@ function toText(data: SummaryBlock): string {
     if (s.tomorrowNudge) lines.push("", s.tomorrowNudge);
   }
   lines.push("", signOffFor(data.date));
-  if (s.createdAt) lines.push("", writtenTime(s.createdAt));
+  if (s.createdAt) lines.push("", writtenTime(s.createdAt, data.timezone));
   return lines.join("\n");
 }
 
@@ -185,7 +185,7 @@ export function SummaryView({ data }: { data: SummaryBlock }) {
 
       <div className="flex flex-col gap-2">
         {s.createdAt && (
-          <p className="text-xs text-fg-soft">{writtenTime(s.createdAt)}</p>
+          <p className="text-xs text-fg-soft">{writtenTime(s.createdAt, data.timezone)}</p>
         )}
         {data.stale && (
           <p className="text-sm text-fg-soft">

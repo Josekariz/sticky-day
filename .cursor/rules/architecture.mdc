@@ -29,9 +29,10 @@ session check that redirects to `/` when signed out.
    returns an AI SDK `LanguageModel`. Tasks in `lib/ai/tasks/*` take a model as an
    argument and never import a provider package. Adding a provider is one `case`.
 
-3. **AI keys never reach the browser.** Read from `process.env` inside
-   `app/api/ai/*` route handlers only. Never `NEXT_PUBLIC_`. Never logged.
-   Never returned in a response.
+3. **AI keys never reach the browser.** Read only in `lib/ai/model.ts` and only on
+   the server (route handlers and server-side helpers like `writeDaySummary`).
+   Never `NEXT_PUBLIC_`. Never logged. Never returned in a response. Never in a
+   client component.
 
 4. **Every AI route checks the Supabase session first** and returns 401 without one.
 
@@ -41,9 +42,11 @@ session check that redirects to `/` when signed out.
    names `user_id` explicitly (`.eq("user_id", user.id)`) even though RLS would catch it.
 
 6. **Only today is writable.** Notes on a past day are read-only; enforce with a
-   policy, not only the UI.
+   policy, not only the UI. "Today" is the user's profile timezone via
+   `public.user_today()`.
 
-7. **One note in focus at a time**, enforced by a partial unique index.
+7. **At most `MAX_FOCUS` (3) notes in focus**, enforced by the `enforce_focus_cap`
+   trigger; only the newest timer runs.
 
 8. **AI output is validated with Zod (`generateObject`) before it touches state or
    the database.** A parse failure is an expected branch: retry once, then a clear
