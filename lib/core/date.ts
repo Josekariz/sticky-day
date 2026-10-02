@@ -60,6 +60,18 @@ export function isSummaryDue(now: Date, tz: string, summaryTime: string): boolea
   return h * 60 + min >= sh * 60 + sm;
 }
 
+/**
+ * Time-of-day greeting in `tz`: Morning (05–11), Afternoon (12–16),
+ * Evening (17–21), Late one (22–04).
+ */
+export function greetingFor(now: Date, tz: string): string {
+  const { h } = zonedParts(now, tz);
+  if (h >= 5 && h <= 11) return "Morning";
+  if (h >= 12 && h <= 16) return "Afternoon";
+  if (h >= 17 && h <= 21) return "Evening";
+  return "Late one";
+}
+
 /** Quiet caption for when a summary was written, in local time (or `tz` if given). */
 export function writtenCaption(iso: string, tz?: string): string {
   const d = new Date(iso);

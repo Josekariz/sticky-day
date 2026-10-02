@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { dayHeading, formatSummaryTime, writtenTime } from "@/lib/core/date";
+import { dayHeading, formatSummaryTime, greetingFor, writtenTime } from "@/lib/core/date";
 import { paperVar, type Note } from "@/lib/core/types";
 import { signOffFor } from "@/lib/core/themes";
 import type { StoredSummary } from "@/lib/ai/tasks/summarize";
@@ -11,6 +11,7 @@ export type SummaryBlock = {
   date: string;
   dayId: string;
   firstName: string | null;
+  timezone: string;
   summary: StoredSummary | null;
   doneNotes: Note[];
   unfinishedNotes: Note[];
@@ -19,12 +20,16 @@ export type SummaryBlock = {
   stale: boolean;
 };
 
+function greetingLine(data: SummaryBlock, now = new Date()): string {
+  const period = greetingFor(now, data.timezone);
+  return data.firstName ? `${period}, ${data.firstName}` : period;
+}
+
 function toText(data: SummaryBlock): string {
   if (!data.summary) return "";
   const s = data.summary;
-  const greeting = data.firstName ? `Evening, ${data.firstName}` : "Evening";
   const lines = [
-    greeting,
+    greetingLine(data),
     dayHeading(data.date),
     "",
     "Today you…",
@@ -129,7 +134,7 @@ export function SummaryView({ data }: { data: SummaryBlock }) {
 
   const s = data.summary;
   const showTomorrow = data.unfinishedNotes.length > 0 || !!s.tomorrowNudge;
-  const greeting = data.firstName ? `Evening, ${data.firstName}` : "Evening";
+  const greeting = greetingLine(data);
 
   return (
     <div className="mx-auto flex w-full max-w-[35rem] flex-col gap-10">

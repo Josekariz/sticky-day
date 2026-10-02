@@ -52,6 +52,7 @@ export default async function SummaryPage() {
     date: today,
     dayId: day.id,
     firstName,
+    timezone,
     summary,
     doneNotes: notes.filter((n) => n.status === "done"),
     unfinishedNotes: notes.filter((n) => n.status === "board" || n.status === "focus"),
