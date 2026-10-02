@@ -12,45 +12,17 @@ export const TRAY_MESH = {
 };
 
 type Props = {
-  dayId: string;
   notes: Note[]; // status === "done", oldest first
   armed: boolean; // a note is being dragged over me
   initialSummary: StoredSummary | null;
   onPutBack: (id: string) => void;
 };
 
-export function DoneTray({ dayId, notes, armed, initialSummary, onPutBack }: Props) {
+export function DoneTray({ notes, armed, initialSummary, onPutBack }: Props) {
   const [open, setOpen] = useState(false);
-  const [summary, setSummary] = useState<StoredSummary | null>(initialSummary);
-  const recap = summary?.recap ?? null;
-  const carryOver = summary?.carryOver ?? [];
-  const dropSuggestions = summary?.dropSuggestions ?? [];
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const recap = initialSummary?.recap ?? null;
   const stack = notes.slice(-6); // never draw more than six sheets
   const worked = notes.reduce((s, n) => s + (n.actualMinutes ?? 0), 0);
-
-  async function writeSummary(force: boolean) {
-    if (busy) return;
-    setBusy(true);
-    setError(null);
-    try {
-      const res = await fetch("/api/ai/summarize", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ dayId, force }),
-      });
-      if (!res.ok) {
-        const err = ((await res.json().catch(() => ({}))) as { error?: string }).error ?? "Something went wrong";
-        throw new Error(err);
-      }
-      setSummary((await res.json()) as StoredSummary);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Something went wrong");
-    } finally {
-      setBusy(false);
-    }
-  }
 
   return (
     <>
@@ -176,54 +148,14 @@ export function DoneTray({ dayId, notes, armed, initialSummary, onPutBack }: Pro
                 )}
               </ul>
 
-              <section className="mt-auto flex flex-col gap-3 border-t border-frame pt-4">
-                {recap ? (
-                  <>
-                    <p className="text-sm leading-relaxed text-fg">{recap}</p>
-                    {summary?.createdAt && (
-                      <p className="text-xs text-fg-soft">{writtenCaption(summary.createdAt)}</p>
-                    )}
-                    {carryOver.length > 0 && (
-                      <div className="flex flex-col gap-1">
-                        <h3 className="text-[11px] font-bold uppercase tracking-widest text-fg-soft">Carry over</h3>
-                        <ul className="flex flex-col gap-0.5 text-sm text-fg">
-                          {carryOver.map((t) => (
-                            <li key={t}>• {t}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                    {dropSuggestions.length > 0 && (
-                      <div className="flex flex-col gap-1">
-                        <h3 className="text-[11px] font-bold uppercase tracking-widest text-fg-soft">Maybe drop</h3>
-                        <ul className="flex flex-col gap-0.5 text-sm text-fg-soft">
-                          {dropSuggestions.map((t) => (
-                            <li key={t}>• {t}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                    <button
-                      type="button"
-                      disabled={busy}
-                      onClick={() => void writeSummary(true)}
-                      className="h-11 self-start rounded-xl border border-frame px-5 text-sm font-semibold disabled:opacity-60"
-                    >
-                      {busy ? "Rewriting…" : "Rewrite"}
-                    </button>
-                  </>
-                ) : (
-                  <button
-                    type="button"
-                    disabled={busy}
-                    onClick={() => void writeSummary(false)}
-                    className="h-11 self-start rounded-xl bg-fg px-5 text-sm font-semibold text-bg disabled:opacity-60"
-                  >
-                    {busy ? "Writing…" : "Write today’s summary"}
-                  </button>
-                )}
-                {error && <p className="text-sm text-danger">{error}</p>}
-              </section>
+              {recap && (
+                <section className="mt-auto flex flex-col gap-2 border-t border-frame pt-4">
+                  <p className="text-sm leading-relaxed text-fg">{recap}</p>
+                  {initialSummary?.createdAt && (
+                    <p className="text-xs text-fg-soft">{writtenCaption(initialSummary.createdAt)}</p>
+                  )}
+                </section>
+              )}
             </motion.aside>
           </>
         )}

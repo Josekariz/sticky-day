@@ -27,7 +27,9 @@ export type SummarizeInput = z.infer<typeof SummarizeInputSchema>;
 export const SummarizeResultSchema = z.object({
   recap: z
     .string()
-    .describe("Two to four sentences, second person, plain prose. No bullet points, no emoji, no praise-padding."),
+    .describe(
+      "Two to four sentences, past tense, plain prose for pasting to a team. Names tasks by title. No bullet points, no emoji, no advice.",
+    ),
   carryOver: z
     .array(z.string())
     .describe("Titles from unfinished the person should keep tomorrow."),
@@ -53,11 +55,11 @@ export function parseStoredSummary(raw: unknown): StoredSummary | null {
   return parsed.success ? parsed.data : null;
 }
 
-const SYSTEM = `You write a short end-of-day recap for one person's sticky-note board.
+const SYSTEM = `You write a short end-of-day recap someone can paste to their team.
 
 Rules:
-- Second person ("you"). Two to four sentences. Plain prose — no bullet points, no emoji, no praise-padding, no pep talk.
-- Refer to notes only by the titles given. Do not invent tasks.
+- Past tense. Two to four sentences. Plain prose — no bullet points, no emoji, no praise-padding, no pep talk, no advice.
+- Name tasks only by the titles given. Do not invent work.
 - Do not do arithmetic. Totals (done count, minutes worked, estimate drift) are computed in code and passed in the prompt — use those numbers as given.
 - Mention estimate accuracy when it is off by a lot (the prompt will say so). Otherwise leave it alone.
 - carryOver: pick unfinished titles worth keeping tomorrow. Prefer things they started or that still matter.

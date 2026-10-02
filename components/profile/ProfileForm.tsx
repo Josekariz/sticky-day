@@ -3,17 +3,20 @@
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { formatSummaryTime } from "@/lib/core/date";
 
 type Props = {
   userId: string;
   displayName: string;
   capacityMinutes: number;
+  summaryTime: string;
 };
 
-export function ProfileForm({ userId, displayName, capacityMinutes }: Props) {
+export function ProfileForm({ userId, displayName, capacityMinutes, summaryTime }: Props) {
   const router = useRouter();
   const [name, setName] = useState(displayName);
   const [hours, setHours] = useState(String(capacityMinutes / 60));
+  const [time, setTime] = useState(formatSummaryTime(summaryTime));
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -24,6 +27,10 @@ export function ProfileForm({ userId, displayName, capacityMinutes }: Props) {
       setMessage("Check the name and hours (1–16).");
       return;
     }
+    if (!/^\d{2}:\d{2}$/.test(time)) {
+      setMessage("Pick a summary time.");
+      return;
+    }
     setSaving(true);
     setMessage(null);
     const { error } = await createClient()
@@ -32,6 +39,7 @@ export function ProfileForm({ userId, displayName, capacityMinutes }: Props) {
         id: userId,
         display_name: name.trim(),
         capacity_minutes: Math.round(h * 60),
+        summary_time: time,
       });
     setSaving(false);
     if (error) {
@@ -65,6 +73,19 @@ export function ProfileForm({ userId, displayName, capacityMinutes }: Props) {
           className="h-11 w-28 rounded-xl border border-frame bg-bg px-3 outline-none focus:border-fg"
         />
         <span className="text-xs text-fg-soft">Used when a brain dump looks overbooked for the day.</span>
+      </label>
+
+      <label className="flex flex-col gap-1.5">
+        <span className="text-sm font-semibold">Daily summary time</span>
+        <input
+          type="time"
+          value={time}
+          onChange={(e) => setTime(e.target.value)}
+          className="h-11 w-36 rounded-xl border border-frame bg-bg px-3 outline-none focus:border-fg"
+        />
+        <span className="text-xs text-fg-soft">
+          After this time (in your timezone), today’s summary writes itself.
+        </span>
       </label>
 
       <div className="flex items-center gap-3">

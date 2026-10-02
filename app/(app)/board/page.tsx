@@ -1,10 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
-import { rowToNote, noteToRow, type NoteRow } from "@/lib/core/mappers";
-import { rollover } from "@/lib/core/rollover";
+import { rowToNote, type NoteRow } from "@/lib/core/mappers";
+import { todayFor } from "@/lib/core/date";
 import { DayView } from "@/components/board/DayView";
 import { parseStoredSummary } from "@/lib/ai/tasks/summarize";
-
-const today = () => new Date().toISOString().slice(0, 10);
+import { ensureTodayDay } from "@/lib/ai/writeDaySummary";
 
 export default async function BoardPage() {
   const supabase = await createClient();
@@ -13,46 +12,20 @@ export default async function BoardPage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("capacity_minutes")
+    .select("capacity_minutes, timezone")
     .eq("id", userId)
     .maybeSingle();
   const capacityMinutes: number = (profile?.capacity_minutes as number | null | undefined) ?? 360;
+  const timezone = (profile?.timezone as string | null | undefined) ?? "UTC";
+  const today = todayFor(timezone);
 
-  // today's row, or create it and roll over the most recent day
-  let { data: day } = await supabase
-    .from("days")
-    .select("id, summary")
-    .eq("date", today())
-    .maybeSingle();
-
-  if (!day) {
-    const { data: created } = await supabase
-      .from("days").insert({ user_id: userId, date: today() }).select("id, summary").single();
-    day = created!;
-
-    const { data: prev } = await supabase
-      .from("days").select("id, date").lt("date", today()).order("date", { ascending: false }).limit(1).maybeSingle();
-
-    if (prev) {
-      const { data: prevNotes } = await supabase
-        .from("notes")
-        .select("*, carried_from")
-        .eq("day_id", prev.id);
-      const carried = rollover(
-        (prevNotes as NoteRow[] ?? []).map(rowToNote),
-        () => crypto.randomUUID(),
-        prev.date as string,
-      );
-      if (carried.length) {
-        await supabase.from("notes").insert(carried.map((n) => noteToRow(n, day!.id, userId)));
-      }
-    }
-  }
+  const day = await ensureTodayDay(supabase, userId, today);
 
   const { data: rows } = await supabase
     .from("notes")
     .select("*, carried_from")
     .eq("day_id", day.id)
+    .eq("user_id", userId)
     .order("created_at");
 
   return (

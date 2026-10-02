@@ -1,11 +1,12 @@
 import { createClient } from "@/lib/supabase/server";
-import { isoDate, monthGrid } from "@/lib/core/calendar";
+import { monthGrid } from "@/lib/core/calendar";
+import { todayFor } from "@/lib/core/date";
 import { CalendarView, type CalendarDay } from "@/components/calendar/CalendarView";
 import { parseStoredSummary } from "@/lib/ai/tasks/summarize";
 
-function parseMonth(raw: string | undefined): { year: number; month: number } {
-  const now = new Date();
-  const fallback = { year: now.getFullYear(), month: now.getMonth() + 1 };
+function parseMonth(raw: string | undefined, today: string): { year: number; month: number } {
+  const [ty, tm] = today.split("-").map(Number);
+  const fallback = { year: ty, month: tm };
   if (!raw || !/^\d{4}-\d{2}$/.test(raw)) return fallback;
   const [y, m] = raw.split("-").map(Number);
   if (m < 1 || m > 12) return fallback;
@@ -28,15 +29,24 @@ export default async function CalendarPage({
 }) {
   const sp = await searchParams;
   const raw = Array.isArray(sp.m) ? sp.m[0] : sp.m;
-  const { year, month } = parseMonth(raw);
-  const { daysInMonth, firstWeekday } = monthGrid(year, month);
-
-  const start = `${monthParam(year, month)}-01`;
-  const end = `${monthParam(year, month)}-${String(daysInMonth).padStart(2, "0")}`;
 
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   const userId = user!.id; // layout already redirected if null
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("timezone")
+    .eq("id", userId)
+    .maybeSingle();
+  const timezone = (profile?.timezone as string | null | undefined) ?? "UTC";
+  const today = todayFor(timezone);
+
+  const { year, month } = parseMonth(raw, today);
+  const { daysInMonth, firstWeekday } = monthGrid(year, month);
+
+  const start = `${monthParam(year, month)}-01`;
+  const end = `${monthParam(year, month)}-${String(daysInMonth).padStart(2, "0")}`;
 
   const { data: rows } = await supabase
     .from("days")
@@ -70,7 +80,7 @@ export default async function CalendarPage({
         daysInMonth={daysInMonth}
         firstWeekday={firstWeekday}
         days={days}
-        today={isoDate(new Date())}
+        today={today}
         prevHref={`/calendar?m=${shiftMonth(year, month, -1)}`}
         nextHref={`/calendar?m=${shiftMonth(year, month, 1)}`}
       />

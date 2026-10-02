@@ -71,7 +71,6 @@ export function DayView({
             onDragEnd={dropFromClipboard}
           />
           <DoneTray
-            dayId={dayId}
             notes={b.doneNotes}
             armed={drop.over === "tray"}
             initialSummary={initialSummary}

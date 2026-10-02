@@ -9,13 +9,14 @@ export default async function ProfilePage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("display_name, capacity_minutes")
+    .select("display_name, capacity_minutes, summary_time")
     .eq("id", userId)
     .maybeSingle();
 
   const googleName: string = user?.user_metadata.full_name ?? user?.email?.split("@")[0] ?? "";
   const displayName: string = (profile?.display_name as string | null | undefined)?.trim() || googleName;
   const capacityMinutes: number = (profile?.capacity_minutes as number | null | undefined) ?? 360;
+  const summaryTime: string = String(profile?.summary_time ?? "18:00");
   const avatar: string | null = user?.user_metadata.avatar_url ?? null;
   const initials = displayName.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
 
@@ -41,6 +42,7 @@ export default async function ProfilePage() {
           userId={userId}
           displayName={displayName}
           capacityMinutes={capacityMinutes}
+          summaryTime={summaryTime}
         />
       </section>
 
