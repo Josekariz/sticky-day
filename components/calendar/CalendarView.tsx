@@ -1,10 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-import { writtenCaption } from "@/lib/core/date";
-import type { NoteStatus } from "@/lib/core/types";
+import { DayDrawer, type DayDrawerNote } from "./DayDrawer";
 
 export type CalendarDay = {
   date: string;
@@ -12,13 +11,6 @@ export type CalendarDay = {
   total: number;
   summary: string | null;
   summaryCreatedAt: string | null;
-};
-
-type DayNote = {
-  title: string;
-  est_minutes: number;
-  actual_minutes: number | null;
-  status: NoteStatus;
 };
 
 const C = 2 * Math.PI * 9;
@@ -53,10 +45,8 @@ export function CalendarView({
   nextHref: string;
 }) {
   const byDate = new Map(days.map((d) => [d.date, d]));
-  const monthPrefix = dayKey(year, month, 1).slice(0, 7);
-  const todayInMonth = today.startsWith(monthPrefix);
-  const [selected, setSelected] = useState<string | null>(todayInMonth ? today : null);
-  const [fetched, setFetched] = useState<{ date: string; notes: DayNote[] } | null>(null);
+  const [selected, setSelected] = useState<string | null>(null);
+  const [fetched, setFetched] = useState<{ date: string; notes: DayDrawerNote[] } | null>(null);
 
   useEffect(() => {
     if (!selected) return;
@@ -86,7 +76,7 @@ export function CalendarView({
         .order("created_at");
 
       if (cancelled) return;
-      setFetched({ date, notes: (rows as DayNote[] | null) ?? [] });
+      setFetched({ date, notes: (rows as DayDrawerNote[] | null) ?? [] });
     })();
 
     return () => {
@@ -94,28 +84,16 @@ export function CalendarView({
     };
   }, [selected, userId]);
 
+  const close = useCallback(() => setSelected(null), []);
+
   const notes = selected && fetched?.date === selected ? fetched.notes : null;
   const loading = selected !== null && fetched?.date !== selected;
+  const info = selected ? byDate.get(selected) : undefined;
 
   const cells = [
     ...Array(firstWeekday).fill(null) as (number | null)[],
     ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
   ];
-
-  const info = selected ? byDate.get(selected) : undefined;
-  const isToday = selected === today;
-  const isPast = selected !== null && selected < today;
-
-  const done = info?.done ?? 0;
-  const total = info?.total ?? 0;
-  const summary = info?.summary ?? null;
-  const summaryCreatedAt = info?.summaryCreatedAt ?? null;
-
-  const doneNotes = notes?.filter((n) => n.status === "done") ?? [];
-  const unfinishedNotes = notes?.filter((n) => n.status === "board" || n.status === "focus") ?? [];
-  const trashedNotes = notes?.filter((n) => n.status === "trashed") ?? [];
-
-  const selectedDay = selected ? Number(selected.slice(8, 10)) : null;
 
   return (
     <div className="flex flex-1 flex-col gap-6 lg:flex-row">
@@ -154,18 +132,26 @@ export function CalendarView({
             const frac = pair && pair.total > 0 ? pair.done / pair.total : 0;
             const isSel = date === selected;
             const isTodayCell = date === today;
+            const isFuture = date > today;
             return (
               <button
                 key={d}
                 type="button"
-                onClick={() => setSelected(date)}
+                disabled={isFuture}
+                aria-disabled={isFuture}
+                onClick={() => {
+                  if (isFuture) return;
+                  setSelected(date);
+                }}
                 className={`flex h-16 flex-col items-center justify-between rounded-lg border p-1.5 text-sm font-semibold ${
-                  isSel
-                    ? "border-fg bg-fg text-bg"
-                    : isTodayCell
-                      ? "border-fg bg-surface"
-                      : "border-frame bg-bg"
-                } ${date > today ? "opacity-40" : ""}`}
+                  isFuture
+                    ? "cursor-default border-frame bg-bg opacity-40"
+                    : isSel
+                      ? "border-fg bg-fg text-bg"
+                      : isTodayCell
+                        ? "border-fg bg-surface"
+                        : "border-frame bg-bg"
+                }`}
               >
                 <span>{d}</span>
                 {pair && pair.total > 0 ? (
@@ -190,89 +176,19 @@ export function CalendarView({
         </div>
       </section>
 
-      <section className="flex flex-1 flex-col gap-4 rounded-2xl border border-frame bg-surface p-6">
-        {selected && selectedDay !== null ? (
-          <>
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <h2 className="font-hand text-4xl font-bold">
-                  {selectedDay} {MONTHS[month - 1]}
-                </h2>
-                <p className="text-sm text-fg-soft">
-                  {total > 0 ? `${done} of ${total} done` : "No notes"}
-                </p>
-              </div>
-              {isToday ? (
-                <Link
-                  href="/board"
-                  className="rounded-lg bg-bg px-2.5 py-1 text-xs font-semibold text-fg underline-offset-2 hover:underline"
-                >
-                  Go to board
-                </Link>
-              ) : isPast ? (
-                <span className="rounded-lg bg-bg px-2.5 py-1 text-xs font-semibold text-fg-soft">
-                  Read only
-                </span>
-              ) : null}
-            </div>
+      {!selected && (
+        <p className="self-start text-sm text-fg-soft lg:pt-2">Pick a day to see how it went.</p>
+      )}
 
-            {total > 0 && (
-              <div className="h-3 overflow-hidden rounded-full bg-bg">
-                <div
-                  className="h-full bg-done"
-                  style={{ width: `${(done / total) * 100}%` }}
-                />
-              </div>
-            )}
-
-            {summary && (
-              <div className="rounded-xl bg-bg p-4">
-                <p className="text-sm leading-relaxed text-fg-soft">{summary}</p>
-                {summaryCreatedAt && (
-                  <p className="mt-2 text-xs text-fg-soft">{writtenCaption(summaryCreatedAt)}</p>
-                )}
-              </div>
-            )}
-
-            {loading ? (
-              <p className="text-sm text-fg-soft">Loading notes…</p>
-            ) : notes && notes.length > 0 ? (
-              <div className="flex flex-col gap-5">
-                <NoteGroup label="Done" items={doneNotes} />
-                <NoteGroup label="Unfinished" items={unfinishedNotes} />
-                <NoteGroup label="Trashed" items={trashedNotes} />
-              </div>
-            ) : notes && !summary ? (
-              <p className="m-auto font-hand text-2xl text-fg-soft">Nothing logged.</p>
-            ) : null}
-          </>
-        ) : (
-          <p className="m-auto font-hand text-2xl text-fg-soft">Pick a day.</p>
-        )}
-      </section>
-    </div>
-  );
-}
-
-function NoteGroup({ label, items }: { label: string; items: DayNote[] }) {
-  if (items.length === 0) return null;
-  return (
-    <div className="flex flex-col gap-2">
-      <h3 className="text-xs font-bold uppercase tracking-wide text-fg-soft">{label}</h3>
-      <ul className="flex flex-col gap-2">
-        {items.map((n, i) => (
-          <li
-            key={`${n.title}-${i}`}
-            className="flex items-baseline justify-between gap-3 rounded-lg bg-bg px-3 py-2 text-sm"
-          >
-            <span className="font-semibold">{n.title}</span>
-            <span className="shrink-0 tabular-nums text-fg-soft">
-              est. {n.est_minutes}
-              {n.actual_minutes != null ? ` · took ${n.actual_minutes}` : ""}
-            </span>
-          </li>
-        ))}
-      </ul>
+      <DayDrawer
+        date={selected}
+        today={today}
+        summary={info?.summary ?? null}
+        summaryCreatedAt={info?.summaryCreatedAt ?? null}
+        notes={notes}
+        loading={loading}
+        onClose={close}
+      />
     </div>
   );
 }
