@@ -17,6 +17,7 @@ const UnfinishedNoteSchema = z.object({
 
 export const SummarizeInputSchema = z.object({
   date: z.string(),
+  theme: z.string(),
   capacityMinutes: z.number().int(),
   done: z.array(DoneNoteSchema),
   unfinished: z.array(UnfinishedNoteSchema),
@@ -25,26 +26,39 @@ export const SummarizeInputSchema = z.object({
 export type SummarizeInput = z.infer<typeof SummarizeInputSchema>;
 
 export const SummarizeResultSchema = z.object({
-  recap: z
+  story: z
     .string()
     .describe(
-      "Two to four sentences, past tense, plain prose for pasting to a team. Names tasks by title. No bullet points, no emoji, no advice.",
+      "Two to three sentences, second person, past tense, warm. Names notes by title. What got cleared, what came first, anything that had carried over and finally got done.",
+    ),
+  read: z
+    .string()
+    .describe(
+      "Four to six sentences on the day's theme, written about THIS day's notes so it could not be reused for another day. Kind, plain, no advice-column voice, no 'you should'. If nothing was done, write about that kindly.",
+    ),
+  tomorrowNudge: z
+    .string()
+    .describe(
+      "One sentence, specific, drawn from what carried over or a pattern (same note carried twice; many added, few finished). Empty string if nothing carried over.",
     ),
   carryOver: z
     .array(z.string())
-    .describe("Titles from unfinished the person should keep tomorrow."),
-  dropSuggestions: z
-    .array(z.string())
-    .describe(
-      "Titles from unfinished that have been carried two or more days and may be worth dropping. Empty if none.",
-    ),
+    .describe("Titles of unfinished board/focus notes, exactly as given."),
 });
 
 export type SummarizeResult = z.infer<typeof SummarizeResultSchema>;
 
-export const StoredSummarySchema = SummarizeResultSchema.extend({
+export const StoredSummarySchema = z.object({
+  story: z.string().optional().default(""),
+  read: z.string().optional().default(""),
+  tomorrowNudge: z.string().optional().default(""),
+  carryOver: z.array(z.string()).optional().default([]),
+  /** Legacy field from older summaries; mapped into story on parse. */
+  recap: z.string().optional(),
+  dropSuggestions: z.array(z.string()).optional(),
   model: z.string(),
   createdAt: z.string().optional(),
+  theme: z.string().optional().default(""),
 });
 
 export type StoredSummary = z.infer<typeof StoredSummarySchema>;
@@ -52,68 +66,43 @@ export type StoredSummary = z.infer<typeof StoredSummarySchema>;
 /** `days.summary` as stored, or null if missing or malformed. */
 export function parseStoredSummary(raw: unknown): StoredSummary | null {
   const parsed = StoredSummarySchema.safeParse(raw);
-  return parsed.success ? parsed.data : null;
+  if (!parsed.success) return null;
+  const s = parsed.data;
+  if (!s.story && s.recap) return { ...s, story: s.recap };
+  return s;
 }
 
-const SYSTEM = `You write a short end-of-day recap someone can paste to their team.
+/** Prefer story; fall back to legacy recap. */
+export function summaryStory(s: StoredSummary): string {
+  return s.story || s.recap || "";
+}
+
+const SYSTEM = `You write a short end-of-day reflection for one person's sticky-note board — something they read alone, not a team report.
 
 Rules:
-- Past tense. Two to four sentences. Plain prose — no bullet points, no emoji, no praise-padding, no pep talk, no advice.
-- Name tasks only by the titles given. Do not invent work.
-- Do not do arithmetic. Totals (done count, minutes worked, estimate drift) are computed in code and passed in the prompt — use those numbers as given.
-- Mention estimate accuracy when it is off by a lot (the prompt will say so). Otherwise leave it alone.
-- carryOver: pick unfinished titles worth keeping tomorrow. Prefer things they started or that still matter.
-- dropSuggestions: only titles from unfinished (board/focus) whose carriedFrom date is two or more days before today. Empty array if none qualify. Suggest dropping, do not insist.
-- Never mention deleted or trashed notes. The recap is only about work done and work left unfinished — not about throwing notes away.
-- Never moralise. No "you should have", no guilt, no productivity lecturing.`;
-
-function driftLabel(done: SummarizeInput["done"]): { minutesWorked: number; drift: number; driftNote: string } {
-  const minutesWorked = done.reduce((s, n) => s + n.actualMinutes, 0);
-  const drift = done.reduce((s, n) => s + (n.actualMinutes - n.estMinutes), 0);
-  const abs = Math.abs(drift);
-  const significant = abs >= 30 || (done.length > 0 && abs >= minutesWorked * 0.25 && abs >= 15);
-  const driftNote = significant
-    ? drift > 0
-      ? `Estimate drift: about ${drift} minutes over (estimates were low).`
-      : `Estimate drift: about ${abs} minutes under (estimates were high).`
-    : "Estimate drift: close enough — no need to call out accuracy.";
-  return { minutesWorked, drift, driftNote };
-}
-
-function daysBetween(from: string, to: string): number {
-  const [fy, fm, fd] = from.split("-").map(Number);
-  const [ty, tm, td] = to.split("-").map(Number);
-  const a = Date.UTC(fy, fm - 1, fd);
-  const b = Date.UTC(ty, tm - 1, td);
-  return Math.round((b - a) / 86_400_000);
-}
+- story: second person ("you"), past tense, warm, 2–3 sentences. Name notes only by the titles given. What got cleared, what came first, anything that had carried over and finally got done. Do not invent notes.
+- read: 4–6 sentences on the theme provided, grounded in THIS day's notes so the piece could not be pasted onto another day. Kind and plain. No advice-column voice, no "you should", no pep talk. If nothing was done, write about that kindly.
+- tomorrowNudge: one sentence, specific, from what carried over or a clear pattern (a note carried twice; many added and few finished). Empty string if nothing carried over.
+- carryOver: the titles of unfinished notes, exactly as listed. Empty array if none.
+- Never write minutes, estimates, percentages, or counts.
+- No praise inflation. No exclamation marks.
+- Never mention deleted or trashed notes. They are out of scope.
+- Never moralise.`;
 
 export async function summarizeDay(model: LanguageModel, input: SummarizeInput): Promise<SummarizeResult> {
-  const { minutesWorked, driftNote } = driftLabel(input.done);
-  const longCarries = input.unfinished
-    .filter((n) => n.carriedFrom != null && daysBetween(n.carriedFrom, input.date) >= 2)
-    .map((n) => n.title);
-
   const { object } = await generateObject({
     model,
     schema: SummarizeResultSchema,
     system: SYSTEM,
     prompt: `Date: ${input.date}
-Capacity: ${input.capacityMinutes} minutes.
-
-Totals (computed — do not recalculate):
-- Done: ${input.done.length} notes
-- Minutes worked: ${minutesWorked}
-- ${driftNote}
+Theme for the read: ${input.theme}
 
 Done:
-${input.done.length ? input.done.map((n) => `- "${n.title}" (est ${n.estMinutes} min, took ${n.actualMinutes}${n.carriedFrom ? `, carried from ${n.carriedFrom}` : ""})`).join("\n") : "(none)"}
+${input.done.length ? input.done.map((n) => `- "${n.title}"${n.carriedFrom ? ` (had carried from ${n.carriedFrom})` : ""}`).join("\n") : "(none)"}
 
 Unfinished:
-${input.unfinished.length ? input.unfinished.map((n) => `- "${n.title}" (est ${n.estMinutes} min, spent ${Math.round(n.spentMs / 60000)} min${n.carriedFrom ? `, carried from ${n.carriedFrom}` : ", new today"})`).join("\n") : "(none)"}
-
-Eligible for dropSuggestions (carried ≥ 2 days): ${longCarries.length ? longCarries.map((t) => `"${t}"`).join(", ") : "(none)"}`,
-    temperature: 0.4,
+${input.unfinished.length ? input.unfinished.map((n) => `- "${n.title}"${n.carriedFrom ? ` (carried from ${n.carriedFrom})` : " (new today)"}`).join("\n") : "(none)"}`,
+    temperature: 0.5,
   });
   return object;
 }

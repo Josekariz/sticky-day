@@ -5,6 +5,8 @@ import { SummaryView, type SummaryBlock } from "@/components/summary/SummaryView
 import { parseStoredSummary } from "@/lib/ai/tasks/summarize";
 import { ensureTodayDay } from "@/lib/ai/writeDaySummary";
 
+type NoteRowWithCreated = NoteRow & { created_at?: string };
+
 export default async function SummaryPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -29,28 +31,31 @@ export default async function SummaryPage() {
     .eq("user_id", userId)
     .neq("status", "trashed");
 
-  const notes = ((rows as NoteRow[] | null) ?? []).map(rowToNote);
+  const noteRows = (rows as NoteRowWithCreated[] | null) ?? [];
+  const notes = noteRows.map(rowToNote);
+  const summary = parseStoredSummary(day.summary);
+
+  let latestNoteMs = 0;
+  for (const r of noteRows) {
+    if (!r.created_at) continue;
+    const t = new Date(r.created_at).getTime();
+    if (t > latestNoteMs) latestNoteMs = t;
+  }
+  const summaryMs = summary?.createdAt ? new Date(summary.createdAt).getTime() : 0;
+  const stale = !!summary?.createdAt && latestNoteMs > summaryMs;
+
   const data: SummaryBlock = {
     date: today,
     dayId: day.id,
-    summary: parseStoredSummary(day.summary),
-    done: notes
-      .filter((n) => n.status === "done")
-      .map((n) => ({
-        title: n.title,
-        estMinutes: n.estMinutes,
-        actualMinutes: n.actualMinutes ?? n.estMinutes,
-      })),
-    carried: notes.filter((n) => n.status === "board" || n.status === "focus").map((n) => n.title),
+    summary,
+    doneNotes: notes.filter((n) => n.status === "done"),
+    unfinishedNotes: notes.filter((n) => n.status === "board" || n.status === "focus"),
     summaryTime,
+    stale,
   };
 
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-col gap-6">
-      <div>
-        <h1 className="font-hand text-5xl font-bold">Summary</h1>
-        <p className="text-sm text-fg-soft">One block for Slack. Writes itself when your day ends.</p>
-      </div>
       <SummaryView data={data} />
     </main>
   );

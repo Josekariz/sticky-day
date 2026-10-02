@@ -8,6 +8,7 @@ import {
 } from "@/lib/ai/tasks/summarize";
 import { noteToRow, rowToNote, type NoteRow } from "@/lib/core/mappers";
 import { rollover } from "@/lib/core/rollover";
+import { themeFor } from "@/lib/core/themes";
 
 /** Today's day row: create + rollover if missing. */
 export async function ensureTodayDay(
@@ -103,6 +104,7 @@ export async function writeDaySummary(
 
   const input: SummarizeInput = {
     date: day.date as string,
+    theme: themeFor(day.date as string),
     capacityMinutes,
     done: notes
       .filter((n) => n.status === "done")
@@ -122,9 +124,11 @@ export async function writeDaySummary(
       })),
   };
 
+  const theme = input.theme;
   const result: StoredSummary = await withFallback(async (model, modelId) => ({
     ...(await summarizeDay(model, input)),
     model: modelId,
+    theme,
     createdAt: new Date().toISOString(),
   }));
 

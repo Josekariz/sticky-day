@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { monthGrid } from "@/lib/core/calendar";
 import { todayFor } from "@/lib/core/date";
 import { CalendarView, type CalendarDay } from "@/components/calendar/CalendarView";
-import { parseStoredSummary } from "@/lib/ai/tasks/summarize";
+import { parseStoredSummary, summaryStory } from "@/lib/ai/tasks/summarize";
 
 function parseMonth(raw: string | undefined, today: string): { year: number; month: number } {
   const [ty, tm] = today.split("-").map(Number);
@@ -64,7 +64,7 @@ export default async function CalendarPage({
       date: row.date as string,
       done: active.filter((n) => n.status === "done").length,
       total: active.length,
-      summary: stored?.recap ?? null,
+      summary: stored ? summaryStory(stored) || null : null,
       summaryCreatedAt: stored?.createdAt ?? null,
     };
   });

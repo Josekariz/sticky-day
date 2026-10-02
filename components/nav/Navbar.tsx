@@ -9,7 +9,7 @@ import { SignOutButton } from "@/components/auth/SignOutButton";
 const LINKS = [
   { href: "/board", label: "Board" },
   { href: "/calendar", label: "Calendar" },
-  { href: "/summary", label: "Summary" },
+  { href: "/summary", label: "Your day" },
 ];
 
 export function Navbar({ initials, avatar }: { initials: string; avatar: string | null }) {

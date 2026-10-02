@@ -80,6 +80,12 @@ export function writtenCaption(iso: string, tz?: string): string {
   }
 }
 
+/** Time-only caption, e.g. "Written 18:05", in local time. */
+export function writtenTime(iso: string): string {
+  const d = new Date(iso);
+  return `Written ${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+}
+
 /** HH:MM display for a Postgres `time` / input value. */
 export function formatSummaryTime(summaryTime: string): string {
   return summaryTime.slice(0, 5);

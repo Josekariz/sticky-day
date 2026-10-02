@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { paperVar, type Note } from "@/lib/core/types";
 import { writtenCaption } from "@/lib/core/date";
 import type { StoredSummary } from "@/lib/ai/tasks/summarize";
+import { summaryStory } from "@/lib/ai/tasks/summarize";
 
 export const TRAY_MESH = {
   backgroundImage: "radial-gradient(circle, rgba(0,0,0,0.28) 1px, transparent 1.4px)",
@@ -20,7 +21,7 @@ type Props = {
 
 export function DoneTray({ notes, armed, initialSummary, onPutBack }: Props) {
   const [open, setOpen] = useState(false);
-  const recap = initialSummary?.recap ?? null;
+  const recap = initialSummary ? summaryStory(initialSummary) : null;
   const stack = notes.slice(-6); // never draw more than six sheets
   const worked = notes.reduce((s, n) => s + (n.actualMinutes ?? 0), 0);
 

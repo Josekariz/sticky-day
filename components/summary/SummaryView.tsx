@@ -2,42 +2,44 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { dayHeading, formatSummaryTime, writtenCaption } from "@/lib/core/date";
+import { dayHeading, formatSummaryTime, writtenTime } from "@/lib/core/date";
+import type { Note } from "@/lib/core/types";
 import type { StoredSummary } from "@/lib/ai/tasks/summarize";
-
-export type DoneLine = {
-  title: string;
-  estMinutes: number;
-  actualMinutes: number;
-};
+import { StickyNote } from "@/components/board/StickyNote";
 
 export type SummaryBlock = {
   date: string;
   dayId: string;
   summary: StoredSummary | null;
-  done: DoneLine[];
-  carried: string[];
+  doneNotes: Note[];
+  unfinishedNotes: Note[];
   summaryTime: string;
+  /** True when a note's created_at is after the summary was written. */
+  stale: boolean;
 };
 
 function toText(data: SummaryBlock): string {
   if (!data.summary) return "";
+  const s = data.summary;
   const lines = [
     dayHeading(data.date),
     "",
-    data.summary.recap,
+    s.story,
     "",
-    "DONE",
-    ...(data.done.length
-      ? data.done.map((n) => `• ${n.title} (${n.estMinutes} → ${n.actualMinutes})`)
-      : ["• (none)"]),
+    "What you did",
+    ...(data.doneNotes.length ? data.doneNotes.map((n) => `• ${n.title}`) : ["• (none)"]),
     "",
-    "CARRIED OVER",
-    ...(data.carried.length ? data.carried.map((t) => `• ${t}`) : ["• (none)"]),
+    s.read,
   ];
-  if (data.summary.createdAt) {
-    lines.push("", writtenCaption(data.summary.createdAt));
+  if (data.unfinishedNotes.length || s.tomorrowNudge) {
+    lines.push(
+      "",
+      "Tomorrow",
+      ...data.unfinishedNotes.map((n) => `• ${n.title}`),
+    );
+    if (s.tomorrowNudge) lines.push("", s.tomorrowNudge);
   }
+  if (s.createdAt) lines.push("", writtenTime(s.createdAt));
   return lines.join("\n");
 }
 
@@ -54,7 +56,7 @@ export function SummaryView({ data }: { data: SummaryBlock }) {
     setTimeout(() => setCopied(false), 1500);
   }
 
-  async function writeNow() {
+  async function writeNow(force: boolean) {
     if (busy) return;
     setBusy(true);
     setError(null);
@@ -62,7 +64,7 @@ export function SummaryView({ data }: { data: SummaryBlock }) {
       const res = await fetch("/api/ai/summarize", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ dayId: data.dayId, force: true }),
+        body: JSON.stringify({ dayId: data.dayId, force }),
       });
       if (!res.ok) {
         const err = ((await res.json().catch(() => ({}))) as { error?: string }).error ?? "Something went wrong";
@@ -85,7 +87,7 @@ export function SummaryView({ data }: { data: SummaryBlock }) {
         <button
           type="button"
           disabled={busy}
-          onClick={() => void writeNow()}
+          onClick={() => void writeNow(true)}
           className="self-start text-sm text-fg-soft underline underline-offset-2 disabled:opacity-60"
         >
           {busy ? "Writing…" : "Write it now"}
@@ -95,51 +97,80 @@ export function SummaryView({ data }: { data: SummaryBlock }) {
     );
   }
 
+  const s = data.summary;
+  const showTomorrow = data.unfinishedNotes.length > 0 || !!s.tomorrowNudge;
+
   return (
-    <div className="flex flex-col gap-6 rounded-2xl border border-frame bg-surface p-6">
-      <h2 className="font-hand text-3xl font-bold">{dayHeading(data.date)}</h2>
-      <p className="text-base leading-relaxed text-fg">{data.summary.recap}</p>
+    <div className="flex flex-col gap-10">
+      <header className="flex flex-col gap-1">
+        <h1 className="font-hand text-5xl font-bold">Your day</h1>
+        <p className="text-sm text-fg-soft">{dayHeading(data.date)}</p>
+      </header>
 
-      <section className="flex flex-col gap-2">
-        <h3 className="text-[11px] font-bold uppercase tracking-widest text-fg-soft">Done</h3>
-        <ul className="flex flex-col gap-1.5">
-          {data.done.length === 0 && <li className="text-sm text-fg-soft">Nothing here.</li>}
-          {data.done.map((n) => (
-            <li key={n.title} className="flex items-baseline gap-2 text-base">
-              <span className="text-fg-soft">•</span>
-              <span>
-                {n.title}{" "}
-                <span className="text-fg-soft">
-                  ({n.estMinutes} → {n.actualMinutes})
-                </span>
-              </span>
-            </li>
-          ))}
-        </ul>
+      <section className="flex flex-col gap-4">
+        <h2 className="text-[11px] font-bold uppercase tracking-widest text-fg-soft">What you did</h2>
+        {data.doneNotes.length > 0 ? (
+          <div className="flex flex-wrap gap-3">
+            {data.doneNotes.map((n) => (
+              <StickyNote key={n.id} note={n} readOnly faded />
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-fg-soft">Nothing finished yet.</p>
+        )}
+        {s.story && <p className="text-base leading-relaxed text-fg">{s.story}</p>}
       </section>
 
-      <section className="flex flex-col gap-2">
-        <h3 className="text-[11px] font-bold uppercase tracking-widest text-fg-soft">Carried over</h3>
-        <ul className="flex flex-col gap-1.5">
-          {data.carried.length === 0 && <li className="text-sm text-fg-soft">Nothing here.</li>}
-          {data.carried.map((t) => (
-            <li key={t} className="flex items-baseline gap-2 text-base">
-              <span className="text-fg-soft">•</span>
-              {t}
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      {data.summary.createdAt && (
-        <p className="text-xs text-fg-soft">{writtenCaption(data.summary.createdAt)}</p>
+      {s.read && (
+        <section className="py-2">
+          <p className="text-lg leading-relaxed text-fg">{s.read}</p>
+        </section>
       )}
 
-      <div className="flex items-center gap-3 border-t border-frame pt-4">
-        <button onClick={() => void copy()} className="h-11 rounded-xl bg-fg px-5 text-sm font-semibold text-bg">
-          {copied ? "Copied" : "Copy as text"}
+      {showTomorrow && (
+        <section className="flex flex-col gap-4">
+          <h2 className="text-[11px] font-bold uppercase tracking-widest text-fg-soft">Tomorrow</h2>
+          {data.unfinishedNotes.length > 0 && (
+            <div className="flex flex-wrap gap-3">
+              {data.unfinishedNotes.map((n) => (
+                <StickyNote key={n.id} note={n} readOnly />
+              ))}
+            </div>
+          )}
+          {s.tomorrowNudge && (
+            <p className="text-base leading-relaxed text-fg">{s.tomorrowNudge}</p>
+          )}
+        </section>
+      )}
+
+      <div className="flex flex-col gap-2">
+        {s.createdAt && (
+          <p className="text-xs text-fg-soft">{writtenTime(s.createdAt)}</p>
+        )}
+        {data.stale && (
+          <p className="text-sm text-fg-soft">
+            Things changed since this was written.{" "}
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => void writeNow(true)}
+              className="underline underline-offset-2 disabled:opacity-60"
+            >
+              {busy ? "Writing…" : "Write it again"}
+            </button>
+          </p>
+        )}
+        {error && <p className="text-sm text-danger">{error}</p>}
+      </div>
+
+      <div>
+        <button
+          type="button"
+          onClick={() => void copy()}
+          className="inline-flex h-11 items-center justify-center rounded-xl border border-frame px-4 text-sm font-semibold"
+        >
+          {copied ? "Copied" : "Copy"}
         </button>
-        <span className="text-xs text-fg-soft">Paste it into Slack, a standup doc, wherever.</span>
       </div>
     </div>
   );
