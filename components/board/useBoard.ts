@@ -5,6 +5,7 @@ import { MAX_FOCUS, type Note } from "@/lib/core/types";
 import { placeNote, randomColor, randomRotation } from "@/lib/core/placement";
 import { createClient } from "@/lib/supabase/client";
 import { noteToRow, patchToRow } from "@/lib/core/mappers";
+import { trackSave } from "@/components/board/pendingSaves";
 import { SplitResultSchema } from "@/lib/ai/tasks/split";
 
 function fmtHours(minutes: number) {
@@ -34,19 +35,33 @@ export function useBoard(initial: Note[], dayId: string, userId: string, capacit
   const [openId, setOpenId] = useState<string | null>(null);
   const supabase = useMemo(() => createClient(), []);
 
-  // fire-and-forget writes; UI has already updated
+  // Optimistic UI; track in-flight writes so nav can flush briefly.
   const save = (id: string, patch: Partial<Note>) =>
-    supabase.from("notes").update(patchToRow(patch)).eq("id", id).eq("user_id", userId)
-      .then(({ error }) => error && console.error("save failed", id, error.message));
+    trackSave(
+      Promise.resolve(
+        supabase.from("notes").update(patchToRow(patch)).eq("id", id).eq("user_id", userId),
+      ).then(({ error }) => {
+        if (error) console.error("save failed", id, error.message);
+      }),
+    );
 
   const insert = (ns: Note[]) =>
-    supabase.from("notes").insert(ns.map((n) => noteToRow(n, dayId, userId)))
-      .then(({ error }) => error && console.error("insert failed", error.message));
+    trackSave(
+      Promise.resolve(
+        supabase.from("notes").insert(ns.map((n) => noteToRow(n, dayId, userId))),
+      ).then(({ error }) => {
+        if (error) console.error("insert failed", error.message);
+      }),
+    );
 
   const remove = (ids: string[]) =>
-    supabase.from("notes").delete().in("id", ids).eq("user_id", userId)
-      .then(({ error }) => error && console.error("delete failed", error.message));
-
+    trackSave(
+      Promise.resolve(
+        supabase.from("notes").delete().in("id", ids).eq("user_id", userId),
+      ).then(({ error }) => {
+        if (error) console.error("delete failed", error.message);
+      }),
+    );
   const update = (id: string, patch: Partial<Note>) => {
     setNotes((ns) => ns.map((n) => (n.id === id ? { ...n, ...patch } : n)));
     save(id, patch);

@@ -42,7 +42,7 @@ export function patchToRow(p: Partial<Note>): Partial<NoteRow> {
   if (p.energy !== undefined) r.energy = p.energy;
   if (p.status !== undefined) {
     r.status = p.status;
-    // Track completion time so "Your day" can detect post-summary changes.
+    // Useful audit field; staleness uses notes.updated_at (DB trigger), not this.
     r.completed_at = p.status === "done" ? new Date().toISOString() : null;
   }
   if (p.color !== undefined) r.color = p.color;

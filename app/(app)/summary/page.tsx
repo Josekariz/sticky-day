@@ -8,8 +8,7 @@ import { ensureTodayDay } from "@/lib/ai/writeDaySummary";
 
 type NoteRowWithTimes = NoteRow & {
   created_at?: string;
-  completed_at?: string | null;
-  started_at?: string | null;
+  updated_at?: string;
 };
 
 export default async function SummaryPage() {
@@ -49,7 +48,7 @@ export default async function SummaryPage() {
 
   let latestNoteMs = 0;
   for (const r of noteRows) {
-    for (const iso of [r.created_at, r.completed_at, r.started_at]) {
+    for (const iso of [r.created_at, r.updated_at]) {
       if (!iso) continue;
       const t = new Date(iso).getTime();
       if (Number.isFinite(t) && t > latestNoteMs) latestNoteMs = t;

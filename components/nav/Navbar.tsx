@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { SignOutButton } from "@/components/auth/SignOutButton";
+import { flushPendingSaves } from "@/components/board/pendingSaves";
 
 const LINKS = [
   { href: "/board", label: "Board" },
@@ -14,6 +15,7 @@ const LINKS = [
 
 export function Navbar({ initials, avatar }: { initials: string; avatar: string | null }) {
   const path = usePathname();
+  const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
   const sheet = useRef<HTMLDivElement>(null);
   const toggle = useRef<HTMLButtonElement>(null);
@@ -36,9 +38,21 @@ export function Navbar({ initials, avatar }: { initials: string; avatar: string 
     };
   }, [menuOpen]);
 
+  async function go(e: MouseEvent<HTMLAnchorElement>, href: string) {
+    if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+    e.preventDefault();
+    setMenuOpen(false);
+    await flushPendingSaves(1000);
+    router.push(href);
+  }
+
   return (
     <header className="relative flex h-16 items-center justify-between border-b border-frame px-4 md:grid md:grid-cols-[1fr_auto_1fr] md:px-8">
-      <Link href="/board" className="justify-self-start whitespace-nowrap font-hand text-3xl font-bold leading-none">
+      <Link
+        href="/board"
+        onClick={(e) => void go(e, "/board")}
+        className="justify-self-start whitespace-nowrap font-hand text-3xl font-bold leading-none"
+      >
         Sticky Day
       </Link>
 
@@ -49,6 +63,7 @@ export function Navbar({ initials, avatar }: { initials: string; avatar: string 
             <Link
               key={l.href}
               href={l.href}
+              onClick={(e) => void go(e, l.href)}
               aria-current={active ? "page" : undefined}
               className={`flex h-9 items-center rounded-xl px-3.5 text-sm font-semibold ${
                 active ? "bg-fg text-bg" : "text-fg-soft hover:text-fg"
@@ -62,7 +77,12 @@ export function Navbar({ initials, avatar }: { initials: string; avatar: string 
 
       <div className="flex items-center gap-2 justify-self-end md:gap-3">
         <ThemeToggle />
-        <Link href="/profile" aria-label="Profile" className="grid h-10 w-10 place-items-center overflow-hidden rounded-full bg-fg text-sm font-semibold text-bg">
+        <Link
+          href="/profile"
+          onClick={(e) => void go(e, "/profile")}
+          aria-label="Profile"
+          className="grid h-10 w-10 place-items-center overflow-hidden rounded-full bg-fg text-sm font-semibold text-bg"
+        >
           {avatar ? (
             // eslint-disable-next-line @next/next/no-img-element -- external Google URL, no need for next/image
             <img src={avatar} alt="" className="h-full w-full object-cover" referrerPolicy="no-referrer" />
@@ -101,7 +121,7 @@ export function Navbar({ initials, avatar }: { initials: string; avatar: string 
               <Link
                 key={l.href}
                 href={l.href}
-                onClick={() => setMenuOpen(false)}
+                onClick={(e) => void go(e, l.href)}
                 aria-current={active ? "page" : undefined}
                 className={`flex h-12 items-center justify-center rounded-xl px-4 font-semibold ${
                   active ? "bg-fg text-bg" : "text-fg"
