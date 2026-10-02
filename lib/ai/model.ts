@@ -1,6 +1,8 @@
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { createGroq } from "@ai-sdk/groq";
 import type { LanguageModel } from "ai";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { logAiCall } from "@/lib/ai/logAiCall";
 
 export type Provider = "google" | "groq";
 
@@ -32,19 +34,48 @@ export function getModelChain(): ChainEntry[] {
     });
 }
 
-/** Try each model in turn; the first that succeeds wins. */
+export type FallbackLog = {
+  supabase: SupabaseClient;
+  task: string;
+  input?: string;
+};
+
+/** Try each model in turn; the first that succeeds wins. Logs each attempt when `log` is set. */
 export async function withFallback<T>(
   fn: (model: LanguageModel, modelId: string) => Promise<T>,
+  log?: FallbackLog,
 ): Promise<T> {
   const chain = getModelChain();
   if (chain.length === 0) throw new Error("No AI provider configured");
   let last: unknown;
   for (const { model, modelId } of chain) {
+    const started = Date.now();
     try {
-      return await fn(model, modelId);
+      const result = await fn(model, modelId);
+      if (log) {
+        void logAiCall(log.supabase, {
+          task: log.task,
+          model: modelId,
+          ok: true,
+          durationMs: Date.now() - started,
+          input: log.input,
+        });
+      }
+      return result;
     } catch (e) {
       last = e;
-      console.warn(`model ${modelId} failed, trying next:`, (e as Error).message);
+      const message = e instanceof Error ? e.message : String(e);
+      if (log) {
+        void logAiCall(log.supabase, {
+          task: log.task,
+          model: modelId,
+          ok: false,
+          error: message,
+          durationMs: Date.now() - started,
+          input: log.input,
+        });
+      }
+      console.warn(`model ${modelId} failed, trying next:`, message);
     }
   }
   throw last;

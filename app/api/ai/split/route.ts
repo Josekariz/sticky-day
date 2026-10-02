@@ -1,9 +1,10 @@
 import { z } from "zod";
+import type { LanguageModel } from "ai";
 import { createClient } from "@/lib/supabase/server";
 import { withFallback } from "@/lib/ai/model";
+import { logAiCall } from "@/lib/ai/logAiCall";
 import { QuotaExceededError, spendAiCall } from "@/lib/ai/spendAiCall";
 import { splitDay, type SplitResult } from "@/lib/ai/tasks/split";
-import type { LanguageModel } from "ai";
 
 const Body = z.object({
   dump: z.string().min(3).max(4000),
@@ -26,19 +27,42 @@ export async function POST(req: Request) {
   if (!parsed.success) return Response.json({ error: "Bad request" }, { status: 400 });
 
   const { dump, capacityMinutes } = parsed.data;
+  const log = { supabase, task: "split", input: dump };
 
   try {
     await spendAiCall(supabase);
 
     let usedModel: LanguageModel | null = null;
-    let result: SplitResult = await withFallback(async (model, _modelId) => {
+    let usedModelId = "";
+    let result: SplitResult = await withFallback(async (model, modelId) => {
       usedModel = model;
+      usedModelId = modelId;
       return splitDay(model, dump, capacityMinutes);
-    });
+    }, log);
 
     if (result.notes.length === 0 && wordCount(dump) >= 3 && usedModel) {
       await spendAiCall(supabase);
-      result = await splitDay(usedModel, dump, capacityMinutes, { hint: EMPTY_RETRY_HINT });
+      const started = Date.now();
+      try {
+        result = await splitDay(usedModel, dump, capacityMinutes, { hint: EMPTY_RETRY_HINT });
+        void logAiCall(supabase, {
+          task: "split-retry",
+          model: usedModelId,
+          ok: true,
+          durationMs: Date.now() - started,
+          input: dump,
+        });
+      } catch (e) {
+        void logAiCall(supabase, {
+          task: "split-retry",
+          model: usedModelId,
+          ok: false,
+          error: e instanceof Error ? e.message : String(e),
+          durationMs: Date.now() - started,
+          input: dump,
+        });
+        throw e;
+      }
     }
 
     return Response.json(result);

@@ -214,12 +214,19 @@ export async function writeDaySummary(
   const theme = input.theme;
   let result: StoredSummary;
   try {
-    result = await withFallback(async (model, modelId) => ({
-      ...(await summarizeDay(model, input)),
-      model: modelId,
-      theme,
-      createdAt: new Date().toISOString(),
-    }));
+    result = await withFallback(
+      async (model, modelId) => ({
+        ...(await summarizeDay(model, input)),
+        model: modelId,
+        theme,
+        createdAt: new Date().toISOString(),
+      }),
+      {
+        supabase,
+        task: "summarize",
+        input: `${input.date}: ${input.done.length} done, ${input.unfinished.length} unfinished`,
+      },
+    );
   } catch (e) {
     if (!force) await clearPendingClaim(supabase, userId, dayId);
     throw e;
