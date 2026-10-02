@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { rowToNote, type NoteRow } from "@/lib/core/mappers";
 import { weekdayLong } from "@/lib/core/date";
 import { SummaryView, type SummaryData } from "@/components/summary/SummaryView";
+import { parseStoredSummary } from "@/lib/ai/tasks/summarize";
 
 const today = () => new Date().toISOString().slice(0, 10);
 
@@ -52,14 +53,14 @@ export default async function SummaryPage() {
       .from("notes")
       .select("*, carried_from")
       .eq("day_id", todayDay.id)
-      .eq("status", "board");
+      .in("status", ["board", "focus"]);
     todayTitles = ((rows as NoteRow[] | null) ?? []).map(rowToNote).map((n) => n.title);
   }
 
   const data: SummaryData = {
     yesterdayDone,
     yesterdayCarried,
-    yesterdaySummary: (yesterday?.summary as string | null | undefined) ?? null,
+    yesterdaySummary: parseStoredSummary(yesterday?.summary),
     today: todayTitles,
     blockers: [],
   };

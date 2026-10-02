@@ -33,13 +33,15 @@ export function getModelChain(): ChainEntry[] {
 }
 
 /** Try each model in turn; the first that succeeds wins. */
-export async function withFallback<T>(fn: (model: LanguageModel) => Promise<T>): Promise<T> {
+export async function withFallback<T>(
+  fn: (model: LanguageModel, modelId: string) => Promise<T>,
+): Promise<T> {
   const chain = getModelChain();
   if (chain.length === 0) throw new Error("No AI provider configured");
   let last: unknown;
   for (const { model, modelId } of chain) {
     try {
-      return await fn(model);
+      return await fn(model, modelId);
     } catch (e) {
       last = e;
       console.warn(`model ${modelId} failed, trying next:`, (e as Error).message);

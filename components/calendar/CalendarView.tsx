@@ -30,6 +30,7 @@ function dayKey(year: number, month: number, day: number): string {
 }
 
 export function CalendarView({
+  userId,
   year,
   month,
   daysInMonth,
@@ -39,6 +40,7 @@ export function CalendarView({
   prevHref,
   nextHref,
 }: {
+  userId: string;
   year: number;
   month: number;
   daysInMonth: number;
@@ -64,6 +66,7 @@ export function CalendarView({
       const { data: day } = await supabase
         .from("days")
         .select("id")
+        .eq("user_id", userId)
         .eq("date", date)
         .maybeSingle();
 
@@ -77,6 +80,7 @@ export function CalendarView({
         .from("notes")
         .select("title, est_minutes, actual_minutes, status")
         .eq("day_id", day.id)
+        .eq("user_id", userId)
         .order("created_at");
 
       if (cancelled) return;
@@ -86,7 +90,7 @@ export function CalendarView({
     return () => {
       cancelled = true;
     };
-  }, [selected]);
+  }, [selected, userId]);
 
   const notes = selected && fetched?.date === selected ? fetched.notes : null;
   const loading = selected !== null && fetched?.date !== selected;

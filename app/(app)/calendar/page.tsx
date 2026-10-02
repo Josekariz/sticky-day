@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { isoDate, monthGrid } from "@/lib/core/calendar";
 import { CalendarView, type CalendarDay } from "@/components/calendar/CalendarView";
+import { parseStoredSummary } from "@/lib/ai/tasks/summarize";
 
 function parseMonth(raw: string | undefined): { year: number; month: number } {
   const now = new Date();
@@ -34,9 +35,14 @@ export default async function CalendarPage({
   const end = `${monthParam(year, month)}-${String(daysInMonth).padStart(2, "0")}`;
 
   const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const userId = user!.id; // layout already redirected if null
+
   const { data: rows } = await supabase
     .from("days")
     .select("date, summary, notes(status)")
+    .eq("user_id", userId)
+    .eq("notes.user_id", userId)
     .gte("date", start)
     .lte("date", end);
 
@@ -47,7 +53,7 @@ export default async function CalendarPage({
       date: row.date as string,
       done: active.filter((n) => n.status === "done").length,
       total: active.length,
-      summary: (row.summary as string | null) ?? null,
+      summary: parseStoredSummary(row.summary)?.recap ?? null,
     };
   });
 
@@ -56,6 +62,7 @@ export default async function CalendarPage({
       <h1 className="font-hand text-5xl font-bold">History</h1>
       <CalendarView
         key={monthParam(year, month)}
+        userId={userId}
         year={year}
         month={month}
         daysInMonth={daysInMonth}

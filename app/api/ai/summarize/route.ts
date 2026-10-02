@@ -1,7 +1,12 @@
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { withFallback } from "@/lib/ai/model";
-import { summarizeDay, type SummarizeInput, type SummarizeResult } from "@/lib/ai/tasks/summarize";
+import {
+  parseStoredSummary,
+  summarizeDay,
+  type StoredSummary,
+  type SummarizeInput,
+} from "@/lib/ai/tasks/summarize";
 import { rowToNote, type NoteRow } from "@/lib/core/mappers";
 
 const Body = z.object({
@@ -23,18 +28,13 @@ export async function POST(req: Request) {
     .from("days")
     .select("id, date, summary, capacity_minutes")
     .eq("id", dayId)
+    .eq("user_id", user.id)
     .maybeSingle();
 
   if (dayErr || !day) return Response.json({ error: "Day not found" }, { status: 404 });
 
-  if (day.summary && !force) {
-    const cached: SummarizeResult = {
-      recap: day.summary as string,
-      carryOver: [],
-      dropSuggestions: [],
-    };
-    return Response.json(cached);
-  }
+  const cached = parseStoredSummary(day.summary);
+  if (cached && !force) return Response.json(cached);
 
   const { data: profile } = await supabase
     .from("profiles")
@@ -45,7 +45,8 @@ export async function POST(req: Request) {
   const { data: noteRows } = await supabase
     .from("notes")
     .select("*, carried_from")
-    .eq("day_id", dayId);
+    .eq("day_id", dayId)
+    .eq("user_id", user.id);
 
   const notes = ((noteRows as NoteRow[] | null) ?? []).map(rowToNote);
 
@@ -77,11 +78,16 @@ export async function POST(req: Request) {
   };
 
   try {
-    const result = await withFallback((model) => summarizeDay(model, input));
+    const result: StoredSummary = await withFallback(async (model, modelId) => ({
+      ...(await summarizeDay(model, input)),
+      model: modelId,
+      createdAt: new Date().toISOString(),
+    }));
     const { error: saveErr } = await supabase
       .from("days")
-      .update({ summary: result.recap })
-      .eq("id", dayId);
+      .update({ summary: result })
+      .eq("id", dayId)
+      .eq("user_id", user.id);
     if (saveErr) console.error("summary save failed", saveErr.message);
     return Response.json(result);
   } catch (e) {

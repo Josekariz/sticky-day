@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { paperVar, type Note } from "@/lib/core/types";
-import type { SummarizeResult } from "@/lib/ai/tasks/summarize";
+import type { StoredSummary } from "@/lib/ai/tasks/summarize";
 
 export const TRAY_MESH = {
   backgroundImage: "radial-gradient(circle, rgba(0,0,0,0.28) 1px, transparent 1.4px)",
@@ -14,15 +14,16 @@ type Props = {
   dayId: string;
   notes: Note[]; // status === "done", oldest first
   armed: boolean; // a note is being dragged over me
-  initialSummary: string | null;
+  initialSummary: StoredSummary | null;
   onPutBack: (id: string) => void;
 };
 
 export function DoneTray({ dayId, notes, armed, initialSummary, onPutBack }: Props) {
   const [open, setOpen] = useState(false);
-  const [recap, setRecap] = useState<string | null>(initialSummary);
-  const [carryOver, setCarryOver] = useState<string[]>([]);
-  const [dropSuggestions, setDropSuggestions] = useState<string[]>([]);
+  const [summary, setSummary] = useState<StoredSummary | null>(initialSummary);
+  const recap = summary?.recap ?? null;
+  const carryOver = summary?.carryOver ?? [];
+  const dropSuggestions = summary?.dropSuggestions ?? [];
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const stack = notes.slice(-6); // never draw more than six sheets
@@ -42,10 +43,7 @@ export function DoneTray({ dayId, notes, armed, initialSummary, onPutBack }: Pro
         const err = ((await res.json().catch(() => ({}))) as { error?: string }).error ?? "Something went wrong";
         throw new Error(err);
       }
-      const data = (await res.json()) as SummarizeResult;
-      setRecap(data.recap);
-      setCarryOver(data.carryOver);
-      setDropSuggestions(data.dropSuggestions);
+      setSummary((await res.json()) as StoredSummary);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong");
     } finally {

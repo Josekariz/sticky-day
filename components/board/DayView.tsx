@@ -1,6 +1,7 @@
 "use client";
 
 import type { Note } from "@/lib/core/types";
+import type { StoredSummary } from "@/lib/ai/tasks/summarize";
 import { useBoard } from "./useBoard";
 import { useDropTargets } from "./useDropTargets";
 import { BrainDump } from "./BrainDump";
@@ -21,7 +22,7 @@ export function DayView({
   userId: string;
   initialNotes: Note[];
   capacityMinutes: number;
-  initialSummary: string | null;
+  initialSummary: StoredSummary | null;
 }) {
   const b = useBoard(initialNotes, dayId, userId, capacityMinutes);
   const drop = useDropTargets();

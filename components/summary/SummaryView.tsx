@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import type { StoredSummary } from "@/lib/ai/tasks/summarize";
 
 export type SummaryData = {
   yesterdayDone: string[];
   yesterdayCarried: string[];
-  yesterdaySummary: string | null;
+  yesterdaySummary: StoredSummary | null;
   today: string[];
   blockers: string[];
 };
@@ -14,7 +15,7 @@ function toText(data: SummaryData) {
   const yDone = data.yesterdayDone;
   const yCarried = data.yesterdayCarried;
   return [
-    data.yesterdaySummary,
+    data.yesterdaySummary?.recap,
     `Yesterday: ${yDone.length ? yDone.join(", ") : "nothing done"}.${yCarried.length ? ` Didn't get to: ${yCarried.join(", ")}.` : ""}`,
     `Today: ${data.today.length ? data.today.join(", ") : "nothing on the board yet"}.`,
     data.blockers.length ? `Blocked: ${data.blockers.join("; ")}.` : "No blockers.",
@@ -54,7 +55,7 @@ export function SummaryView({ data }: { data: SummaryData }) {
       {data.yesterdaySummary && (
         <section className="flex flex-col gap-2">
           <h2 className="text-[11px] font-bold uppercase tracking-widest text-fg-soft">Yesterday · recap</h2>
-          <p className="text-base leading-relaxed text-fg">{data.yesterdaySummary}</p>
+          <p className="text-base leading-relaxed text-fg">{data.yesterdaySummary.recap}</p>
         </section>
       )}
       <Section title="Yesterday · done" items={data.yesterdayDone} muted />

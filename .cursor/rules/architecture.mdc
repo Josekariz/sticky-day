@@ -37,7 +37,8 @@ session check that redirects to `/` when signed out.
 
 5. **Row-level security is the real security.** Every table has `user_id` and a
    policy of `user_id = auth.uid()` for select, insert, update, delete. Never use
-   the service role key in code that runs for a user request.
+   the service role key in code that runs for a user request. Every query still
+   names `user_id` explicitly (`.eq("user_id", user.id)`) even though RLS would catch it.
 
 6. **Only today is writable.** Notes on a past day are read-only; enforce with a
    policy, not only the UI.

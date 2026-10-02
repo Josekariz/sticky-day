@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { rowToNote, noteToRow, type NoteRow } from "@/lib/core/mappers";
 import { rollover } from "@/lib/core/rollover";
 import { DayView } from "@/components/board/DayView";
+import { parseStoredSummary } from "@/lib/ai/tasks/summarize";
 
 const today = () => new Date().toISOString().slice(0, 10);
 
@@ -61,7 +62,7 @@ export default async function BoardPage() {
         userId={userId}
         initialNotes={(rows as NoteRow[] ?? []).map(rowToNote)}
         capacityMinutes={capacityMinutes}
-        initialSummary={(day.summary as string | null | undefined) ?? null}
+        initialSummary={parseStoredSummary(day.summary)}
       />
     </main>
   );

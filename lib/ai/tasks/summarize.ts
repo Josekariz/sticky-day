@@ -45,6 +45,19 @@ export const SummarizeResultSchema = z.object({
 
 export type SummarizeResult = z.infer<typeof SummarizeResultSchema>;
 
+export const StoredSummarySchema = SummarizeResultSchema.extend({
+  model: z.string(),
+  createdAt: z.string(),
+});
+
+export type StoredSummary = z.infer<typeof StoredSummarySchema>;
+
+/** `days.summary` as stored, or null if missing or malformed. */
+export function parseStoredSummary(raw: unknown): StoredSummary | null {
+  const parsed = StoredSummarySchema.safeParse(raw);
+  return parsed.success ? parsed.data : null;
+}
+
 const SYSTEM = `You write a short end-of-day recap for one person's sticky-note board.
 
 Rules:
