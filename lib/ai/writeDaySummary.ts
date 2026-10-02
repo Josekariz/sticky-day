@@ -209,7 +209,7 @@ export async function writeDaySummary(
       })),
   };
 
-  if (countTowardQuota) await spendAiCall(supabase, userId);
+  if (countTowardQuota) await spendAiCall(supabase);
 
   const theme = input.theme;
   let result: StoredSummary;

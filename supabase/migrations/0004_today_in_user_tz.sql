@@ -89,3 +89,46 @@ alter table public.profiles
     check (display_name is null or length(display_name) <= 60),
   add constraint profiles_timezone_format
     check (timezone ~ '^[A-Za-z_]+(/[A-Za-z_+-]+)*$');
+
+-- Quota must only move via spend_ai_call (security definer). Column-level
+-- grants: table UPDATE would still allow writing these columns, so revoke
+-- table UPDATE and re-grant only the fields the profile form may touch.
+revoke update on table public.profiles from authenticated, anon;
+grant update (display_name, capacity_minutes, summary_time, timezone)
+  on table public.profiles to authenticated;
+
+-- Atomically reset/increment the call counter for auth.uid(). True = spent.
+create or replace function public.spend_ai_call("limit" int)
+returns boolean
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  today date := public.user_today();
+  updated_id uuid;
+begin
+  if auth.uid() is null then
+    return false;
+  end if;
+
+  update public.profiles
+  set
+    ai_calls_date = today,
+    ai_calls_count = case
+      when ai_calls_date is distinct from today then 1
+      else ai_calls_count + 1
+    end
+  where id = auth.uid()
+    and (
+      ai_calls_date is distinct from today
+      or coalesce(ai_calls_count, 0) < "limit"
+    )
+  returning id into updated_id;
+
+  return updated_id is not null;
+end;
+$$;
+
+revoke all on function public.spend_ai_call(int) from public;
+grant execute on function public.spend_ai_call(int) to authenticated;

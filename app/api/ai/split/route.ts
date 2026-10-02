@@ -18,7 +18,7 @@ export async function POST(req: Request) {
   if (!parsed.success) return Response.json({ error: "Bad request" }, { status: 400 });
 
   try {
-    await spendAiCall(supabase, user.id);
+    await spendAiCall(supabase);
     const result = await withFallback((model) =>
       splitDay(model, parsed.data.dump, parsed.data.capacityMinutes),
     );

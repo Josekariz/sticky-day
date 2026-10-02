@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { todayFor } from "@/lib/core/date";
-import { AI_DAILY_LIMIT, canSpend } from "@/lib/core/quota";
+
+export const AI_DAILY_LIMIT = 60;
 
 export class QuotaExceededError extends Error {
   constructor() {
@@ -9,29 +9,12 @@ export class QuotaExceededError extends Error {
   }
 }
 
-/** Reset/increment the per-user daily AI counter. Throws QuotaExceededError when over. */
-export async function spendAiCall(
-  supabase: SupabaseClient,
-  userId: string,
-): Promise<void> {
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("timezone, ai_calls_date, ai_calls_count")
-    .eq("id", userId)
-    .maybeSingle();
-
-  const timezone = (profile?.timezone as string | null | undefined) ?? "UTC";
-  const today = todayFor(timezone);
-  const decision = canSpend(today, {
-    ai_calls_date: (profile?.ai_calls_date as string | null | undefined) ?? null,
-    ai_calls_count: (profile?.ai_calls_count as number | null | undefined) ?? 0,
-  }, AI_DAILY_LIMIT);
-
-  if (!decision.allowed) throw new QuotaExceededError();
-
-  const { error } = await supabase
-    .from("profiles")
-    .update({ ai_calls_date: today, ai_calls_count: decision.nextCount })
-    .eq("id", userId);
-  if (error) console.error("ai quota update failed", error.message);
+/** Spend one AI call via DB RPC. Throws QuotaExceededError when over the daily cap. */
+export async function spendAiCall(supabase: SupabaseClient): Promise<void> {
+  const { data, error } = await supabase.rpc("spend_ai_call", { limit: AI_DAILY_LIMIT });
+  if (error) {
+    console.error("ai quota rpc failed", error.message);
+    throw new Error("Couldn't check AI allowance. Try again.");
+  }
+  if (data !== true) throw new QuotaExceededError();
 }
