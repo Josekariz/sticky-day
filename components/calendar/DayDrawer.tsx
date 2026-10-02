@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, type Ref } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import { dayHeading, writtenCaption } from "@/lib/core/date";
@@ -21,6 +21,7 @@ type Props = {
   notes: DayDrawerNote[] | null;
   loading: boolean;
   onClose: () => void;
+  panelRef: Ref<HTMLElement>;
 };
 
 export function DayDrawer({
@@ -31,6 +32,7 @@ export function DayDrawer({
   notes,
   loading,
   onClose,
+  panelRef,
 }: Props) {
   useEffect(() => {
     if (!date) return;
@@ -51,6 +53,7 @@ export function DayDrawer({
     <AnimatePresence>
       {open && date && (
         <motion.aside
+          ref={panelRef}
           className="fixed right-0 top-0 z-50 flex h-full w-full max-w-md flex-col gap-4 overflow-y-auto bg-surface p-6 shadow-2xl"
           initial={{ x: "100%" }}
           animate={{ x: 0 }}
@@ -92,12 +95,14 @@ export function DayDrawer({
           )}
 
           {isToday && (
-            <Link
-              href="/board"
-              className="mt-auto h-11 self-start rounded-xl bg-fg px-5 text-sm font-semibold text-bg"
-            >
-              Go to board
-            </Link>
+            <footer className="mt-auto border-t border-frame pt-4">
+              <Link
+                href="/board"
+                className="inline-flex h-11 items-center justify-center rounded-xl bg-fg px-4 text-sm font-semibold text-bg"
+              >
+                Go to board
+              </Link>
+            </footer>
           )}
         </motion.aside>
       )}

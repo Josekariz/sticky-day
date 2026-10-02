@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { DayDrawer, type DayDrawerNote } from "./DayDrawer";
@@ -85,6 +85,19 @@ export function CalendarView({
   }, [selected, userId]);
 
   const close = useCallback(() => setSelected(null), []);
+  const drawerRef = useRef<HTMLElement>(null);
+  const gridRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!selected) return;
+    function onPointerDown(e: PointerEvent) {
+      const target = e.target as Node;
+      if (drawerRef.current?.contains(target) || gridRef.current?.contains(target)) return;
+      setSelected(null);
+    }
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => document.removeEventListener("pointerdown", onPointerDown);
+  }, [selected]);
 
   const notes = selected && fetched?.date === selected ? fetched.notes : null;
   const loading = selected !== null && fetched?.date !== selected;
@@ -124,7 +137,7 @@ export function CalendarView({
           ))}
         </div>
 
-        <div className="grid grid-cols-7 gap-1.5">
+        <div ref={gridRef} className="grid grid-cols-7 gap-1.5">
           {cells.map((d, i) => {
             if (d === null) return <div key={`e${i}`} />;
             const date = dayKey(year, month, d);
@@ -189,6 +202,7 @@ export function CalendarView({
         notes={notes}
         loading={loading}
         onClose={close}
+        panelRef={drawerRef}
       />
     </div>
   );
