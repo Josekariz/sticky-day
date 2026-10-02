@@ -34,12 +34,12 @@ export const SummarizeResultSchema = z.object({
   read: z
     .string()
     .describe(
-      "A short warm read on the day's theme, about THIS day's notes only. End with one short line that makes tomorrow feel worth showing up for. Kind, playful, no 'you should'.",
+      "Open on the day's theme; at most one note title as an example. Must not restate story. End with one short line that makes tomorrow feel worth showing up for.",
     ),
   tomorrowNudge: z
     .string()
     .describe(
-      "One sentence, specific, drawn from what carried over or a pattern. Empty string if nothing carried over.",
+      "One concrete move with a slot or reorder (e.g. first thing, after lunch, make it the top note). Not 'maybe try'. Empty string if nothing carried over.",
     ),
   carryOver: z
     .array(z.string())
@@ -87,11 +87,12 @@ Tone:
 
 Content:
 - story: second person, past tense. Name notes only by the titles given. What got cleared, what came first, anything that had carried over and finally got done. Do not invent notes.
-- read: on the theme provided, grounded in THIS day's notes so it could not be reused for another day. End with one short line that makes tomorrow feel worth showing up for. If nothing was done, say so kindly.
-- tomorrowNudge: one sentence, specific, from what carried over or a clear pattern. Empty string if nothing carried over.
+- read: open on the day's theme, not on a recap of the work. Use at most one note title as an example. If the draft would restate story, rewrite it. End with one short line that makes tomorrow feel worth showing up for. If nothing was done, say so kindly.
+- tomorrowNudge: one sentence with one concrete move — a slot ("first thing", "after lunch") or a reorder ("make it the top note"). Not "maybe try". Empty string if nothing carried over.
 - carryOver: the titles of unfinished notes, exactly as listed. Empty array if none.
 
 Hard rules:
+- Never invent details the notes don't contain (no "stroll", "treat", "dove in", or similar colour). Describe only what the titles say.
 - Never write minutes, estimates, percentages, or counts.
 - No "you should". If the day went badly, say so kindly and make tomorrow sound easy.
 - Never mention deleted or trashed notes. They are out of scope.`;
