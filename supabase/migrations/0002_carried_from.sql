@@ -2,7 +2,7 @@
 -- Null for notes written today; set once on first rollover and kept across further carries.
 
 alter table public.notes
-  add column carried_from date;
+  add column if not exists carried_from date;
 
 -- Cache the whole summarize result, not just the recap:
 -- { recap, carryOver, dropSuggestions, model, createdAt }.
