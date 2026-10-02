@@ -2,7 +2,9 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { withFallback } from "@/lib/ai/model";
 import { spendAiCall } from "@/lib/ai/spendAiCall";
 import {
+  isSummaryBusy,
   parseStoredSummary,
+  pendingClaimMarker,
   summarizeDay,
   type StoredSummary,
   type SummarizeInput,
@@ -62,6 +64,58 @@ export async function ensureTodayDay(
   return day as { id: string; summary: unknown };
 }
 
+async function clearPendingClaim(
+  supabase: SupabaseClient,
+  userId: string,
+  dayId: string,
+): Promise<void> {
+  await supabase
+    .from("days")
+    .update({ summary: null })
+    .eq("id", dayId)
+    .eq("user_id", userId)
+    .contains("summary", { pending: true });
+}
+
+/** Claim the summary slot before calling the model (non-force only). */
+async function claimSummarySlot(
+  supabase: SupabaseClient,
+  userId: string,
+  dayId: string,
+  current: unknown,
+): Promise<"claimed" | "done" | "busy"> {
+  const cached = parseStoredSummary(current);
+  if (cached) return "done";
+  if (isSummaryBusy(current)) return "busy";
+
+  const marker = pendingClaimMarker();
+
+  let q = supabase
+    .from("days")
+    .update({ summary: marker })
+    .eq("id", dayId)
+    .eq("user_id", userId);
+
+  // Null → first claim. Stale pending → reclaim by matching pending flag.
+  if (current == null) {
+    q = q.is("summary", null);
+  } else {
+    q = q.contains("summary", { pending: true });
+  }
+
+  const { data: claimed } = await q.select("id").maybeSingle();
+  if (claimed) return "claimed";
+
+  const { data: again } = await supabase
+    .from("days")
+    .select("summary")
+    .eq("id", dayId)
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (parseStoredSummary(again?.summary)) return "done";
+  return "busy";
+}
+
 /** Write (or return cached) end-of-day summary for a day. */
 export async function writeDaySummary(
   supabase: SupabaseClient,
@@ -83,6 +137,21 @@ export async function writeDaySummary(
 
   const cached = parseStoredSummary(day.summary);
   if (cached && !force) return cached;
+
+  if (!force) {
+    const claim = await claimSummarySlot(supabase, userId, dayId, day.summary);
+    if (claim === "done") {
+      const { data: again } = await supabase
+        .from("days")
+        .select("summary")
+        .eq("id", dayId)
+        .eq("user_id", userId)
+        .maybeSingle();
+      const stored = parseStoredSummary(again?.summary);
+      if (stored) return stored;
+    }
+    if (claim === "busy") throw new Error("Summary is already being written");
+  }
 
   const { data: profile } = await supabase
     .from("profiles")
@@ -129,24 +198,26 @@ export async function writeDaySummary(
   if (countTowardQuota) await spendAiCall(supabase, userId);
 
   const theme = input.theme;
-  const result: StoredSummary = await withFallback(async (model, modelId) => ({
-    ...(await summarizeDay(model, input)),
-    model: modelId,
-    theme,
-    createdAt: new Date().toISOString(),
-  }));
+  let result: StoredSummary;
+  try {
+    result = await withFallback(async (model, modelId) => ({
+      ...(await summarizeDay(model, input)),
+      model: modelId,
+      theme,
+      createdAt: new Date().toISOString(),
+    }));
+  } catch (e) {
+    if (!force) await clearPendingClaim(supabase, userId, dayId);
+    throw e;
+  }
 
-  let q = supabase
+  const { error: saveErr } = await supabase
     .from("days")
     .update({ summary: result })
     .eq("id", dayId)
     .eq("user_id", userId);
-  if (!force) q = q.is("summary", null);
-
-  const { error: saveErr } = await q;
   if (saveErr) console.error("summary save failed", saveErr.message);
 
-  // Another request may have won the race; prefer whatever is stored now.
   if (!force) {
     const { data: again } = await supabase
       .from("days")

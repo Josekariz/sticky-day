@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Navbar } from "@/components/nav/Navbar";
 import { SyncTimezone } from "@/components/profile/SyncTimezone";
 import { isSummaryDue, todayFor } from "@/lib/core/date";
-import { parseStoredSummary } from "@/lib/ai/tasks/summarize";
+import { isSummaryBusy, parseStoredSummary } from "@/lib/ai/tasks/summarize";
 import { writeDaySummary } from "@/lib/ai/writeDaySummary";
 
 export default async function AppLayout({ children }: LayoutProps<"/">) {
@@ -30,7 +30,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
       .eq("date", today)
       .maybeSingle();
 
-    if (day && !parseStoredSummary(day.summary)) {
+    if (day && !parseStoredSummary(day.summary) && !isSummaryBusy(day.summary)) {
       const dayId = day.id as string;
       const userId = user.id;
       after(() => {

@@ -63,8 +63,32 @@ export const StoredSummarySchema = z.object({
 
 export type StoredSummary = z.infer<typeof StoredSummarySchema>;
 
-/** `days.summary` as stored, or null if missing or malformed. */
+const PENDING_MAX_MS = 5 * 60 * 1000;
+
+type PendingMarker = { pending: true; claimedAt?: string };
+
+function isPendingMarker(raw: unknown): raw is PendingMarker {
+  return !!raw && typeof raw === "object" && (raw as { pending?: unknown }).pending === true;
+}
+
+function isStalePending(raw: PendingMarker, now = Date.now()): boolean {
+  if (!raw.claimedAt) return true;
+  const t = new Date(raw.claimedAt).getTime();
+  return !Number.isFinite(t) || now - t > PENDING_MAX_MS;
+}
+
+/** Fresh pending claim — another writer is in flight. */
+export function isSummaryBusy(raw: unknown): boolean {
+  return isPendingMarker(raw) && !isStalePending(raw);
+}
+
+export function pendingClaimMarker(now = new Date()): PendingMarker {
+  return { pending: true, claimedAt: now.toISOString() };
+}
+
+/** `days.summary` as stored, or null if missing, pending, or malformed. */
 export function parseStoredSummary(raw: unknown): StoredSummary | null {
+  if (isPendingMarker(raw)) return null;
   const parsed = StoredSummarySchema.safeParse(raw);
   if (!parsed.success) return null;
   const s = parsed.data;

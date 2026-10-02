@@ -30,6 +30,9 @@ export async function POST(req: Request) {
     }
     const msg = e instanceof Error ? e.message : "Couldn't write the summary. Try again.";
     if (msg === "Day not found") return Response.json({ error: msg }, { status: 404 });
+    if (msg === "Summary is already being written") {
+      return Response.json({ error: "Summary is already being written. Try again in a moment." }, { status: 409 });
+    }
     console.error("summarize failed", e);
     return Response.json({ error: "Couldn't write the summary. Try again." }, { status: 502 });
   }
