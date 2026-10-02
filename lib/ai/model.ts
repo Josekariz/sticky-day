@@ -44,8 +44,9 @@ export type FallbackLog = {
 export async function withFallback<T>(
   fn: (model: LanguageModel, modelId: string) => Promise<T>,
   log?: FallbackLog,
+  skipModelId?: string,
 ): Promise<T> {
-  const chain = getModelChain();
+  const chain = getModelChain().filter((m) => m.modelId !== skipModelId);
   if (chain.length === 0) throw new Error("No AI provider configured");
   let last: unknown;
   for (const { model, modelId } of chain) {

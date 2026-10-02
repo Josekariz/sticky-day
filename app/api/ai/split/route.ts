@@ -1,8 +1,6 @@
 import { z } from "zod";
-import type { LanguageModel } from "ai";
 import { createClient } from "@/lib/supabase/server";
-import { withFallback } from "@/lib/ai/model";
-import { logAiCall } from "@/lib/ai/logAiCall";
+import { getModelChain, withFallback } from "@/lib/ai/model";
 import { QuotaExceededError, spendAiCall } from "@/lib/ai/spendAiCall";
 import { splitDay, type SplitResult } from "@/lib/ai/tasks/split";
 
@@ -32,37 +30,19 @@ export async function POST(req: Request) {
   try {
     await spendAiCall(supabase);
 
-    let usedModel: LanguageModel | null = null;
     let usedModelId = "";
     let result: SplitResult = await withFallback(async (model, modelId) => {
-      usedModel = model;
       usedModelId = modelId;
       return splitDay(model, dump, capacityMinutes);
     }, log);
 
-    if (result.notes.length === 0 && wordCount(dump) >= 3 && usedModel) {
+    if (result.notes.length === 0 && wordCount(dump) >= 3 && getModelChain().length > 1) {
       await spendAiCall(supabase);
-      const started = Date.now();
-      try {
-        result = await splitDay(usedModel, dump, capacityMinutes, { hint: EMPTY_RETRY_HINT });
-        void logAiCall(supabase, {
-          task: "split-retry",
-          model: usedModelId,
-          ok: true,
-          durationMs: Date.now() - started,
-          input: dump,
-        });
-      } catch (e) {
-        void logAiCall(supabase, {
-          task: "split-retry",
-          model: usedModelId,
-          ok: false,
-          error: e instanceof Error ? e.message : String(e),
-          durationMs: Date.now() - started,
-          input: dump,
-        });
-        throw e;
-      }
+      result = await withFallback(
+        (model) => splitDay(model, dump, capacityMinutes, { hint: EMPTY_RETRY_HINT }),
+        { ...log, task: "split-retry" },
+        usedModelId,
+      );
     }
 
     return Response.json(result);
