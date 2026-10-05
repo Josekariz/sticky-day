@@ -40,11 +40,13 @@ export async function splitDay(
   model: LanguageModel,
   dump: string,
   capacityMinutes: number,
-  opts: { hint?: string } = {},
+  opts: { hint?: string; abortSignal?: AbortSignal } = {},
 ): Promise<SplitResult> {
   const hint = opts.hint?.trim();
   const { object } = await generateObject({
     model,
+    maxRetries: 0, // withFallback's model chain is the retry
+    abortSignal: opts.abortSignal,
     schema: SplitResultSchema,
     system: SYSTEM,
     prompt: `They have about ${Math.round(capacityMinutes / 60)} hours today.${hint ? `\n\n${hint}` : ""}\n\nTheir day:\n<brain_dump>\n${dump}\n</brain_dump>`,
