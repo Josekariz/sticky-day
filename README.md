@@ -67,6 +67,9 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=  # the anon key; never the service role key
 AI_ORDER=groq:qwen/qwen3.8-27b,google:gemini-3.8-flash
 GOOGLE_API_KEY=                 # aistudio.google.com/apikey
 GROQ_API_KEY=                   # console.groq.com/keys
+RESEND_API_KEY=                 # resend.com/api-keys — emails you Say hi messages
+CONTACT_TO=                     # the inbox Say hi messages go to
+CONTACT_FROM=onboarding@resend.dev  # sender; change once you verify a domain on Resend
 ```
 
 Google's client ID and secret go into Supabase (Authentication → Providers → Google), not into `.env`. Add `http://localhost:3000/auth/callback` and your production URL to the redirect list there.
