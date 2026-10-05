@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { resolveDisplayName } from "@/lib/core/name";
 import { SignOutButton } from "@/components/auth/SignOutButton";
@@ -60,6 +61,11 @@ export default async function ProfilePage() {
       </section>
 
       <DeleteAccountCard email={user?.email ?? ""} />
+
+      <p className="text-sm text-fg-soft">
+        What Sticky Day keeps and who can see it:{" "}
+        <Link href="/privacy" className="underline underline-offset-4">Privacy</Link>
+      </p>
     </main>
   );
 }
