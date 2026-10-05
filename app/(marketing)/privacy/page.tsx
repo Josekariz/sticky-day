@@ -23,6 +23,11 @@ export default function PrivacyPage() {
             answered and how long it took. It’s there so I can fix things when they break, and it’s
             deleted after 30 days.
           </p>
+          <p>
+            Messages sent through Say hi: your name, the message, and your email if you give one. They’re
+            stored and emailed to me. A scrambled (hashed) form of your IP address is stored with them to
+            stop spam, never the address itself.
+          </p>
           <p>Nothing else. No analytics, no ads, no tracking.</p>
         </AboutNote>
 
