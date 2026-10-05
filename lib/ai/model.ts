@@ -40,19 +40,26 @@ export type FallbackLog = {
   input?: string;
 };
 
+export type FallbackOptions = {
+  skipModelId?: string;
+  /** Per-attempt limit; a stalled model is abandoned and the next one tried. */
+  timeoutMs?: number;
+};
+
 /** Try each model in turn; the first that succeeds wins. Logs each attempt when `log` is set. */
 export async function withFallback<T>(
-  fn: (model: LanguageModel, modelId: string) => Promise<T>,
+  fn: (model: LanguageModel, modelId: string, abortSignal?: AbortSignal) => Promise<T>,
   log?: FallbackLog,
-  skipModelId?: string,
+  { skipModelId, timeoutMs }: FallbackOptions = {},
 ): Promise<T> {
   const chain = getModelChain().filter((m) => m.modelId !== skipModelId);
   if (chain.length === 0) throw new Error("No AI provider configured");
   let last: unknown;
   for (const { model, modelId } of chain) {
     const started = Date.now();
+    const signal = timeoutMs ? AbortSignal.timeout(timeoutMs) : undefined;
     try {
-      const result = await fn(model, modelId);
+      const result = await fn(model, modelId, signal);
       if (log) {
         void logAiCall(log.supabase, {
           task: log.task,
@@ -65,7 +72,9 @@ export async function withFallback<T>(
       return result;
     } catch (e) {
       last = e;
-      const message = e instanceof Error ? e.message : String(e);
+      const raw = e instanceof Error ? e.message : String(e);
+      // Starts with "timeout" so aborted attempts are easy to find in ai_calls.
+      const message = signal?.aborted ? `timeout after ${timeoutMs} ms` : raw;
       if (log) {
         void logAiCall(log.supabase, {
           task: log.task,
