@@ -9,6 +9,8 @@ const Body = z.object({
   capacityMinutes: z.number().int().min(30).max(960).default(360),
 });
 
+const SPLIT_TIMEOUT_MS = 8_000;
+
 const EMPTY_RETRY_HINT =
   "This is a real to-do list, possibly with typos. Extract the tasks.";
 
@@ -31,17 +33,18 @@ export async function POST(req: Request) {
     await spendAiCall(supabase);
 
     let usedModelId = "";
-    let result: SplitResult = await withFallback(async (model, modelId) => {
+    let result: SplitResult = await withFallback(async (model, modelId, abortSignal) => {
       usedModelId = modelId;
-      return splitDay(model, dump, capacityMinutes);
-    }, log);
+      return splitDay(model, dump, capacityMinutes, { abortSignal });
+    }, log, { timeoutMs: SPLIT_TIMEOUT_MS });
 
     if (result.notes.length === 0 && wordCount(dump) >= 3 && getModelChain().length > 1) {
       await spendAiCall(supabase);
       result = await withFallback(
-        (model) => splitDay(model, dump, capacityMinutes, { hint: EMPTY_RETRY_HINT }),
+        (model, _modelId, abortSignal) =>
+          splitDay(model, dump, capacityMinutes, { hint: EMPTY_RETRY_HINT, abortSignal }),
         { ...log, task: "split-retry" },
-        usedModelId,
+        { skipModelId: usedModelId, timeoutMs: SPLIT_TIMEOUT_MS },
       );
     }
 
