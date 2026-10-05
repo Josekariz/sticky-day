@@ -13,6 +13,8 @@ import { noteToRow, rowToNote, type NoteRow } from "@/lib/core/mappers";
 import { rollover } from "@/lib/core/rollover";
 import { themeFor } from "@/lib/core/themes";
 
+const SUMMARIZE_TIMEOUT_MS = 20_000;
+
 /** Today's day row: create + rollover if missing. */
 export async function ensureTodayDay(
   supabase: SupabaseClient,
@@ -215,8 +217,8 @@ export async function writeDaySummary(
   let result: StoredSummary;
   try {
     result = await withFallback(
-      async (model, modelId) => ({
-        ...(await summarizeDay(model, input)),
+      async (model, modelId, abortSignal) => ({
+        ...(await summarizeDay(model, input, abortSignal)),
         model: modelId,
         theme,
         createdAt: new Date().toISOString(),
@@ -226,6 +228,7 @@ export async function writeDaySummary(
         task: "summarize",
         input: `${input.date}: ${input.done.length} done, ${input.unfinished.length} unfinished`,
       },
+      { timeoutMs: SUMMARIZE_TIMEOUT_MS },
     );
   } catch (e) {
     if (!force) await clearPendingClaim(supabase, userId, dayId);
