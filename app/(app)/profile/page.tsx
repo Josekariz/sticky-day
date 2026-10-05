@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { resolveDisplayName } from "@/lib/core/name";
 import { SignOutButton } from "@/components/auth/SignOutButton";
 import { ProfileForm } from "@/components/profile/ProfileForm";
+import { DeleteAccountCard } from "@/components/profile/DeleteAccountCard";
 
 export default async function ProfilePage() {
   const supabase = await createClient();
@@ -57,6 +58,8 @@ export default async function ProfilePage() {
         </div>
         <SignOutButton />
       </section>
+
+      <DeleteAccountCard email={user?.email ?? ""} />
     </main>
   );
 }
