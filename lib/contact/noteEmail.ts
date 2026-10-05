@@ -1,8 +1,14 @@
 import type { ContactMessage } from "@/lib/core/contact";
+import { PAPER_COLORS, type PaperColor } from "@/lib/core/types";
 
 // Email clients can't read CSS variables, so these copy the light-theme tokens in globals.css.
+const PAPER: Record<PaperColor, string> = {
+  yellow: "#F5FF3D", lime: "#B8FF3D", mint: "#5CFF9E",
+  teal: "#3DFFE4", sky: "#4DC8FF", lavender: "#A78BFF",
+  lilac: "#E066FF", pink: "#FF5FA8", coral: "#FF6A4D",
+  peach: "#FFA94D", sand: "#E8D28A", grey: "#C9CCC2",
+};
 const BOARD = "#EDEAE2";
-const PAPER = "#FF5FA8"; // --paper-pink, same as the Say hi note
 const INK = "#1F1D1A";
 const INK_SOFT = "#5A554B";
 const HAND = "'Caveat', 'Segoe Print', 'Comic Sans MS', cursive";
@@ -20,6 +26,7 @@ function escapeHtml(s: string): string {
 export function noteEmail(msg: ContactMessage, sentAt: Date) {
   const subject = `Sticky Day · note from ${msg.name}`;
   const when = sentAt.toUTCString();
+  const paper = PAPER[PAPER_COLORS[Math.floor(Math.random() * PAPER_COLORS.length)]];
 
   const text = [
     msg.message,
@@ -44,7 +51,7 @@ export function noteEmail(msg: ContactMessage, sentAt: Date) {
 <body style="margin:0;padding:0;background:${BOARD};">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${BOARD};padding:40px 16px;">
     <tr><td align="center">
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:440px;background:${PAPER};color:${INK};transform:rotate(-1.5deg);box-shadow:0 10px 24px rgba(0,0,0,0.18);">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:440px;background:${paper};color:${INK};transform:rotate(-1.5deg);box-shadow:0 10px 24px rgba(0,0,0,0.18);">
         <tr><td style="padding:28px 28px 8px;font-family:${HAND};font-size:40px;font-weight:700;line-height:1;">Say hi</td></tr>
         <tr><td style="padding:0 28px 16px;font-family:${BODY};font-size:14px;color:${INK_SOFT};">from <strong style="color:${INK};">${name}</strong></td></tr>
         <tr><td style="padding:0 28px 24px;font-family:${HAND};font-size:26px;line-height:1.25;">${message}</td></tr>
