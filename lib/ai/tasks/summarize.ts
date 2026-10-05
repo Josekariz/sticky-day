@@ -129,9 +129,15 @@ Read: "You went to the tailor and then read about the history of plastics, which
 Day: nothing done; unfinished "Fix the leaking tap", "Call the insurance people", "Start the tax return". Theme: what a half-done day actually means.
 Read: "Nothing moved today, and the three things on the board are the three things nobody wants to do — a tap, an insurer, and a tax return walk into a Friday. Writing them down was the move; now they're on paper instead of circling. Tomorrow pick the tap. It's the only one that can't put you on hold. 🔧"`;
 
-export async function summarizeDay(model: LanguageModel, input: SummarizeInput): Promise<SummarizeResult> {
+export async function summarizeDay(
+  model: LanguageModel,
+  input: SummarizeInput,
+  abortSignal?: AbortSignal,
+): Promise<SummarizeResult> {
   const { object } = await generateObject({
     model,
+    maxRetries: 0, // withFallback's model chain is the retry
+    abortSignal,
     schema: SummarizeResultSchema,
     system: SYSTEM,
     prompt: `Date: ${input.date}
