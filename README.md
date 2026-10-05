@@ -47,6 +47,8 @@ Every model attempt is logged for debugging: the task, the model, how long it to
 
 You need a Supabase project with Google auth turned on, and at least one AI key.
 
+**Privacy.** What the hosted version keeps and who can see it is on the [privacy page](https://sticky-day.vercel.app/privacy). On Gemini's free tier, Google may use what's sent to improve its products, and human reviewers may read it, de-identified. Because of that, the hosted version is for people outside the EEA, UK and Switzerland for now; if you're there, run your own copy with your own keys.
+
 ```bash
 git clone https://github.com/Josekariz/sticky-day
 cd sticky-day
@@ -102,7 +104,7 @@ Pick one from that list for `AI_ORDER`.
 ## How the code is laid out
 
 ```
-app/(marketing)/   landing + about, no navbar
+app/(marketing)/   landing, about, privacy, no navbar
 app/(app)/         board, calendar, summary, profile — one layout, session-guarded
 app/api/ai/        the two AI routes (split, summarize), both check the session first
 lib/core/          pure logic: types, placement, rollover, dates, themes. No React, no Next.
