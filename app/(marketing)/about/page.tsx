@@ -29,6 +29,9 @@ export default function AboutPage() {
           <p>
             The code is open. <a href="https://github.com/Josekariz/sticky-day" className="font-semibold underline underline-offset-2">See it on GitHub.</a>
           </p>
+          <p>
+            What it keeps and who can see it: <Link href="/privacy" className="font-semibold underline underline-offset-2">Privacy.</Link>
+          </p>
         </AboutNote>
 
         <ContactNote />
