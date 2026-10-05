@@ -7,7 +7,7 @@ import { CONTACT_EMAIL_MAX, CONTACT_MESSAGE_MAX, CONTACT_NAME_MAX } from "@/lib/
 type Status = "idle" | "sending" | "sent" | "error";
 
 const fieldClass =
-  "rounded-lg border border-black/20 bg-white/50 px-3 font-hand text-lg outline-none placeholder:text-ink-soft focus:border-black/50";
+  "rounded-lg border border-black/20 bg-white/50 px-3 text-[15px] outline-none placeholder:text-ink-soft focus:border-black/50";
 
 export function ContactNote() {
   const [status, setStatus] = useState<Status>("idle");
