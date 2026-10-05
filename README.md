@@ -34,6 +34,8 @@ Models are tried in order from `AI_ORDER` in the environment (`provider:model,pr
 
 Each account gets 60 AI calls a day, counted in the database where the browser can't reset it.
 
+Every model attempt is logged for debugging: the task, the model, how long it took, and the first 80 characters of what you typed. A nightly `pg_cron` job deletes log rows older than 30 days.
+
 ## Stack
 
 - **Next.js 16** (App Router), TypeScript, Tailwind v4, Framer Motion
