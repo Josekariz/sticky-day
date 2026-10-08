@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 export type NoteStatus = "board" | "focus" | "done" | "trashed";
 export type Energy = "low" | "medium" | "high";
 
@@ -11,6 +13,16 @@ export function paperVar(color: PaperColor) {
   return `var(--paper-${color})`;
 }
 
+export const NOTE_SHAPES = ["square", "rounded", "circle", "heart", "pill"] as const;
+export const NoteShapeSchema = z.enum(NOTE_SHAPES);
+export type NoteShape = z.infer<typeof NoteShapeSchema>;
+
+/** A stored shape, or null when it is missing or not one of the five. */
+export function parseShape(value: unknown): NoteShape | null {
+  const parsed = NoteShapeSchema.safeParse(value);
+  return parsed.success ? parsed.data : null;
+}
+
 export type Note = {
   id: string;
   title: string;
@@ -20,6 +32,7 @@ export type Note = {
   energy: Energy;
   status: NoteStatus;
   color: PaperColor;
+  shape: NoteShape;
   x: number; // 0..1, fraction of the board's usable width
   y: number; // 0..1, fraction of the board's usable height
   rotation: number;

@@ -1,8 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { MAX_FOCUS, type Note } from "@/lib/core/types";
-import { placeNote, randomColor, randomRotation } from "@/lib/core/placement";
+import { MAX_FOCUS, type Note, type NoteShape } from "@/lib/core/types";
+import { placeNote, randomColor, randomRotation, shapeForNewNote } from "@/lib/core/placement";
 import { createClient } from "@/lib/supabase/client";
 import { noteToRow, patchToRow } from "@/lib/core/mappers";
 import { trackSave } from "@/components/board/pendingSaves";
@@ -30,9 +30,18 @@ function changedTimerFields(prev: Note, next: Note): Partial<Note> | null {
   return Object.keys(patch).length ? patch : null;
 }
 
-export function useBoard(initial: Note[], dayId: string, userId: string, capacityMinutes: number) {
+export function useBoard(
+  initial: Note[],
+  dayId: string,
+  userId: string,
+  capacityMinutes: number,
+  initialDefaultShape: NoteShape | null, // null = a random mix
+  initialOnboarded: boolean,
+) {
   const [notes, setNotes] = useState(initial);
   const [openId, setOpenId] = useState<string | null>(null);
+  const [defaultShape, setDefaultShape] = useState(initialDefaultShape);
+  const [onboarded, setOnboarded] = useState(initialOnboarded);
   const supabase = useMemo(() => createClient(), []);
 
   // Optimistic UI; track in-flight writes so nav can flush briefly.
@@ -79,6 +88,22 @@ export function useBoard(initial: Note[], dayId: string, userId: string, capacit
     doneNotes,
     trashedNotes,
     openNote,
+    onboarded,
+
+    /** First-visit answer: the shape for new notes, and never show the card again. */
+    async finishOnboarding(shape: NoteShape | null) {
+      const { error } = await trackSave(
+        Promise.resolve(
+          supabase
+            .from("profiles")
+            .update({ default_shape: shape, onboarded_at: new Date().toISOString() })
+            .eq("id", userId),
+        ),
+      );
+      if (error) throw new Error(error.message);
+      setDefaultShape(shape);
+      setOnboarded(true);
+    },
 
     move(id: string, x: number, y: number) {
       setNotes((ns) => {
@@ -218,6 +243,7 @@ export function useBoard(initial: Note[], dayId: string, userId: string, capacit
           spentMs: 0,
           status: "board",
           color: randomColor(),
+          shape: shapeForNewNote(defaultShape),
           rotation: randomRotation(),
           startedAt: null,
           carriedFrom: null,

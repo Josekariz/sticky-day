@@ -105,8 +105,9 @@ export function Clipboard({
               )}
               <div className={`relative font-hand text-xl font-semibold leading-tight ${carried ? "mt-3" : ""}`}>{n.title}</div>
               <div className="relative mt-2 flex items-baseline justify-between">
-                <span className="text-2xl font-bold tabular-nums leading-none">{fmt(elapsed)}</span>
-                <span className={`text-[11px] ${left < 0 ? "text-danger" : "text-ink-soft"}`}>
+                {/* A running clock reads a second or two later on the client than on the server. */}
+                <span className="text-2xl font-bold tabular-nums leading-none" suppressHydrationWarning>{fmt(elapsed)}</span>
+                <span className={`text-[11px] ${left < 0 ? "text-danger" : "text-ink-soft"}`} suppressHydrationWarning>
                   {live ? (left >= 0 ? `${fmt(left)} left` : `${fmt(-left)} over`) : "paused"}
                 </span>
               </div>

@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { paperVar, type Energy, type Note } from "@/lib/core/types";
+import { NOTE_SHAPES, paperVar, type Energy, type Note } from "@/lib/core/types";
+import { SHAPE_LABELS, ShapeSwatch } from "./ShapeSwatch";
 
 type Props = {
   note: Note | null;
@@ -10,7 +11,7 @@ type Props = {
   onWorkOn: (id: string) => void;
   onDone: (id: string) => void;
   onTrash: (id: string) => void;
-  onEdit: (id: string, patch: Partial<Pick<Note, "title" | "detail" | "estMinutes" | "energy">>) => void;
+  onEdit: (id: string, patch: Partial<Pick<Note, "title" | "detail" | "estMinutes" | "energy" | "shape">>) => void;
 };
 
 const ENERGY: Energy[] = ["low", "medium", "high"];
@@ -27,10 +28,11 @@ export function PickupCard({ note, onClose, onWorkOn, onDone, onTrash, onEdit }:
     <AnimatePresence>
       {note && (
         <motion.div
+          key={note.id}
           className="fixed inset-0 z-50 grid place-items-center bg-black/35 p-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
+          exit={{ opacity: 0, pointerEvents: "none" }}
           onClick={close}
           tabIndex={-1}
           onKeyDown={(e) => e.key === "Escape" && close()}
@@ -98,6 +100,26 @@ export function PickupCard({ note, onClose, onWorkOn, onDone, onTrash, onEdit }:
                     </button>
                   ))}
                 </div>
+              </div>
+            </div>
+
+            <div className="relative flex flex-col gap-1">
+              <span className="text-[11px] font-bold uppercase tracking-widest text-ink-soft">Shape</span>
+              <div role="radiogroup" aria-label="Note shape" className="flex items-center gap-1">
+                {NOTE_SHAPES.map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    role="radio"
+                    aria-checked={note.shape === s}
+                    aria-label={SHAPE_LABELS[s]}
+                    title={SHAPE_LABELS[s]}
+                    onClick={() => note.shape !== s && onEdit(note.id, { shape: s })}
+                    className={`grid h-10 min-w-10 place-items-center rounded-lg px-1.5 ${note.shape === s ? "bg-black/10" : "hover:bg-black/5"}`}
+                  >
+                    <ShapeSwatch shape={s} color={note.color} size={24} outline strong={note.shape === s} />
+                  </button>
+                ))}
               </div>
             </div>
 
