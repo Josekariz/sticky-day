@@ -78,7 +78,7 @@ export function DayView({
             </div>
           )}
         </div>
-        <aside className="flex flex-col gap-5 pb-24 md:pb-0 lg:w-72">
+        <aside className="flex flex-col gap-5 lg:w-72">
           <Clipboard
             notes={b.focusNotes}
             armed={drop.over === "clipboard"}
@@ -89,12 +89,20 @@ export function DayView({
             onDragMove={drop.move}
             onDragEnd={dropFromClipboard}
           />
-          <DoneTray
-            notes={b.doneNotes}
-            armed={drop.over === "tray"}
-            initialSummary={initialSummary}
-            onPutBack={b.restore}
-          />
+          <div className="flex items-end gap-3">
+            <DoneTray
+              notes={b.doneNotes}
+              armed={drop.over === "tray"}
+              initialSummary={initialSummary}
+              onPutBack={b.restore}
+            />
+            <Bin
+              notes={b.trashedNotes}
+              armed={drop.over === "bin"}
+              onRestore={b.restore}
+              onEmpty={b.emptyBin}
+            />
+          </div>
         </aside>
       </div>
 
@@ -105,12 +113,6 @@ export function DayView({
         onDone={b.done}
         onTrash={b.trash}
         onEdit={b.edit}
-      />
-      <Bin
-        notes={b.trashedNotes}
-        armed={drop.over === "bin"}
-        onRestore={b.restore}
-        onEmpty={b.emptyBin}
       />
     </div>
   );

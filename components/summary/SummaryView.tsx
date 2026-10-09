@@ -118,19 +118,25 @@ export function SummaryView({ data }: { data: SummaryBlock }) {
 
   if (!data.summary) {
     return (
-      <div className="mx-auto flex w-full max-w-[35rem] flex-col gap-4 rounded-2xl border border-frame bg-surface p-6">
-        <p className="text-base text-fg">
-          Writes itself at {formatSummaryTime(data.summaryTime)}
-        </p>
-        <button
-          type="button"
-          disabled={busy}
-          onClick={() => void writeNow(true)}
-          className="self-start text-sm text-fg-soft underline underline-offset-2 disabled:opacity-60"
-        >
-          {busy ? "Writing…" : "Write it now"}
-        </button>
-        {error && <p className="text-sm text-danger">{error}</p>}
+      <div className="mx-auto flex w-full max-w-[35rem] flex-col gap-10">
+        <header className="flex flex-col gap-1">
+          <h1 className="font-hand text-5xl font-bold">{greetingLine(data)}</h1>
+          <p className="text-sm text-fg-soft">{dayHeading(data.date)}</p>
+        </header>
+        <div className="flex flex-col gap-4 rounded-2xl border border-frame bg-surface p-6">
+          <p className="text-base text-fg">
+            Writes itself at {formatSummaryTime(data.summaryTime)}
+          </p>
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => void writeNow(true)}
+            className="self-start text-sm text-fg-soft underline underline-offset-2 disabled:opacity-60"
+          >
+            {busy ? "Writing…" : "Write it now"}
+          </button>
+          {error && <p className="text-sm text-danger">{error}</p>}
+        </div>
       </div>
     );
   }

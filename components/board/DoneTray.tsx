@@ -127,7 +127,7 @@ export function DoneTray({ notes, armed, initialSummary, onPutBack }: Props) {
                       <span className="flex-1 min-w-0">
                         <span className="block truncate text-sm font-semibold line-through text-fg-soft">{n.title}</span>
                         <span className="block text-xs text-fg-soft">
-                          est. {n.estMinutes} · took {n.actualMinutes}
+                          est. {n.estMinutes} min · took {n.actualMinutes} min
                           {diff !== 0 && (
                             <span className={`ml-1 font-bold tabular-nums ${diff > 0 ? "text-danger" : "text-done"}`}>
                               ({diff > 0 ? `+${diff}` : diff} min)

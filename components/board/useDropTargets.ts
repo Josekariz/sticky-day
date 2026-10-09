@@ -8,7 +8,7 @@ type Rects = Partial<Record<Exclude<DropTarget, null>, DOMRect>>;
 
 // The first element for a target that is actually on screen. On phones the docked
 // targets live inside the board, so they come before the clipboard, tray and bin
-// in the DOM and win; from md up they are display:none and measure 0 wide.
+// in the DOM and win; from lg up they are display:none and measure 0 wide.
 function rectOf(key: Exclude<DropTarget, null>): DOMRect | undefined {
   for (const el of document.querySelectorAll(`[data-drop='${key}']`)) {
     const r = el.getBoundingClientRect();

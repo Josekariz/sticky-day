@@ -65,7 +65,7 @@ export function Bin({ notes, armed, onRestore, onEmpty }: Props) {
         }
         whileHover={armed ? undefined : { scale: 1.06, rotate: -3 }}
         whileTap={{ scale: 0.96 }}
-        className="fixed bottom-2 right-4 z-30 h-14 w-12 md:bottom-6 md:right-6 md:h-28 md:w-24 drop-shadow-[0_12px_14px_rgba(0,0,0,0.35)]"
+        className="relative h-24 w-20 shrink-0 drop-shadow-[0_12px_14px_rgba(0,0,0,0.35)] md:h-28 md:w-24"
       >
         <BinShape notes={notes} />
         {notes.length > 0 && (

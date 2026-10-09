@@ -44,7 +44,7 @@ export function BrainDump({
           id="dump"
           value={text}
           onChange={(e) => setText(e.target.value)}
-          placeholder="What do you want to get done today?"
+          placeholder="What's on today?"
           className="flex-1 min-w-0 bg-transparent font-hand text-2xl outline-none placeholder:text-fg-soft"
         />
         <button

@@ -44,10 +44,10 @@ const BODY: Record<NoteShape, string> = {
   pill: "md:items-center md:justify-center md:gap-1 md:px-11 md:py-2 md:text-center",
 };
 const TITLE: Record<NoteShape, string> = {
-  square: "md:px-7",
+  square: "md:px-6",
   rounded: "md:px-6",
   circle: "",
-  heart: "md:line-clamp-2",
+  heart: "",
   pill: "",
 };
 const CHIPS: Record<NoteShape, string> = {
@@ -82,6 +82,8 @@ export function StickyNote(props: Props) {
   const self = useRef<HTMLDivElement>(null);
   const carried = !!note.carriedFrom;
   const shape = note.shape;
+  // Below md the "from <day>" stamp sits where a third title line would go.
+  const clamp = `${carried ? "line-clamp-2" : "line-clamp-3"} ${shape === "heart" ? "md:line-clamp-2" : "md:line-clamp-3"}`;
 
   function handleDragEnd() {
     if (readOnly) return;
@@ -180,7 +182,7 @@ export function StickyNote(props: Props) {
       {readOnly ? (
         <div className={`relative flex h-full w-full flex-col p-3 text-left ${BODY[shape]}`}>
           {stamp}
-          <span className="font-hand text-(length:--note-font) font-semibold leading-tight line-clamp-3">
+          <span className={`font-hand text-(length:--note-font) font-semibold leading-tight ${clamp}`}>
             {note.title}
           </span>
           {faded && (
@@ -208,7 +210,7 @@ export function StickyNote(props: Props) {
             className={`relative flex h-full w-full flex-col p-3 text-left ${BODY[shape]}`}
           >
             {stamp}
-            <span className={`font-hand text-(length:--note-font) font-semibold leading-tight line-clamp-3 ${TITLE[shape]}`}>
+            <span className={`font-hand text-(length:--note-font) font-semibold leading-tight ${clamp} ${TITLE[shape]}`}>
               {note.title}
             </span>
             <span className={`mt-auto flex items-center gap-1 pr-5 text-[10px] font-semibold text-ink-soft md:gap-1.5 md:text-[11px] ${CHIPS[shape]}`}>

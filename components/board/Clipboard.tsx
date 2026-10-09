@@ -91,6 +91,7 @@ export function Clipboard({
               style={{
                 backgroundColor: paperVar(n.color),
                 ["--paper" as string]: paperVar(n.color),
+                ["--fold-under" as string]: "var(--clipboard-paper)",
                 rotate: live ? "-1.5deg" : "1deg",
                 filter: carried ? "saturate(0.55)" : undefined,
               }}
@@ -107,11 +108,11 @@ export function Clipboard({
               <div className="relative mt-2 flex items-baseline justify-between">
                 {/* A running clock reads a second or two later on the client than on the server. */}
                 <span className="text-2xl font-bold tabular-nums leading-none" suppressHydrationWarning>{fmt(elapsed)}</span>
-                <span className={`text-[11px] ${left < 0 ? "text-danger" : "text-ink-soft"}`} suppressHydrationWarning>
+                <span className={`text-[11px] ${left < 0 ? "font-bold text-ink" : "text-ink-soft"}`} suppressHydrationWarning>
                   {live ? (left >= 0 ? `${fmt(left)} left` : `${fmt(-left)} over`) : "paused"}
                 </span>
               </div>
-              <div className="relative mt-2 flex gap-1.5">
+              <div className="relative mt-2 mr-6 flex gap-1.5">
                 {!live && (
                   <button onClick={() => onResume(n.id)} className="h-9 flex-1 rounded-lg border border-ink text-xs font-bold">
                     Resume

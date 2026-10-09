@@ -128,7 +128,7 @@ body { background: var(--bg); }
   bottom: 0;
   width: 30px;
   height: 30px;
-  background: linear-gradient(135deg, var(--paper-fold) 0 50%, var(--board) 50% 100%);
+  background: linear-gradient(135deg, var(--paper-fold) 0 50%, var(--fold-under, var(--board)) 50% 100%);
   box-shadow: -2px -2px 4px rgba(0,0,0,0.18);
   pointer-events: none;
 }

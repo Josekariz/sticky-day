@@ -26,7 +26,7 @@ export function LandingNote() {
         >
           <h1 className="relative font-hand text-6xl font-bold leading-none">Sticky Day</h1>
           <p className="relative text-lg leading-snug">
-            Type what you hope to get done. It becomes sticky notes. Work one at a time, then throw them in the bin.
+            Type what you hope to get done. It becomes sticky notes. Work a few at a time, then drop them in the Done tray.
           </p>
           <SignInButton className="relative mt-2 flex h-12 items-center justify-center rounded-xl bg-ink text-sm font-semibold text-on-ink" />
           <p className="relative flex justify-center gap-2 text-sm font-semibold">
