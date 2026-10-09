@@ -13,7 +13,6 @@ import { PickupCard } from "./PickupCard";
 import { FirstVisit } from "./FirstVisit";
 
 export function DayView({
-  dayId,
   userId,
   initialNotes,
   capacityMinutes,
@@ -22,7 +21,6 @@ export function DayView({
   onboarded,
   isNewAccount,
 }: {
-  dayId: string;
   userId: string;
   initialNotes: Note[];
   capacityMinutes: number;
@@ -31,7 +29,7 @@ export function DayView({
   onboarded: boolean;
   isNewAccount: boolean;
 }) {
-  const b = useBoard(initialNotes, dayId, userId, capacityMinutes, defaultShape, onboarded);
+  const b = useBoard(initialNotes, userId, capacityMinutes, onboarded);
   const drop = useDropTargets();
 
   function dropFromBoard(id: string): boolean {

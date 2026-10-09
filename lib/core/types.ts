@@ -41,5 +41,31 @@ export type Note = {
   carriedFrom: string | null; // YYYY-MM-DD of the day first written; set on rollover
 };
 
+export const NoteSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  detail: z.string(),
+  estMinutes: z.number(),
+  actualMinutes: z.number().nullable(),
+  energy: z.enum(["low", "medium", "high"]),
+  status: z.enum(["board", "focus", "done", "trashed"]),
+  color: z.enum(PAPER_COLORS),
+  shape: NoteShapeSchema,
+  x: z.number(),
+  y: z.number(),
+  rotation: z.number(),
+  startedAt: z.number().nullable(),
+  spentMs: z.number(),
+  carriedFrom: z.string().nullable(),
+}) satisfies z.ZodType<Note>;
+
+/** What /api/ai/split returns: the notes it saved to today's board. */
+export const SplitResponseSchema = z.object({
+  notes: z.array(NoteSchema),
+  warning: z.string().nullable(),
+  replayed: z.boolean(), // true when this dump was already split in the last few minutes
+});
+export type SplitResponse = z.infer<typeof SplitResponseSchema>;
+
 export const MAX_FOCUS = 3;
  
