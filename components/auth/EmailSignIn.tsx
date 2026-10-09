@@ -4,6 +4,7 @@ import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
+import { sendPasswordReset } from "./sendPasswordReset";
 
 export type EmailMode = "signIn" | "signUp" | "reset";
 
@@ -25,7 +26,7 @@ const SUBMIT: Record<EmailMode, string> = {
   reset: "Send reset link",
 };
 
-const fieldClass =
+export const fieldClass =
   "h-11 rounded-lg border border-black/20 bg-white/50 px-3 text-[15px] outline-none placeholder:text-ink-soft focus:border-black/50";
 
 export function EmailSignIn({ mode, onModeChange, onBack }: Props) {
@@ -60,12 +61,10 @@ export function EmailSignIn({ mode, onModeChange, onBack }: Props) {
     }
 
     if (mode === "reset") {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${location.origin}/auth/confirm?next=${encodeURIComponent("/profile?reset=1")}`,
-      });
+      const { error } = await sendPasswordReset(email);
       setBusy(false);
       if (error) setError(error.message);
-      else setSent("If that email has an account, a reset link is on its way. Open it in this browser.");
+      else setSent("If that email has an account, a reset link is on its way.");
       return;
     }
 
