@@ -61,7 +61,7 @@ export function DeleteAccountCard({ email }: { email: string }) {
       <div className="font-semibold">Delete account</div>
       <p id={warningId} className="text-sm text-fg-soft">
         This deletes every note, every day, every summary, the AI log, your profile and the
-        link to your Google sign-in. It cannot be undone.
+        login itself. It cannot be undone.
       </p>
 
       {!open ? (

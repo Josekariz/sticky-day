@@ -31,11 +31,23 @@
   --tray-front-armed: #62708A;
   --tray-line: #2B313A;
   --on-tray: #F2EFE6;
+  --google-blue: #4285F4;
+  --google-green: #34A853;
+  --google-yellow: #FBBC05;
+  --google-red: #EA4335;
 
   --paper-yellow: #F5FF3D;  --paper-lime: #B8FF3D;   --paper-mint: #5CFF9E;
   --paper-teal: #3DFFE4;    --paper-sky: #4DC8FF;    --paper-lavender: #A78BFF;
   --paper-lilac: #E066FF;   --paper-pink: #FF5FA8;   --paper-coral: #FF6A4D;
   --paper-peach: #FFA94D;   --paper-sand: #E8D28A;   --paper-grey: #C9CCC2;
+
+  /* note outlines, in percentages so they scale with whatever they clip */
+  --clip-square: inset(0);
+  --clip-rounded: inset(0 round 24%);
+  --clip-circle: ellipse(50% 50% at 50% 50%);
+  --clip-pill: inset(0 round 999px);
+  --clip-heart: polygon(50.0% 19.8%, 50.0% 19.2%, 50.4% 17.5%, 51.2% 14.9%, 52.8% 11.7%, 55.2% 8.3%, 58.6% 5.3%, 62.8% 2.9%, 67.7% 1.5%, 73.1% 1.5%, 78.7% 2.9%, 84.3% 5.7%, 89.4% 9.8%, 93.8% 15.0%, 97.2% 21.0%, 99.3% 27.4%, 100.0% 34.1%, 99.3% 40.7%, 97.2% 47.1%, 93.8% 53.0%, 89.4% 58.6%, 84.3% 63.8%, 78.7% 68.6%, 73.1% 73.1%, 67.7% 77.4%, 62.8% 81.5%, 58.6% 85.4%, 55.2% 89.0%, 52.8% 92.1%, 51.2% 94.8%, 50.4% 96.8%, 50.0% 98.1%, 50.0% 98.5%, 50.0% 98.1%, 49.6% 96.8%, 48.8% 94.8%, 47.2% 92.1%, 44.8% 89.0%, 41.4% 85.4%, 37.2% 81.5%, 32.3% 77.4%, 26.9% 73.1%, 21.3% 68.6%, 15.7% 63.8%, 10.6% 58.6%, 6.2% 53.0%, 2.8% 47.1%, 0.7% 40.7%, 0.0% 34.1%, 0.7% 27.4%, 2.8% 21.0%, 6.2% 15.0%, 10.6% 9.8%, 15.7% 5.7%, 21.3% 2.9%, 26.9% 1.5%, 32.3% 1.5%, 37.2% 2.9%, 41.4% 5.3%, 44.8% 8.3%, 47.2% 11.7%, 48.8% 14.9%, 49.6% 17.5%, 50.0% 19.2%);
+  --shape-shadow: rgba(0,0,0,0.3);
 }
 
 .dark {
@@ -116,7 +128,7 @@ body { background: var(--bg); }
   bottom: 0;
   width: 30px;
   height: 30px;
-  background: linear-gradient(135deg, var(--paper-fold) 0 50%, var(--board) 50% 100%);
+  background: linear-gradient(135deg, var(--paper-fold) 0 50%, var(--fold-under, var(--board)) 50% 100%);
   box-shadow: -2px -2px 4px rgba(0,0,0,0.18);
   pointer-events: none;
 }
@@ -130,6 +142,75 @@ body { background: var(--bg); }
   mix-blend-mode: multiply;
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.5 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
   pointer-events: none;
+}
+
+/*
+ * Board note. The root carries position, drag, the hover buttons and the
+ * "from <day>" stamp; only .note-paper inside it is clipped to the shape, so
+ * nothing interactive is ever cut off. Below md every note is a square.
+ */
+.note-root {
+  --note-w: var(--note-size);
+  --note-h: var(--note-size);
+  --note-tint: saturate(1);
+}
+/* Carried and finished notes: the tint runs before any drop-shadow, so the glow fades too. */
+.note-root[data-muted] { --note-tint: saturate(0.55); }
+.note-glow { filter: var(--note-tint); }
+.note-root:hover .note-paper {
+  box-shadow:
+    0 0 0 1px color-mix(in oklch, var(--paper) 45%, transparent),
+    0 0 48px color-mix(in oklch, var(--paper) 85%, transparent),
+    0 16px 24px -10px rgba(0,0,0,0.4);
+}
+
+@media (width >= 48rem) {
+  .note-root[data-shape="rounded"] { --note-font: 1.375rem; }
+  .note-root[data-shape="circle"] { --note-font: 1.125rem; }
+  .note-root[data-shape="heart"] { --note-font: 1.125rem; }
+  .note-root[data-shape="pill"] {
+    --note-w: calc(var(--note-size) * 1.5);
+    --note-h: calc(var(--note-size) * 0.7);
+    --note-font: 1.125rem;
+  }
+
+  .note-root[data-shape="rounded"] .note-paper { clip-path: var(--clip-rounded); }
+  .note-root[data-shape="circle"] .note-paper { clip-path: var(--clip-circle); }
+  .note-root[data-shape="heart"] .note-paper { clip-path: var(--clip-heart); }
+  .note-root[data-shape="pill"] .note-paper { clip-path: var(--clip-pill); }
+
+  /* Only the square keeps the lifted corner; the rest glow along their outline. */
+  .note-root:not([data-shape="square"]) .note-paper,
+  .note-root:not([data-shape="square"]):hover .note-paper { box-shadow: none; }
+  .note-root:not([data-shape="square"]) .note-paper::after { display: none; }
+  .note-root:not([data-shape="square"]) .note-glow {
+    filter:
+      var(--note-tint)
+      drop-shadow(0 0 1px color-mix(in oklch, var(--paper) 50%, transparent))
+      drop-shadow(0 0 12px color-mix(in oklch, var(--paper) 55%, transparent))
+      drop-shadow(0 10px 8px var(--shape-shadow));
+  }
+  .note-root:not([data-shape="square"]):hover .note-glow {
+    filter:
+      var(--note-tint)
+      drop-shadow(0 0 1px color-mix(in oklch, var(--paper) 60%, transparent))
+      drop-shadow(0 0 22px color-mix(in oklch, var(--paper) 85%, transparent))
+      drop-shadow(0 14px 10px var(--shape-shadow));
+  }
+}
+
+/* Small shape swatches and mini notes (pickup card, first visit, profile). */
+.shape-clip {
+  clip-path: var(--shape-clip);
+}
+.shape-paper {
+  background-color: var(--paper);
+  background-image: linear-gradient(180deg, color-mix(in oklch, var(--paper) 90%, white) 0%, var(--paper) 18%, color-mix(in oklch, var(--paper) 93%, black) 100%);
+}
+.shape-glow {
+  filter:
+    drop-shadow(0 0 6px color-mix(in oklch, var(--paper) 55%, transparent))
+    drop-shadow(0 3px 3px var(--shape-shadow));
 }
 
 /* Top nav progress — delayed so sub-150ms navigations never flash */

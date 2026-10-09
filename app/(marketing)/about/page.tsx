@@ -12,15 +12,15 @@ export default function AboutPage() {
       <div className="grid gap-6 md:grid-cols-2">
         <AboutNote title="Why" color="yellow" rotation={-2}>
           <p>Every morning I have to say at standup what I did yesterday and what I’m doing today. I didn’t want Notion for that.</p>
-          <p>I wanted a board I could throw notes at, work through one at a time, and have it write the standup for me.</p>
+          <p>I wanted a board I could throw notes at, work through a few at a time, and have it write the standup for me.</p>
         </AboutNote>
 
         <AboutNote title="How" color="sky" rotation={2} delay={0.1}>
           <ol className="list-decimal space-y-1 pl-5">
             <li>Type what you hope to get done today.</li>
             <li>It becomes sticky notes on your board, sized to fit the day.</li>
-            <li>Pick one. Work on it. Only one at a time.</li>
-            <li>Done? Into the bin. At the end of the day, the bin tells you how it went.</li>
+            <li>Pick up to three to focus on. The rest wait on the board.</li>
+            <li>Done? Into the Done tray. At the end of the day, it tells you how it went.</li>
           </ol>
         </AboutNote>
 

@@ -4,19 +4,22 @@ import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { formatSummaryTime } from "@/lib/core/date";
+import { ShapePicker, type ShapeChoice } from "@/components/board/ShapePicker";
 
 type Props = {
   userId: string;
   displayName: string;
   capacityMinutes: number;
   summaryTime: string;
+  defaultShape: ShapeChoice;
 };
 
-export function ProfileForm({ userId, displayName, capacityMinutes, summaryTime }: Props) {
+export function ProfileForm({ userId, displayName, capacityMinutes, summaryTime, defaultShape }: Props) {
   const router = useRouter();
   const [name, setName] = useState(displayName);
   const [hours, setHours] = useState(String(capacityMinutes / 60));
   const [time, setTime] = useState(formatSummaryTime(summaryTime));
+  const [shape, setShape] = useState<ShapeChoice>(defaultShape);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -39,6 +42,9 @@ export function ProfileForm({ userId, displayName, capacityMinutes, summaryTime 
         display_name: name.trim(),
         capacity_minutes: Math.round(h * 60),
         summary_time: time,
+        default_shape: shape,
+        // Choosing a shape here answers the board's first-visit card too.
+        ...(shape !== defaultShape && { onboarded_at: new Date().toISOString() }),
       })
       .eq("id", userId);
     setSaving(false);
@@ -87,6 +93,14 @@ export function ProfileForm({ userId, displayName, capacityMinutes, summaryTime 
           After this time (in your timezone), today’s summary writes itself.
         </span>
       </label>
+
+      <div className="flex flex-col gap-1.5">
+        <span className="text-sm font-semibold">Shape for new notes</span>
+        <ShapePicker value={shape} onChange={setShape} tone="page" label="Shape for new notes" />
+        <span className="text-xs text-fg-soft">
+          Only affects new notes. The ones already on your board keep their shape.
+        </span>
+      </div>
 
       <div className="flex items-center gap-3">
         <button

@@ -1,6 +1,6 @@
 # Sticky Day
 
-A whiteboard for your day. Type what you want to get done, and it becomes sticky notes. Work them one at a time, drop the finished ones in the tray, and at the end of the day the app writes you a short note about how it went.
+A whiteboard for your day. Type what you want to get done, and it becomes sticky notes. Work on up to three at a time, drop the finished ones in the tray, and at the end of the day the app writes you a short note about how it went.
 
 Live at **https://sticky-day.vercel.app** — sign in with Google and you're on the board.
 

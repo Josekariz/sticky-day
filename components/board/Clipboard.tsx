@@ -13,7 +13,7 @@ type Props = {
   onPutBack: (id: string) => void;
   onResume: (id: string) => void;
   onDragStart: () => void;
-  onDragMove: (px: number, py: number) => void;
+  onDragMove: (px: number, py: number, pointer?: [number, number]) => void;
   onDragEnd: (id: string) => void;
 };
 
@@ -81,9 +81,9 @@ export function Clipboard({
               dragMomentum={false}
               dragSnapToOrigin
               onDragStart={onDragStart}
-              onDrag={() => {
+              onDrag={(_e, info) => {
                 const el = slips.current.get(n.id);
-                if (el) onDragMove(...centreOf(el));
+                if (el) onDragMove(...centreOf(el), [info.point.x - window.scrollX, info.point.y - window.scrollY]);
               }}
               onDragEnd={() => onDragEnd(n.id)}
               whileDrag={{ scale: 1.05, zIndex: 50 }}
@@ -91,6 +91,7 @@ export function Clipboard({
               style={{
                 backgroundColor: paperVar(n.color),
                 ["--paper" as string]: paperVar(n.color),
+                ["--fold-under" as string]: "var(--clipboard-paper)",
                 rotate: live ? "-1.5deg" : "1deg",
                 filter: carried ? "saturate(0.55)" : undefined,
               }}
@@ -105,12 +106,13 @@ export function Clipboard({
               )}
               <div className={`relative font-hand text-xl font-semibold leading-tight ${carried ? "mt-3" : ""}`}>{n.title}</div>
               <div className="relative mt-2 flex items-baseline justify-between">
-                <span className="text-2xl font-bold tabular-nums leading-none">{fmt(elapsed)}</span>
-                <span className={`text-[11px] ${left < 0 ? "text-danger" : "text-ink-soft"}`}>
+                {/* A running clock reads a second or two later on the client than on the server. */}
+                <span className="text-2xl font-bold tabular-nums leading-none" suppressHydrationWarning>{fmt(elapsed)}</span>
+                <span className={`text-[11px] ${left < 0 ? "font-bold text-ink" : "text-ink-soft"}`} suppressHydrationWarning>
                   {live ? (left >= 0 ? `${fmt(left)} left` : `${fmt(-left)} over`) : "paused"}
                 </span>
               </div>
-              <div className="relative mt-2 flex gap-1.5">
+              <div className="relative mt-2 mr-6 flex gap-1.5">
                 {!live && (
                   <button onClick={() => onResume(n.id)} className="h-9 flex-1 rounded-lg border border-ink text-xs font-bold">
                     Resume

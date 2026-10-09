@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { resolveDisplayName } from "@/lib/core/name";
+import { parseShape } from "@/lib/core/types";
 import { SignOutButton } from "@/components/auth/SignOutButton";
 import { ProfileForm } from "@/components/profile/ProfileForm";
 import { DeleteAccountCard } from "@/components/profile/DeleteAccountCard";
+import { PasswordCard } from "@/components/profile/PasswordCard";
 
 export default async function ProfilePage() {
   const supabase = await createClient();
@@ -12,7 +14,7 @@ export default async function ProfilePage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("display_name, capacity_minutes, summary_time")
+    .select("display_name, capacity_minutes, summary_time, default_shape")
     .eq("id", userId)
     .maybeSingle();
 
@@ -23,6 +25,7 @@ export default async function ProfilePage() {
   );
   const capacityMinutes: number = (profile?.capacity_minutes as number | null | undefined) ?? 360;
   const summaryTime: string = String(profile?.summary_time ?? "18:00");
+  const defaultShape = parseShape(profile?.default_shape);
   const avatar: string | null = user?.user_metadata.avatar_url ?? null;
   const initials = displayName.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
 
@@ -49,13 +52,16 @@ export default async function ProfilePage() {
           displayName={displayName}
           capacityMinutes={capacityMinutes}
           summaryTime={summaryTime}
+          defaultShape={defaultShape}
         />
       </section>
+
+      <PasswordCard email={user?.email ?? ""} />
 
       <section className="flex items-center justify-between rounded-2xl border border-frame bg-surface p-6">
         <div>
           <div className="font-semibold">Sign out</div>
-          <div className="text-sm text-fg-soft">You can sign back in with Google any time.</div>
+          <div className="text-sm text-fg-soft">You can sign back in any time.</div>
         </div>
         <SignOutButton />
       </section>

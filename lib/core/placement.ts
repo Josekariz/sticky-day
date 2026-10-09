@@ -1,4 +1,4 @@
-import { PAPER_COLORS, type PaperColor } from "./types";
+import { NOTE_SHAPES, PAPER_COLORS, type NoteShape, type PaperColor } from "./types";
 
 type Pos = { x: number; y: number };
 
@@ -23,4 +23,15 @@ export function randomRotation() {
 
 export function randomColor(): PaperColor {
   return PAPER_COLORS[Math.floor(Math.random() * PAPER_COLORS.length)];
+}
+
+/**
+ * Shape for a new note. A fixed default (from the profile) always wins;
+ * null means a random mix, weighted so about half the notes stay square.
+ */
+export function shapeForNewNote(defaultShape: NoteShape | null, random = Math.random): NoteShape {
+  if (defaultShape) return defaultShape;
+  if (random() < 0.5) return "square";
+  const others = NOTE_SHAPES.filter((s) => s !== "square");
+  return others[Math.floor(random() * others.length)];
 }

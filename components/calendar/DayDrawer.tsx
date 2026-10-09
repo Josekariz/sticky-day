@@ -134,7 +134,7 @@ function NoteGroup({
             <span className="font-semibold">{n.title}</span>
             {mode === "done" && (
               <span className="shrink-0 tabular-nums text-fg-soft">
-                {n.est_minutes} · took {n.actual_minutes ?? n.est_minutes}
+                est. {n.est_minutes} min · took {n.actual_minutes ?? n.est_minutes} min
               </span>
             )}
           </li>

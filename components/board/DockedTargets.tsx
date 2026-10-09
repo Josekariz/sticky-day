@@ -35,7 +35,7 @@ export function DockedTargets({ show, over, board }: Props) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="pointer-events-none fixed inset-x-0 z-10 mx-auto flex w-fit gap-5 rounded-2xl bg-board/80 px-3 py-2 backdrop-blur-sm md:hidden"
+          className="pointer-events-none fixed inset-x-0 z-10 mx-auto flex w-fit gap-5 rounded-2xl bg-board/80 px-3 py-2 backdrop-blur-sm lg:hidden"
         >
           <Slot target="clipboard"><MiniClipboard armed={over === "clipboard"} /></Slot>
           <Slot target="tray"><MiniTray armed={over === "tray"} /></Slot>
