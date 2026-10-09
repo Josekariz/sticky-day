@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { NOTE_SHAPES, paperVar, type Energy, type Note } from "@/lib/core/types";
+import { NOTE_SHAPES, paperVar, type Priority, type Note } from "@/lib/core/types";
 import { SHAPE_LABELS, ShapeSwatch } from "./ShapeSwatch";
 
 type Props = {
@@ -11,10 +11,10 @@ type Props = {
   onWorkOn: (id: string) => void;
   onDone: (id: string) => void;
   onTrash: (id: string) => void;
-  onEdit: (id: string, patch: Partial<Pick<Note, "title" | "detail" | "estMinutes" | "energy" | "shape">>) => void;
+  onEdit: (id: string, patch: Partial<Pick<Note, "title" | "detail" | "estMinutes" | "priority" | "shape">>) => void;
 };
 
-const ENERGY: Energy[] = ["low", "medium", "high"];
+const PRIORITY: Priority[] = ["low", "medium", "high"];
 
 export function PickupCard({ note, onClose, onWorkOn, onDone, onTrash, onEdit }: Props) {
   const [confirmTrash, setConfirmTrash] = useState(false);
@@ -87,16 +87,16 @@ export function PickupCard({ note, onClose, onWorkOn, onDone, onTrash, onEdit }:
                 </div>
               </div>
               <div className="flex flex-1 flex-col gap-1">
-                <span className="text-[11px] font-bold uppercase tracking-widest text-ink-soft">Energy</span>
+                <span className="text-[11px] font-bold uppercase tracking-widest text-ink-soft">Priority</span>
                 <div className="flex rounded-lg bg-black/5 p-0.5">
-                  {ENERGY.map((e) => (
+                  {PRIORITY.map((p) => (
                     <button
-                      key={e}
-                      onClick={() => onEdit(note.id, { energy: e })}
-                      aria-pressed={note.energy === e}
-                      className={`h-9 flex-1 rounded-md text-xs font-bold capitalize ${note.energy === e ? "bg-ink text-on-ink" : "text-ink-soft"}`}
+                      key={p}
+                      onClick={() => onEdit(note.id, { priority: p })}
+                      aria-pressed={note.priority === p}
+                      className={`h-9 flex-1 rounded-md text-xs font-bold capitalize ${note.priority === p ? "bg-ink text-on-ink" : "text-ink-soft"}`}
                     >
-                      {e}
+                      {p}
                     </button>
                   ))}
                 </div>

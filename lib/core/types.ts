@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export type NoteStatus = "board" | "focus" | "done" | "trashed";
-export type Energy = "low" | "medium" | "high";
+export type Priority = "low" | "medium" | "high";
 
 export const PAPER_COLORS = [
   "yellow", "lime", "mint", "teal", "sky", "lavender",
@@ -29,7 +29,7 @@ export type Note = {
   detail: string;
   estMinutes: number;
   actualMinutes: number | null;
-  energy: Energy;
+  priority: Priority;
   status: NoteStatus;
   color: PaperColor;
   shape: NoteShape;
@@ -47,7 +47,7 @@ export const NoteSchema = z.object({
   detail: z.string(),
   estMinutes: z.number(),
   actualMinutes: z.number().nullable(),
-  energy: z.enum(["low", "medium", "high"]),
+  priority: z.enum(["low", "medium", "high"]),
   status: z.enum(["board", "focus", "done", "trashed"]),
   color: z.enum(PAPER_COLORS),
   shape: NoteShapeSchema,

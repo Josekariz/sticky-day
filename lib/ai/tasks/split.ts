@@ -5,7 +5,7 @@ export const SplitNoteSchema = z.object({
   title: z.string().min(1).max(60).describe("Short, imperative, the way you'd write it on a sticky. No trailing period."),
   detail: z.string().max(240).describe("One or two sentences of context, or empty if the title says it all."),
   estMinutes: z.number().int().min(5).max(240).describe("Honest estimate. Round to 5. If unsure, lean high."),
-  energy: z.enum(["low", "medium", "high"]).describe("low = can do tired; high = needs a fresh brain."),
+  priority: z.enum(["low", "medium", "high"]).describe("high = must happen today; low = fine to slip to tomorrow."),
 });
 
 export const SplitResultSchema = z.object({
@@ -31,7 +31,7 @@ Rules:
 - Keep the title in the language they wrote it in; don't translate.
 - Titles are short and start with a verb where natural. Detail carries anything from their text that the title dropped.
 - Estimates: be honest, not optimistic. Reading, writing and code always take longer than people think.
-- Energy: creative or hard thinking is high; admin and errands are low.
+- Priority: high when it must happen today (a deadline, an appointment, someone waiting on it, or they say it's urgent); low when it's nice to have and could slip to tomorrow; medium otherwise.
 - People type fast. Misspellings, missing letters, shorthand, slang, Swahili/Sheng words and mixed languages are all normal — read the intent charitably. If you can see what they mean, it's a task — never treat readable shorthand as gibberish.
 - When you fix an obvious typo in a title, fix it quietly. When you're not sure what a word is, keep it exactly as written and mention the doubt in warning.
 - Return an empty notes array only when you cannot form a single plausible intention from the text — random letters, a bare greeting, a question to you. Say why in warning, in one kind sentence. Shorthand that expands to real tasks must become notes, not an empty array.`;
