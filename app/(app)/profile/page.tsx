@@ -5,8 +5,10 @@ import { parseShape } from "@/lib/core/types";
 import { SignOutButton } from "@/components/auth/SignOutButton";
 import { ProfileForm } from "@/components/profile/ProfileForm";
 import { DeleteAccountCard } from "@/components/profile/DeleteAccountCard";
+import { PasswordCard } from "@/components/profile/PasswordCard";
 
-export default async function ProfilePage() {
+export default async function ProfilePage({ searchParams }: PageProps<"/profile">) {
+  const { reset } = await searchParams;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   const userId = user!.id;
@@ -55,10 +57,12 @@ export default async function ProfilePage() {
         />
       </section>
 
+      <PasswordCard email={user?.email ?? ""} fromReset={reset === "1"} />
+
       <section className="flex items-center justify-between rounded-2xl border border-frame bg-surface p-6">
         <div>
           <div className="font-semibold">Sign out</div>
-          <div className="text-sm text-fg-soft">You can sign back in with Google any time.</div>
+          <div className="text-sm text-fg-soft">You can sign back in any time.</div>
         </div>
         <SignOutButton />
       </section>

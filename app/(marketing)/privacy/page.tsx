@@ -15,7 +15,7 @@ export default function PrivacyPage() {
 
       <div className="grid gap-6 md:grid-cols-2">
         <AboutNote title="What we keep" color="yellow" rotation={-2}>
-          <p>Your name, email and picture from Google, to sign you in and say hello.</p>
+          <p>Your email to sign you in, plus your name and picture if you use Google, to say hello.</p>
           <p>Every note you write, with when you started and finished it.</p>
           <p>Your timezone, display name and the time you want your daily summary.</p>
           <p>
