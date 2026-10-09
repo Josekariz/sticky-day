@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 
 export function BrainDump({
@@ -44,6 +45,7 @@ export function BrainDump({
           id="dump"
           value={text}
           onChange={(e) => setText(e.target.value)}
+          aria-describedby="dump-ai-notice"
           placeholder="What's on today?"
           className="flex-1 min-w-0 bg-transparent font-hand text-2xl outline-none placeholder:text-fg-soft"
         />
@@ -75,6 +77,12 @@ export function BrainDump({
           {busy ? "Thinking" : "Break it down"}
         </button>
       </form>
+      <p id="dump-ai-notice" className="px-1 text-xs text-fg-soft">
+        Your notes go to an AI to be split. Keep passwords and money out.{" "}
+        <Link href="/privacy" className="underline underline-offset-2 hover:text-fg">
+          Privacy
+        </Link>
+      </p>
       <AnimatePresence>
         {message && (
           <motion.p
