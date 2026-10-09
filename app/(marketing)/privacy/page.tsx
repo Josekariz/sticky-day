@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { AboutNote } from "@/components/marketing/AboutNote";
 
-const LAST_UPDATED = "5 October 2026";
+const LAST_UPDATED = "9 October 2026";
 
 const linkClass = "font-semibold underline underline-offset-2";
 
@@ -22,6 +22,10 @@ export default function PrivacyPage() {
             A short log of each AI call: the first 80 characters of what you typed, which model
             answered and how long it took. It’s there so I can fix things when they break, and it’s
             deleted after 30 days.
+          </p>
+          <p>
+            A fingerprint (hash) of each brain dump, never the text, and which notes it made. It stops
+            the same dump being split twice, and it’s deleted within a day.
           </p>
           <p>
             Messages sent through Say hi: your name, the message, and your email if you give one. They’re
