@@ -1,12 +1,11 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { MAX_FOCUS, type Note, type NoteShape } from "@/lib/core/types";
-import { placeNote, randomColor, randomRotation, shapeForNewNote } from "@/lib/core/placement";
+import { MAX_FOCUS, SplitResponseSchema, type Note, type NoteShape } from "@/lib/core/types";
+import { placeNote } from "@/lib/core/placement";
 import { createClient } from "@/lib/supabase/client";
-import { noteToRow, patchToRow } from "@/lib/core/mappers";
+import { patchToRow } from "@/lib/core/mappers";
 import { trackSave } from "@/components/board/pendingSaves";
-import { SplitResultSchema } from "@/lib/ai/tasks/split";
 
 function fmtHours(minutes: number) {
   const h = minutes / 60;
@@ -32,15 +31,12 @@ function changedTimerFields(prev: Note, next: Note): Partial<Note> | null {
 
 export function useBoard(
   initial: Note[],
-  dayId: string,
   userId: string,
   capacityMinutes: number,
-  initialDefaultShape: NoteShape | null, // null = a random mix
   initialOnboarded: boolean,
 ) {
   const [notes, setNotes] = useState(initial);
   const [openId, setOpenId] = useState<string | null>(null);
-  const [defaultShape, setDefaultShape] = useState(initialDefaultShape);
   const [onboarded, setOnboarded] = useState(initialOnboarded);
   const supabase = useMemo(() => createClient(), []);
 
@@ -51,15 +47,6 @@ export function useBoard(
         supabase.from("notes").update(patchToRow(patch)).eq("id", id).eq("user_id", userId),
       ).then(({ error }) => {
         if (error) console.error("save failed", id, error.message);
-      }),
-    );
-
-  const insert = (ns: Note[]) =>
-    trackSave(
-      Promise.resolve(
-        supabase.from("notes").insert(ns.map((n) => noteToRow(n, dayId, userId))),
-      ).then(({ error }) => {
-        if (error) console.error("insert failed", error.message);
       }),
     );
 
@@ -106,7 +93,6 @@ export function useBoard(
     /** First-visit answer: the shape for new notes, and never show the card again. */
     async finishOnboarding(shape: NoteShape | null) {
       await saveOnboarding({ default_shape: shape });
-      setDefaultShape(shape);
       setOnboarded(true);
     },
 
@@ -231,40 +217,27 @@ export function useBoard(
         throw new Error(err);
       }
 
-      const parsed = SplitResultSchema.safeParse(await res.json());
+      const parsed = SplitResponseSchema.safeParse(await res.json());
       if (!parsed.success) throw new Error("Something went wrong");
-      const { notes: split, warning } = parsed.data;
-      if (split.length === 0) {
+      const { notes: created, warning, replayed } = parsed.data;
+      if (created.length === 0) {
         return warning ?? "Couldn't find a task in that.";
       }
+      if (replayed && created.every((c) => notes.some((n) => n.id === c.id))) {
+        return "Those are already on your board (check the bin).";
+      }
 
-      const total = split.reduce((s, n) => s + n.estMinutes, 0);
+      const total = created.reduce((s, n) => s + n.estMinutes, 0);
       const overbooked =
         total > capacityMinutes
           ? `That's about ${fmtHours(total)}h of work for a ${fmtHours(capacityMinutes)}h day.`
           : null;
 
-      const created: Note[] = [];
-      let board = notes.filter((n) => n.status === "board");
-      for (const s of split) {
-        const n: Note = {
-          id: crypto.randomUUID(),
-          ...s,
-          actualMinutes: null,
-          spentMs: 0,
-          status: "board",
-          color: randomColor(),
-          shape: shapeForNewNote(defaultShape),
-          rotation: randomRotation(),
-          startedAt: null,
-          carriedFrom: null,
-          ...placeNote(board),
-        };
-        created.push(n);
-        board = [...board, n];
-      }
-      setNotes((ns) => [...ns, ...created]);
-      insert(created);
+      // The server saved these; a repeat returns notes this board may already show.
+      setNotes((ns) => {
+        const shown = new Set(ns.map((n) => n.id));
+        return [...ns, ...created.filter((n) => !shown.has(n.id))];
+      });
       return [warning, overbooked].filter(Boolean).join(" ") || null;
     },
   };

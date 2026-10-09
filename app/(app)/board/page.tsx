@@ -44,7 +44,6 @@ export default async function BoardPage() {
   return (
     <main className="flex flex-1 flex-col">
       <DayView
-        dayId={day.id}
         userId={userId}
         initialNotes={(rows as NoteRow[] ?? []).map(rowToNote)}
         capacityMinutes={capacityMinutes}
