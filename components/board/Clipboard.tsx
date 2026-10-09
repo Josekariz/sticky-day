@@ -13,7 +13,7 @@ type Props = {
   onPutBack: (id: string) => void;
   onResume: (id: string) => void;
   onDragStart: () => void;
-  onDragMove: (px: number, py: number) => void;
+  onDragMove: (px: number, py: number, pointer?: [number, number]) => void;
   onDragEnd: (id: string) => void;
 };
 
@@ -81,9 +81,9 @@ export function Clipboard({
               dragMomentum={false}
               dragSnapToOrigin
               onDragStart={onDragStart}
-              onDrag={() => {
+              onDrag={(_e, info) => {
                 const el = slips.current.get(n.id);
-                if (el) onDragMove(...centreOf(el));
+                if (el) onDragMove(...centreOf(el), [info.point.x - window.scrollX, info.point.y - window.scrollY]);
               }}
               onDragEnd={() => onDragEnd(n.id)}
               whileDrag={{ scale: 1.05, zIndex: 50 }}

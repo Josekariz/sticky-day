@@ -49,8 +49,11 @@ export function useDropTargets() {
     setDragging(true);
   }
 
-  function move(px: number, py: number) {
-    const hit = (r?: DOMRect) => !!r && px >= r.left && px <= r.right && py >= r.top && py <= r.bottom;
+  /** Points are viewport coordinates: the note's centre, and the pointer when known. */
+  function move(px: number, py: number, pointer?: [number, number]) {
+    const points = pointer ? [[px, py], pointer] : [[px, py]];
+    const hit = (r?: DOMRect) =>
+      !!r && points.some(([x, y]) => x >= r.left && x <= r.right && y >= r.top && y <= r.bottom);
     const t: DropTarget =
       hit(rects.current.clipboard) ? "clipboard" :
       hit(rects.current.tray) ? "tray" :

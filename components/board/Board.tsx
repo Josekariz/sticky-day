@@ -16,7 +16,7 @@ type Props = {
   onDone: (id: string) => void;
   onTrash: (id: string) => void;
   onDragStart: () => void;
-  onDragMove: (px: number, py: number) => void;
+  onDragMove: (px: number, py: number, pointer?: [number, number]) => void;
   onDragEnd: (id: string) => boolean;
 };
 

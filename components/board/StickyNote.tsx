@@ -15,7 +15,7 @@ type InteractiveProps = {
   onDone: (id: string) => void;
   onTrash: (id: string) => void;
   onDragStart: () => void;
-  onDragMove: (px: number, py: number) => void;
+  onDragMove: (px: number, py: number, pointer?: [number, number]) => void;
   onDragEnd: (id: string) => boolean;
 };
 
@@ -77,6 +77,8 @@ export function StickyNote(props: Props) {
   // A drag ends with pointerup on the note, which the browser turns into a click.
   // Remember that this gesture was a drag so the click doesn't open the note.
   const dragged = useRef(false);
+  // Separate from `dragged`: that click runs before Framer's onDragEnd and clears it.
+  const boardSawDrag = useRef(false);
   const self = useRef<HTMLDivElement>(null);
   const carried = !!note.carriedFrom;
   const shape = note.shape;
@@ -87,6 +89,8 @@ export function StickyNote(props: Props) {
     const dy = y.get();
     x.set(0);
     y.set(0);
+    if (!boardSawDrag.current) return; // never got past DRAG_PX
+    boardSawDrag.current = false;
     if (props.onDragEnd(note.id)) return; // it left the board; don't save a position
     if (Math.hypot(dx, dy) <= DRAG_PX) return; // a wobbly click; the reset above puts it back
     const el = props.board.current;
@@ -138,13 +142,22 @@ export function StickyNote(props: Props) {
               dragged.current = false;
             }
       }
-      onDragStart={readOnly ? undefined : () => props.onDragStart()}
       onDrag={
         readOnly
           ? undefined
-          : () => {
-              if (Math.hypot(x.get(), y.get()) > DRAG_PX) dragged.current = true;
-              if (self.current) props.onDragMove(...centreOf(self.current));
+          : (_e, info) => {
+              if (!dragged.current) {
+                if (Math.hypot(x.get(), y.get()) <= DRAG_PX) return;
+                dragged.current = true;
+                boardSawDrag.current = true;
+                props.onDragStart();
+              }
+              if (self.current) {
+                props.onDragMove(...centreOf(self.current), [
+                  info.point.x - window.scrollX,
+                  info.point.y - window.scrollY,
+                ]);
+              }
             }
       }
       onDragEnd={readOnly ? undefined : handleDragEnd}
