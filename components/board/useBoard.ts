@@ -71,6 +71,19 @@ export function useBoard(
         if (error) console.error("delete failed", error.message);
       }),
     );
+  // Rejects if the profile couldn't be saved, so the first-visit card can say so.
+  const saveOnboarding = async (fields: { default_shape?: NoteShape | null }) => {
+    const { error } = await trackSave(
+      Promise.resolve(
+        supabase
+          .from("profiles")
+          .update({ ...fields, onboarded_at: new Date().toISOString() })
+          .eq("id", userId),
+      ),
+    );
+    if (error) throw new Error(error.message);
+  };
+
   const update = (id: string, patch: Partial<Note>) => {
     setNotes((ns) => ns.map((n) => (n.id === id ? { ...n, ...patch } : n)));
     save(id, patch);
@@ -92,16 +105,14 @@ export function useBoard(
 
     /** First-visit answer: the shape for new notes, and never show the card again. */
     async finishOnboarding(shape: NoteShape | null) {
-      const { error } = await trackSave(
-        Promise.resolve(
-          supabase
-            .from("profiles")
-            .update({ default_shape: shape, onboarded_at: new Date().toISOString() })
-            .eq("id", userId),
-        ),
-      );
-      if (error) throw new Error(error.message);
+      await saveOnboarding({ default_shape: shape });
       setDefaultShape(shape);
+      setOnboarded(true);
+    },
+
+    /** Dismiss the first-visit card without touching the shape already chosen. */
+    async skipOnboarding() {
+      await saveOnboarding({});
       setOnboarded(true);
     },
 

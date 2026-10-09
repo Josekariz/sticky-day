@@ -43,6 +43,8 @@ export function ProfileForm({ userId, displayName, capacityMinutes, summaryTime,
         capacity_minutes: Math.round(h * 60),
         summary_time: time,
         default_shape: shape,
+        // Choosing a shape here answers the board's first-visit card too.
+        ...(shape !== defaultShape && { onboarded_at: new Date().toISOString() }),
       })
       .eq("id", userId);
     setSaving(false);

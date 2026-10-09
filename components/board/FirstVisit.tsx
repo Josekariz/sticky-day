@@ -9,8 +9,12 @@ import { ShapePicker, type ShapeChoice } from "./ShapePicker";
 type Props = {
   /** New accounts get the how-it-works step first; everyone else gets a one-line intro. */
   isNewAccount: boolean;
+  /** The shape new notes already get; null = a random mix. */
+  defaultShape: ShapeChoice;
   /** Saves the choice; rejects if it couldn't be saved. */
   onFinish: (choice: ShapeChoice) => Promise<void>;
+  /** Dismisses the card without changing the shape; rejects if it couldn't be saved. */
+  onSkip: () => Promise<void>;
 };
 
 const HOW_IT_WORKS = [
@@ -25,19 +29,19 @@ const MINI_NOTES: { title: string; color: PaperColor; mix: NoteShape }[] = [
   { title: "Draft report", color: "peach", mix: "circle" },
 ];
 
-export function FirstVisit({ isNewAccount, onFinish }: Props) {
+export function FirstVisit({ isNewAccount, defaultShape, onFinish, onSkip }: Props) {
   const [step, setStep] = useState<"how" | "paper">(isNewAccount ? "how" : "paper");
-  const [choice, setChoice] = useState<ShapeChoice>(null);
+  const [choice, setChoice] = useState<ShapeChoice>(defaultShape);
   const [hovered, setHovered] = useState<ShapeChoice | undefined>(undefined);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const shown = hovered === undefined ? choice : hovered;
 
-  async function finish(picked: ShapeChoice) {
+  async function answer(write: () => Promise<void>) {
     setSaving(true);
     setError(null);
     try {
-      await onFinish(picked);
+      await write();
     } catch {
       setError("Couldn’t save that. Try again?");
       setSaving(false);
@@ -77,7 +81,7 @@ export function FirstVisit({ isNewAccount, onFinish }: Props) {
             </button>
             <button
               type="button"
-              onClick={() => finish(null)}
+              onClick={() => answer(onSkip)}
               disabled={saving}
               className="text-xs font-semibold text-ink-soft underline underline-offset-2 hover:text-ink disabled:opacity-40"
             >
@@ -130,7 +134,7 @@ export function FirstVisit({ isNewAccount, onFinish }: Props) {
           <div className="relative flex items-center gap-4">
             <button
               type="button"
-              onClick={() => finish(choice)}
+              onClick={() => answer(() => onFinish(choice))}
               disabled={saving}
               className="h-12 flex-1 rounded-xl bg-ink text-sm font-bold text-on-ink disabled:opacity-60"
             >
@@ -138,7 +142,7 @@ export function FirstVisit({ isNewAccount, onFinish }: Props) {
             </button>
             <button
               type="button"
-              onClick={() => finish(null)}
+              onClick={() => answer(onSkip)}
               disabled={saving}
               className="text-xs font-semibold text-ink-soft underline underline-offset-2 hover:text-ink disabled:opacity-40"
             >

@@ -69,7 +69,12 @@ export function DayView({
           />
           {!b.onboarded && (
             <div className="absolute inset-0 z-30 flex items-start justify-center overflow-y-auto p-3 md:items-center md:overflow-visible md:p-6">
-              <FirstVisit isNewAccount={isNewAccount} onFinish={b.finishOnboarding} />
+              <FirstVisit
+                isNewAccount={isNewAccount}
+                defaultShape={defaultShape}
+                onFinish={b.finishOnboarding}
+                onSkip={b.skipOnboarding}
+              />
             </div>
           )}
         </div>
