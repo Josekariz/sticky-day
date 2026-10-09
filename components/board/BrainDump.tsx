@@ -5,6 +5,7 @@ import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 
 const AI_NOTICE = "Your notes go to an AI to be split. Keep passwords and money out.";
+const QUICK_NOTICE = "Quick split, right here in your browser. Nothing is sent anywhere. Sign in and the AI does it properly.";
 const NOTICE_DISMISSED_KEY = "sticky-day:ai-notice-dismissed";
 
 const noSubscribe = () => () => {};
@@ -18,8 +19,10 @@ function readNoticeNotDismissed() {
 
 export function BrainDump({
   onSubmit,
+  quick = false,
 }: {
   onSubmit: (text: string) => Promise<string | null>;
+  quick?: boolean; // the guest board: split by rules in the browser, no AI
 }) {
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
@@ -27,7 +30,8 @@ export function BrainDump({
   // Server snapshot is "hidden" so people who dismissed it never see it flash.
   const noticeNotDismissed = useSyncExternalStore(noSubscribe, readNoticeNotDismissed, () => false);
   const [dismissedNow, setDismissedNow] = useState(false);
-  const showNotice = noticeNotDismissed && !dismissedNow;
+  const showNotice = quick || (noticeNotDismissed && !dismissedNow);
+  const notice = quick ? QUICK_NOTICE : AI_NOTICE;
 
   function dismissNotice() {
     setDismissedNow(true);
@@ -90,7 +94,7 @@ export function BrainDump({
         <button
           type="submit"
           disabled={!text.trim() || busy}
-          title={AI_NOTICE}
+          title={notice}
           className="flex h-11 w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-fg pl-4 pr-5 text-sm font-semibold leading-none text-bg disabled:opacity-60 md:w-auto md:min-w-40"
         >
           {busy ? (
@@ -100,9 +104,11 @@ export function BrainDump({
               <span className="h-1 w-1 animate-bounce rounded-full bg-bg" />
             </span>
           ) : (
-            <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-              <path d="M12 2.5l2.3 7.2 7.2 2.3-7.2 2.3-2.3 7.2-2.3-7.2L2.5 12l7.2-2.3z" />
-            </svg>
+            !quick && (
+              <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                <path d="M12 2.5l2.3 7.2 7.2 2.3-7.2 2.3-2.3 7.2-2.3-7.2L2.5 12l7.2-2.3z" />
+              </svg>
+            )
           )}
           <span>{busy ? "Thinking" : "Break it down"}</span>
         </button>
@@ -110,12 +116,12 @@ export function BrainDump({
       {showNotice && (
         <div className="flex items-start gap-1 px-1">
           <p id="dump-ai-notice" className="text-xs text-fg-soft">
-            {AI_NOTICE}{" "}
+            {notice}{" "}
             <Link href="/privacy" className="underline underline-offset-2 hover:text-fg">
               Privacy
             </Link>
           </p>
-          <button
+          {!quick && <button
             type="button"
             onClick={dismissNotice}
             aria-label="Dismiss AI notice"
@@ -124,7 +130,7 @@ export function BrainDump({
             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" aria-hidden>
               <path d="M5 5l14 14M19 5L5 19" />
             </svg>
-          </button>
+          </button>}
         </div>
       )}
       <AnimatePresence>
