@@ -1,7 +1,20 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
+import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
+
+const AI_NOTICE = "Your notes go to an AI to be split. Keep passwords and money out.";
+const NOTICE_DISMISSED_KEY = "sticky-day:ai-notice-dismissed";
+
+const noSubscribe = () => () => {};
+function readNoticeNotDismissed() {
+  try {
+    return localStorage.getItem(NOTICE_DISMISSED_KEY) !== "1";
+  } catch {
+    return true;
+  }
+}
 
 export function BrainDump({
   onSubmit,
@@ -11,6 +24,19 @@ export function BrainDump({
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  // Server snapshot is "hidden" so people who dismissed it never see it flash.
+  const noticeNotDismissed = useSyncExternalStore(noSubscribe, readNoticeNotDismissed, () => false);
+  const [dismissedNow, setDismissedNow] = useState(false);
+  const showNotice = noticeNotDismissed && !dismissedNow;
+
+  function dismissNotice() {
+    setDismissedNow(true);
+    try {
+      localStorage.setItem(NOTICE_DISMISSED_KEY, "1");
+    } catch {
+      // Storage blocked: it stays hidden until the next reload.
+    }
+  }
 
   useEffect(() => {
     if (!message) return;
@@ -44,6 +70,7 @@ export function BrainDump({
           id="dump"
           value={text}
           onChange={(e) => setText(e.target.value)}
+          aria-describedby="dump-ai-notice"
           placeholder="What's on today?"
           className="flex-1 min-w-0 bg-transparent font-hand text-2xl outline-none placeholder:text-fg-soft"
         />
@@ -63,18 +90,43 @@ export function BrainDump({
         <button
           type="submit"
           disabled={!text.trim() || busy}
-          className="flex h-11 w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-fg px-5 text-sm font-semibold text-bg disabled:opacity-60 md:w-auto"
+          title={AI_NOTICE}
+          className="flex h-11 w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-fg pl-4 pr-5 text-sm font-semibold leading-none text-bg disabled:opacity-60 md:w-auto md:min-w-40"
         >
-          {busy && (
-            <span className="flex gap-1" aria-hidden>
-              <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-bg [animation-delay:-0.3s]" />
-              <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-bg [animation-delay:-0.15s]" />
-              <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-bg" />
+          {busy ? (
+            <span className="flex h-4 w-4 shrink-0 items-center justify-center gap-0.5" aria-hidden>
+              <span className="h-1 w-1 animate-bounce rounded-full bg-bg [animation-delay:-0.3s]" />
+              <span className="h-1 w-1 animate-bounce rounded-full bg-bg [animation-delay:-0.15s]" />
+              <span className="h-1 w-1 animate-bounce rounded-full bg-bg" />
             </span>
+          ) : (
+            <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+              <path d="M12 2.5l2.3 7.2 7.2 2.3-7.2 2.3-2.3 7.2-2.3-7.2L2.5 12l7.2-2.3z" />
+            </svg>
           )}
-          {busy ? "Thinking" : "Break it down"}
+          <span>{busy ? "Thinking" : "Break it down"}</span>
         </button>
       </form>
+      {showNotice && (
+        <div className="flex items-start gap-1 px-1">
+          <p id="dump-ai-notice" className="text-xs text-fg-soft">
+            {AI_NOTICE}{" "}
+            <Link href="/privacy" className="underline underline-offset-2 hover:text-fg">
+              Privacy
+            </Link>
+          </p>
+          <button
+            type="button"
+            onClick={dismissNotice}
+            aria-label="Dismiss AI notice"
+            className="-my-1 grid h-6 w-6 shrink-0 place-items-center rounded-full text-fg-soft hover:text-fg"
+          >
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" aria-hidden>
+              <path d="M5 5l14 14M19 5L5 19" />
+            </svg>
+          </button>
+        </div>
+      )}
       <AnimatePresence>
         {message && (
           <motion.p
