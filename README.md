@@ -10,7 +10,7 @@ Built in Nairobi by [Joseph Macharia](https://github.com/Josekariz) as a way to 
 
 ## What it does
 
-**Board.** One text box: *"What do you want to get done today?"* Write it the way you'd say it — *"reply to Sarah about the budget, 30 min run, water the plants, book the dentist"*. The AI splits that into sticky notes, each with a rough time and an energy level. They land on the board in random colours. Drag them around. If you've written more than fits in your day it tells you so, gently.
+**Board.** One text box: *"What do you want to get done today?"* Write it the way you'd say it — *"reply to Sarah about the budget, 30 min run, water the plants, book the dentist"*. The AI splits that into sticky notes, each with a rough time and a priority (low, medium or high). They land on the board in random colours. Drag them around. If you've written more than fits in your day it tells you so, gently.
 
 Pick a note up to edit it. Drag it to the clipboard to work on it — a timer starts, and only the newest one on the clipboard runs. Drag it to the Done tray when it's finished, or to the bin if it shouldn't have existed. The bin is restorable.
 

@@ -1,9 +1,10 @@
-import { parseShape, type Note, type NoteStatus, type Energy, type PaperColor, type NoteShape } from "./types";
+import { parseShape, type Note, type NoteStatus, type Priority, type PaperColor, type NoteShape } from "./types";
 
+// The priority column is still named `energy` in the database.
 export type NoteRow = {
   id: string; day_id: string; user_id: string;
   title: string; detail: string; est_minutes: number; actual_minutes: number | null;
-  spent_ms: number; energy: Energy; status: NoteStatus; color: PaperColor; shape: NoteShape;
+  spent_ms: number; energy: Priority; status: NoteStatus; color: PaperColor; shape: NoteShape;
   x: number; y: number; rotation: number; started_at: string | null;
   completed_at?: string | null;
   carried_from: string | null;
@@ -13,7 +14,7 @@ export function rowToNote(r: NoteRow): Note {
   return {
     id: r.id, title: r.title, detail: r.detail,
     estMinutes: r.est_minutes, actualMinutes: r.actual_minutes, spentMs: Number(r.spent_ms),
-    energy: r.energy, status: r.status, color: r.color, shape: parseShape(r.shape) ?? "square",
+    priority: r.energy, status: r.status, color: r.color, shape: parseShape(r.shape) ?? "square",
     x: r.x, y: r.y, rotation: r.rotation,
     startedAt: r.started_at ? new Date(r.started_at).getTime() : null,
     carriedFrom: r.carried_from,
@@ -24,7 +25,7 @@ export function noteToRow(n: Note, dayId: string, userId: string): NoteRow {
   return {
     id: n.id, day_id: dayId, user_id: userId,
     title: n.title, detail: n.detail, est_minutes: n.estMinutes, actual_minutes: n.actualMinutes,
-    spent_ms: n.spentMs, energy: n.energy, status: n.status, color: n.color, shape: n.shape,
+    spent_ms: n.spentMs, energy: n.priority, status: n.status, color: n.color, shape: n.shape,
     x: n.x, y: n.y, rotation: n.rotation,
     started_at: n.startedAt ? new Date(n.startedAt).toISOString() : null,
     carried_from: n.carriedFrom,
@@ -39,7 +40,7 @@ export function patchToRow(p: Partial<Note>): Partial<NoteRow> {
   if (p.estMinutes !== undefined) r.est_minutes = p.estMinutes;
   if (p.actualMinutes !== undefined) r.actual_minutes = p.actualMinutes;
   if (p.spentMs !== undefined) r.spent_ms = p.spentMs;
-  if (p.energy !== undefined) r.energy = p.energy;
+  if (p.priority !== undefined) r.energy = p.priority;
   if (p.status !== undefined) {
     r.status = p.status;
     // Useful audit field; staleness uses notes.updated_at (DB trigger), not this.

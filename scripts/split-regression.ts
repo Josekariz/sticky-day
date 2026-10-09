@@ -14,7 +14,7 @@ async function runCase(c: (typeof SPLIT_REGRESSION)[number], attempt = 1): Promi
   );
   try {
     const result = await withFallback((model) => splitDay(model, c.dump, CAPACITY));
-    const notes = result.notes.map((n) => `${n.title} (${n.estMinutes}m, ${n.energy})`).join("\n       ");
+    const notes = result.notes.map((n) => `${n.title} (${n.estMinutes}m, ${n.priority})`).join("\n       ");
     process.stdout.write(`  notes: ${result.notes.length ? `\n       ${notes}` : "(none)"}\n`);
     process.stdout.write(`  warning: ${result.warning?.trim() ? result.warning : "(null)"}\n`);
     const err = c.check(result);
