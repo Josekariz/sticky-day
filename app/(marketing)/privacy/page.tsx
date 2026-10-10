@@ -63,6 +63,18 @@ export default function PrivacyPage() {
           <p>If you’re there, run your own copy, or wait for your own key.</p>
         </AboutNote>
 
+        <AboutNote title="Trying it without signing in" color="peach" rotation={-2} delay={0.25}>
+          <p>
+            Everything you put on the board before you sign in stays in your browser. It isn’t sent to
+            the server or to any AI model; the quick split happens on your device.
+          </p>
+          <p>
+            If you sign in on the same browser, those notes move into your account once and are then
+            removed from the browser. Otherwise they expire after 7 days unused, or when you press
+            Clear board.
+          </p>
+        </AboutNote>
+
         <AboutNote title="Your choices" color="lavender" rotation={1} delay={0.3}>
           <p>
             <Link href="/profile" className={linkClass}>Delete account</Link> on the Profile page

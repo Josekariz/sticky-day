@@ -14,6 +14,8 @@ Built in Nairobi by [Joseph Macharia](https://github.com/Josekariz) as a way to 
 
 Pick a note up to edit it. Drag it to the clipboard to work on it — a timer starts, and only the newest one on the clipboard runs. Drag it to the Done tray when it's finished, or to the bin if it shouldn't have existed. The bin is restorable.
 
+You can try the board on the landing page before signing in. There the splitting is a quick rule-based one in your browser (no AI, nothing sent anywhere), with three example days the AI made earlier. Sign in and the notes come with you.
+
 Whatever you don't finish rolls over to tomorrow's board by itself, with a small *"from Thursday"* stamp so you know it's been waiting.
 
 **Calendar.** A month of small rings — each one is how much of that day got done. Click a day and a drawer slides in with what you finished, what you didn't, and the note the app wrote about it. Past days are read-only.

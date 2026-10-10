@@ -1,11 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { MAX_FOCUS, SplitResponseSchema, type Note, type NoteShape } from "@/lib/core/types";
+import { useEffect, useState } from "react";
+import { MAX_FOCUS, type Note, type NoteShape } from "@/lib/core/types";
 import { placeNote } from "@/lib/core/placement";
-import { createClient } from "@/lib/supabase/client";
-import { patchToRow } from "@/lib/core/mappers";
-import { trackSave } from "@/components/board/pendingSaves";
+import type { BoardStore } from "@/components/board/store";
 
 function fmtHours(minutes: number) {
   const h = minutes / 60;
@@ -29,47 +27,33 @@ function changedTimerFields(prev: Note, next: Note): Partial<Note> | null {
   return Object.keys(patch).length ? patch : null;
 }
 
+/** Adds notes the board doesn't show yet; a repeat split or import may return ones it does. */
+function mergeNew(ns: Note[], created: Note[]): Note[] {
+  const shown = new Set(ns.map((n) => n.id));
+  return [...ns, ...created.filter((n) => !shown.has(n.id))];
+}
+
+/** capacityMinutes is null when estimates are guesses (the guest board), so no overbooking line. */
 export function useBoard(
   initial: Note[],
-  userId: string,
-  capacityMinutes: number,
+  store: BoardStore,
+  capacityMinutes: number | null,
   initialOnboarded: boolean,
 ) {
   const [notes, setNotes] = useState(initial);
   const [openId, setOpenId] = useState<string | null>(null);
   const [onboarded, setOnboarded] = useState(initialOnboarded);
-  const supabase = useMemo(() => createClient(), []);
+  const { save, remove, saveOnboarding } = store;
 
-  // Optimistic UI; track in-flight writes so nav can flush briefly.
-  const save = (id: string, patch: Partial<Note>) =>
-    trackSave(
-      Promise.resolve(
-        supabase.from("notes").update(patchToRow(patch)).eq("id", id).eq("user_id", userId),
-      ).then(({ error }) => {
-        if (error) console.error("save failed", id, error.message);
-      }),
-    );
+  useEffect(() => {
+    store.persist?.(notes);
+  }, [store, notes]);
 
-  const remove = (ids: string[]) =>
-    trackSave(
-      Promise.resolve(
-        supabase.from("notes").delete().in("id", ids).eq("user_id", userId),
-      ).then(({ error }) => {
-        if (error) console.error("delete failed", error.message);
-      }),
-    );
-  // Rejects if the profile couldn't be saved, so the first-visit card can say so.
-  const saveOnboarding = async (fields: { default_shape?: NoteShape | null }) => {
-    const { error } = await trackSave(
-      Promise.resolve(
-        supabase
-          .from("profiles")
-          .update({ ...fields, onboarded_at: new Date().toISOString() })
-          .eq("id", userId),
-      ),
-    );
-    if (error) throw new Error(error.message);
-  };
+  useEffect(() => {
+    store.importGuest?.().then((imported) => {
+      if (imported.length) setNotes((ns) => mergeNew(ns, imported));
+    });
+  }, [store]);
 
   const update = (id: string, patch: Partial<Note>) => {
     setNotes((ns) => ns.map((n) => (n.id === id ? { ...n, ...patch } : n)));
@@ -205,21 +189,9 @@ export function useBoard(
       update(id, patch);
     },
 
-    /** AI split via /api/ai/split. Returns a capacity/ambiguity warning, or null. Throws on failure. */
+    /** Splits a brain dump into notes. Returns a capacity/ambiguity warning, or null. Throws on failure. */
     async addFromDump(text: string): Promise<string | null> {
-      const res = await fetch("/api/ai/split", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ dump: text, capacityMinutes }),
-      });
-      if (!res.ok) {
-        const err = ((await res.json().catch(() => ({}))) as { error?: string }).error ?? "Something went wrong";
-        throw new Error(err);
-      }
-
-      const parsed = SplitResponseSchema.safeParse(await res.json());
-      if (!parsed.success) throw new Error("Something went wrong");
-      const { notes: created, warning, replayed } = parsed.data;
+      const { notes: created, warning, replayed } = await store.split(text, notes);
       if (created.length === 0) {
         return warning ?? "Couldn't find a task in that.";
       }
@@ -229,16 +201,25 @@ export function useBoard(
 
       const total = created.reduce((s, n) => s + n.estMinutes, 0);
       const overbooked =
-        total > capacityMinutes
+        capacityMinutes !== null && total > capacityMinutes
           ? `That's about ${fmtHours(total)}h of work for a ${fmtHours(capacityMinutes)}h day.`
           : null;
 
-      // The server saved these; a repeat returns notes this board may already show.
-      setNotes((ns) => {
-        const shown = new Set(ns.map((n) => n.id));
-        return [...ns, ...created.filter((n) => !shown.has(n.id))];
-      });
+      setNotes((ns) => mergeNew(ns, created));
       return [warning, overbooked].filter(Boolean).join(" ") || null;
+    },
+
+    /** Puts ready-made notes on the board, e.g. an example day on the guest board. */
+    addNotes(created: Note[]) {
+      setNotes((ns) => mergeNew(ns, created));
+    },
+
+    /** Takes every note off the board for good. */
+    clear() {
+      const ids = notes.map((n) => n.id);
+      setNotes([]);
+      setOpenId(null);
+      if (ids.length) remove(ids);
     },
   };
 }

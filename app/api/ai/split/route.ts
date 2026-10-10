@@ -3,12 +3,12 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { getModelChain, withFallback } from "@/lib/ai/model";
 import { QuotaExceededError, spendAiCall } from "@/lib/ai/spendAiCall";
-import { splitDay, type SplitNote, type SplitResult } from "@/lib/ai/tasks/split";
+import { splitDay, type SplitResult } from "@/lib/ai/tasks/split";
 import { ensureTodayDay } from "@/lib/ai/writeDaySummary";
 import { todayFor } from "@/lib/core/date";
 import { noteToRow, rowToNote, type NoteRow } from "@/lib/core/mappers";
-import { placeNote, randomColor, randomRotation, shapeForNewNote } from "@/lib/core/placement";
-import { parseShape, type Note, type NoteShape } from "@/lib/core/types";
+import { toBoardNotes } from "@/lib/core/split";
+import { parseShape, type Note } from "@/lib/core/types";
 
 const Body = z.object({
   dump: z.string().min(3).max(4000),
@@ -33,29 +33,6 @@ function wordCount(text: string): number {
 /** Same text after trimming and collapsing whitespace gives the same hash. */
 function dumpHash(dump: string): string {
   return createHash("sha256").update(dump.trim().replace(/\s+/g, " ")).digest("hex");
-}
-
-function toBoardNotes(split: SplitNote[], board: { x: number; y: number }[], defaultShape: NoteShape | null): Note[] {
-  const created: Note[] = [];
-  let placed = board;
-  for (const s of split) {
-    const n: Note = {
-      id: crypto.randomUUID(),
-      ...s,
-      actualMinutes: null,
-      spentMs: 0,
-      status: "board",
-      color: randomColor(),
-      shape: shapeForNewNote(defaultShape),
-      rotation: randomRotation(),
-      startedAt: null,
-      carriedFrom: null,
-      ...placeNote(placed),
-    };
-    created.push(n);
-    placed = [...placed, n];
-  }
-  return created;
 }
 
 export async function POST(req: Request) {
@@ -148,7 +125,7 @@ export async function POST(req: Request) {
       .eq("status", "board");
     if (boardError) throw new Error(boardError.message);
 
-    const notes = toBoardNotes(result.notes, boardRows ?? [], defaultShape);
+    const notes = toBoardNotes(result.notes, boardRows ?? [], defaultShape, () => crypto.randomUUID());
     const { error: finishError } = await supabase.rpc("finish_split", {
       p_claim_id: claimId,
       p_notes: notes.map((n) => noteToRow(n, dayId, user.id)),
