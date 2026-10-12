@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { rowToNote, type NoteRow } from "@/lib/core/mappers";
 import { todayFor } from "@/lib/core/date";
@@ -9,7 +10,8 @@ import { ensureTodayDay } from "@/lib/ai/writeDaySummary";
 export default async function BoardPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  const userId = user!.id; // layout already redirected if null
+  if (!user) redirect("/");
+  const userId = user.id;
 
   const { data: profile } = await supabase
     .from("profiles")

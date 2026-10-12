@@ -17,12 +17,14 @@ export async function GET(req: Request) {
   if (tokenHash && type) {
     const { error } = await supabase.auth.verifyOtp({ type, token_hash: tokenHash });
     if (!error) return NextResponse.redirect(`${origin}${next}`);
+    console.error("auth confirm failed", error.code ?? error.name, error.message);
   }
   // Default templates still send ?code=, which only works in the browser that asked.
   const code = searchParams.get("code");
   if (code) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) return NextResponse.redirect(`${origin}${next}`);
+    console.error("auth confirm failed", error.code ?? error.name, error.message);
   }
   return NextResponse.redirect(`${origin}/?error=auth`);
 }
