@@ -106,7 +106,7 @@ export function Bin({ notes, armed, onRestore, onEmpty }: Props) {
                 </button>
               </header>
 
-              <ul className="flex flex-col gap-2">
+              <ul className="-mx-2 flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-2">
                 {notes.map((n) => (
                   <li key={n.id} className="flex items-center gap-3 rounded-xl bg-bg p-3">
                     <span
