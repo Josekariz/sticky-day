@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { resolveDisplayName } from "@/lib/core/name";
 import { parseShape } from "@/lib/core/types";
@@ -10,7 +11,8 @@ import { PasswordCard } from "@/components/profile/PasswordCard";
 export default async function ProfilePage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  const userId = user!.id;
+  if (!user) redirect("/");
+  const userId = user.id;
 
   const { data: profile } = await supabase
     .from("profiles")

@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { rowToNote, type NoteRow } from "@/lib/core/mappers";
 import { todayFor } from "@/lib/core/date";
@@ -14,7 +15,8 @@ type NoteRowWithTimes = NoteRow & {
 export default async function SummaryPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  const userId = user!.id;
+  if (!user) redirect("/");
+  const userId = user.id;
 
   const { data: profile } = await supabase
     .from("profiles")

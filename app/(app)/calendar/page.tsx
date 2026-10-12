@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { monthGrid } from "@/lib/core/calendar";
 import { todayFor } from "@/lib/core/date";
@@ -32,7 +33,8 @@ export default async function CalendarPage({
 
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  const userId = user!.id; // layout already redirected if null
+  if (!user) redirect("/");
+  const userId = user.id;
 
   const { data: profile } = await supabase
     .from("profiles")
