@@ -115,7 +115,7 @@ export function CalendarView({
           <Link
             href={prevHref}
             aria-label="Previous month"
-            className="grid h-9 w-9 place-items-center rounded-full border border-frame"
+            className="grid h-11 w-11 place-items-center rounded-full border border-frame md:h-9 md:w-9"
           >
             ‹
           </Link>
@@ -125,7 +125,7 @@ export function CalendarView({
           <Link
             href={nextHref}
             aria-label="Next month"
-            className="grid h-9 w-9 place-items-center rounded-full border border-frame"
+            className="grid h-11 w-11 place-items-center rounded-full border border-frame md:h-9 md:w-9"
           >
             ›
           </Link>

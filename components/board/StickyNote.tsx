@@ -207,7 +207,7 @@ export function StickyNote(props: Props) {
               }
               props.onOpen(note.id);
             }}
-            className={`relative flex h-full w-full flex-col p-3 text-left ${BODY[shape]}`}
+            className={`note-hit relative flex h-full w-full flex-col p-3 text-left ${BODY[shape]}`}
           >
             {stamp}
             <span className={`font-hand text-(length:--note-font) font-semibold leading-tight ${clamp} ${TITLE[shape]}`}>

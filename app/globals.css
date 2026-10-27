@@ -36,6 +36,10 @@
   --google-yellow: #FBBC05;
   --google-red: #EA4335;
 
+  /* Keyboard focus: gap matches the page so the outer ring reads on any surface */
+  --focus: var(--fg);
+  --focus-gap: var(--bg);
+
   --paper-yellow: #F5FF3D;  --paper-lime: #B8FF3D;   --paper-mint: #5CFF9E;
   --paper-teal: #3DFFE4;    --paper-sky: #4DC8FF;    --paper-lavender: #A78BFF;
   --paper-lilac: #E066FF;   --paper-pink: #FF5FA8;   --paper-coral: #FF6A4D;
@@ -103,6 +107,20 @@
 
 body { background: var(--bg); }
 
+/* Keyboard-only focus ring. Two-tone so it reads on the board, paper, and every note.
+ * Not wrapped in :where() — specificity must beat utility rings (e.g. ring-2). */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+a[href]:focus-visible,
+button:not(:disabled):focus-visible,
+[role="button"]:not([aria-disabled="true"]):focus-visible,
+[role="radio"]:focus-visible,
+summary:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--focus-gap), 0 0 0 4px var(--focus);
+}
+
 .sticky-note {
   --paper-hi: color-mix(in oklch, var(--paper) 90%, white);
   --paper-lo: color-mix(in oklch, var(--paper) 93%, black);
@@ -153,6 +171,32 @@ body { background: var(--bg); }
   --note-w: var(--note-size);
   --note-h: var(--note-size);
   --note-tint: saturate(1);
+  /* Gap sits on the board, not the page chrome behind the frame */
+  --focus-gap: var(--board);
+}
+/* Open-note hit: ring follows the paper outline, not the rectangular button. */
+.note-root > .note-hit:focus-visible {
+  box-shadow: none;
+}
+.note-root:has(> .note-hit:focus-visible) .note-glow::before,
+.note-root:has(> .note-hit:focus-visible) .note-glow::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+}
+.note-root:has(> .note-hit:focus-visible) .note-glow::before {
+  /* Outer focus band is thicker than the gap (matches 2px gap + 4px focus shadows). */
+  inset: -4px;
+  z-index: 0;
+  background: var(--focus);
+}
+.note-root:has(> .note-hit:focus-visible) .note-glow::after {
+  inset: -2px;
+  z-index: 0;
+  background: var(--focus-gap);
+}
+.note-root .note-paper {
+  z-index: 1;
 }
 /* Carried and finished notes: the tint runs before any drop-shadow, so the glow fades too. */
 .note-root[data-muted] { --note-tint: saturate(0.55); }
@@ -178,6 +222,15 @@ body { background: var(--bg); }
   .note-root[data-shape="circle"] .note-paper { clip-path: var(--clip-circle); }
   .note-root[data-shape="heart"] .note-paper { clip-path: var(--clip-heart); }
   .note-root[data-shape="pill"] .note-paper { clip-path: var(--clip-pill); }
+
+  .note-root[data-shape="rounded"]:has(> .note-hit:focus-visible) .note-glow::before,
+  .note-root[data-shape="rounded"]:has(> .note-hit:focus-visible) .note-glow::after { clip-path: var(--clip-rounded); }
+  .note-root[data-shape="circle"]:has(> .note-hit:focus-visible) .note-glow::before,
+  .note-root[data-shape="circle"]:has(> .note-hit:focus-visible) .note-glow::after { clip-path: var(--clip-circle); }
+  .note-root[data-shape="heart"]:has(> .note-hit:focus-visible) .note-glow::before,
+  .note-root[data-shape="heart"]:has(> .note-hit:focus-visible) .note-glow::after { clip-path: var(--clip-heart); }
+  .note-root[data-shape="pill"]:has(> .note-hit:focus-visible) .note-glow::before,
+  .note-root[data-shape="pill"]:has(> .note-hit:focus-visible) .note-glow::after { clip-path: var(--clip-pill); }
 
   /* Only the square keeps the lifted corner; the rest glow along their outline. */
   .note-root:not([data-shape="square"]) .note-paper,
