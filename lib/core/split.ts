@@ -50,6 +50,7 @@ export function toBoardNotes(
       rotation: randomRotation(),
       startedAt: null,
       carriedFrom: null,
+      againTomorrow: false,
       ...placeNote(placed),
     };
     created.push(n);

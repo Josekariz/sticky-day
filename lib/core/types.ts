@@ -39,6 +39,7 @@ export type Note = {
   startedAt: number | null; // epoch ms while this focus note's timer is running
   spentMs: number; // accumulated focus time across pauses
   carriedFrom: string | null; // YYYY-MM-DD of the day first written; set on rollover
+  againTomorrow: boolean; // one-shot: copy a fresh sticky onto the next day
 };
 
 export const NoteSchema = z.object({
@@ -57,6 +58,7 @@ export const NoteSchema = z.object({
   startedAt: z.number().nullable(),
   spentMs: z.number(),
   carriedFrom: z.string().nullable(),
+  againTomorrow: z.boolean().default(false),
 }) satisfies z.ZodType<Note>;
 
 /** What /api/ai/split returns: the notes it saved to today's board. */

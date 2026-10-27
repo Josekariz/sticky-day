@@ -5,6 +5,7 @@ import { useRef, type RefObject } from "react";
 import { paperVar, type Note, type NoteShape } from "@/lib/core/types";
 import { weekdayShort } from "@/lib/core/date";
 import { centreOf, type DropTarget } from "./useDropTargets";
+import { TomorrowBadge } from "./TomorrowMark";
 
 type InteractiveProps = {
   readOnly?: false;
@@ -81,9 +82,11 @@ export function StickyNote(props: Props) {
   const boardSawDrag = useRef(false);
   const self = useRef<HTMLDivElement>(null);
   const carried = !!note.carriedFrom;
+  const queued = note.againTomorrow;
+  const stamped = carried || queued;
   const shape = note.shape;
-  // Below md the "from <day>" stamp sits where a third title line would go.
-  const clamp = `${carried ? "line-clamp-2" : "line-clamp-3"} ${shape === "heart" ? "md:line-clamp-2" : "md:line-clamp-3"}`;
+  // Below md the stamp sits where a third title line would go.
+  const clamp = `${stamped ? "line-clamp-2" : "line-clamp-3"} ${shape === "heart" ? "md:line-clamp-2" : "md:line-clamp-3"}`;
 
   function handleDragEnd() {
     if (readOnly) return;
@@ -105,12 +108,12 @@ export function StickyNote(props: Props) {
     );
   }
 
-  const stamp = carried && (
+  const stamp = stamped && (
     <span
       className={`pointer-events-none text-[9px] font-semibold tracking-wide text-ink-soft/80 md:text-[10px] ${STAMP[shape]}`}
       aria-hidden
     >
-      from {weekdayShort(note.carriedFrom!)}
+      {queued ? "for tomorrow" : `from ${weekdayShort(note.carriedFrom!)}`}
     </span>
   );
 
@@ -214,8 +217,13 @@ export function StickyNote(props: Props) {
               {note.title}
             </span>
             <span className={`mt-auto flex items-center gap-1 pr-5 text-[10px] font-semibold text-ink-soft md:gap-1.5 md:text-[11px] ${CHIPS[shape]}`}>
-              <span className="whitespace-nowrap px-1 py-0.5 rounded-full bg-black/10 tabular-nums md:px-1.5">{note.estMinutes} min</span>
+              {queued ? (
+                <TomorrowBadge />
+              ) : (
+                <span className="whitespace-nowrap px-1 py-0.5 rounded-full bg-black/10 tabular-nums md:px-1.5">{note.estMinutes} min</span>
+              )}
               <span className="whitespace-nowrap px-1 py-0.5 rounded-full bg-black/10 capitalize md:px-1.5">{note.priority}<span className="sr-only"> priority</span></span>
+              {queued && <span className="sr-only">{note.estMinutes} minutes, on for tomorrow</span>}
             </span>
           </button>
 

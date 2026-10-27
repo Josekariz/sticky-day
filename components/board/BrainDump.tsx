@@ -97,7 +97,7 @@ export function BrainDump({
         <div className="dump-paper-hover relative flex h-11 w-full shrink-0 md:w-auto">
           <button
             type="submit"
-            disabled={!text.trim() || busy}
+            disabled={!text.trim() || !!busy}
             title={notice}
             className="group relative flex h-11 min-w-0 flex-1 items-center justify-center gap-2 overflow-hidden rounded-l-xl bg-fg pl-4 pr-4 text-sm font-semibold leading-none text-bg after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:origin-left after:scale-x-0 after:bg-[var(--dump-hover)] after:transition-transform after:duration-200 after:ease-out hover:after:scale-x-100 disabled:pointer-events-none disabled:opacity-60 md:min-w-40"
           >
@@ -118,7 +118,7 @@ export function BrainDump({
           </button>
           <button
             type="button"
-            disabled={!text.trim() || busy}
+            disabled={!text.trim() || !!busy}
             title="Add as one note"
             aria-label="Add as one note"
             onClick={() => void run("one", onAddOne)}
