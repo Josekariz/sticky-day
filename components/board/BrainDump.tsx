@@ -19,13 +19,16 @@ function readNoticeNotDismissed() {
 
 export function BrainDump({
   onSubmit,
+  onAddOne,
   quick = false,
 }: {
   onSubmit: (text: string) => Promise<string | null>;
+  /** One sticky from the text as typed; no AI. */
+  onAddOne: (text: string) => Promise<string | null>;
   quick?: boolean; // the guest board: split by rules in the browser, no AI
 }) {
   const [text, setText] = useState("");
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useState<"split" | "one" | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   // Server snapshot is "hidden" so people who dismissed it never see it flash.
   const noticeNotDismissed = useSyncExternalStore(noSubscribe, readNoticeNotDismissed, () => false);
@@ -48,25 +51,25 @@ export function BrainDump({
     return () => clearTimeout(t);
   }, [message]);
 
-  async function submit() {
+  async function run(kind: "split" | "one", action: (text: string) => Promise<string | null>) {
     if (!text.trim() || busy) return;
-    setBusy(true);
+    setBusy(kind);
     setMessage(null);
     try {
-      const warning = await onSubmit(text);
+      const warning = await action(text);
       setMessage(warning);
       setText("");
     } catch (e) {
       setMessage(e instanceof Error ? e.message : "Something went wrong");
     } finally {
-      setBusy(false);
+      setBusy(null);
     }
   }
 
   return (
     <div className="flex flex-col gap-2">
       <form
-        onSubmit={(e) => { e.preventDefault(); void submit(); }}
+        onSubmit={(e) => { e.preventDefault(); void run("split", onSubmit); }}
         className="flex flex-wrap items-center gap-3 rounded-2xl border border-frame bg-surface px-4 py-2 md:flex-nowrap"
       >
         <label htmlFor="dump" className="sr-only">What do you want to get done today?</label>
@@ -91,27 +94,53 @@ export function BrainDump({
             <path d="M12 17v4" />
           </svg>
         </button>
-        <button
-          type="submit"
-          disabled={!text.trim() || busy}
-          title={notice}
-          className="flex h-11 w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-fg pl-4 pr-5 text-sm font-semibold leading-none text-bg disabled:opacity-60 md:w-auto md:min-w-40"
-        >
-          {busy ? (
-            <span className="flex h-4 w-4 shrink-0 items-center justify-center gap-0.5" aria-hidden>
-              <span className="h-1 w-1 animate-bounce rounded-full bg-bg [animation-delay:-0.3s]" />
-              <span className="h-1 w-1 animate-bounce rounded-full bg-bg [animation-delay:-0.15s]" />
-              <span className="h-1 w-1 animate-bounce rounded-full bg-bg" />
-            </span>
-          ) : (
-            !quick && (
-              <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-                <path d="M12 2.5l2.3 7.2 7.2 2.3-7.2 2.3-2.3 7.2-2.3-7.2L2.5 12l7.2-2.3z" />
+        <div className="dump-paper-hover relative flex h-11 w-full shrink-0 md:w-auto">
+          <button
+            type="submit"
+            disabled={!text.trim() || busy}
+            title={notice}
+            className="group relative flex h-11 min-w-0 flex-1 items-center justify-center gap-2 overflow-hidden rounded-l-xl bg-fg pl-4 pr-4 text-sm font-semibold leading-none text-bg after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:origin-left after:scale-x-0 after:bg-[var(--dump-hover)] after:transition-transform after:duration-200 after:ease-out hover:after:scale-x-100 disabled:pointer-events-none disabled:opacity-60 md:min-w-40"
+          >
+            {busy === "split" ? (
+              <span className="flex h-4 w-4 shrink-0 items-center justify-center gap-0.5" aria-hidden>
+                <span className="h-1 w-1 animate-bounce rounded-full bg-bg [animation-delay:-0.3s]" />
+                <span className="h-1 w-1 animate-bounce rounded-full bg-bg [animation-delay:-0.15s]" />
+                <span className="h-1 w-1 animate-bounce rounded-full bg-bg" />
+              </span>
+            ) : (
+              !quick && (
+                <svg className="h-4 w-4 shrink-0 group-hover:text-[var(--dump-hover)]" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                  <path d="M12 2.5l2.3 7.2 7.2 2.3-7.2 2.3-2.3 7.2-2.3-7.2L2.5 12l7.2-2.3z" />
+                </svg>
+              )
+            )}
+            <span>{busy === "split" ? "Thinking" : "Break it down"}</span>
+          </button>
+          <button
+            type="button"
+            disabled={!text.trim() || busy}
+            title="Add as one note"
+            aria-label="Add as one note"
+            onClick={() => void run("one", onAddOne)}
+            className="group relative grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-r-xl bg-fg text-bg before:absolute before:inset-y-2.5 before:left-0 before:w-px before:bg-bg/20 disabled:pointer-events-none disabled:opacity-60"
+          >
+            <span className="grid h-8 w-8 place-items-center rounded-full transition-colors duration-200 group-hover:bg-bg/10">
+              <svg
+                className="group-hover:text-[var(--dump-hover)]"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.25"
+                strokeLinecap="round"
+                aria-hidden
+              >
+                <path d="M12 5v14M5 12h14" />
               </svg>
-            )
-          )}
-          <span>{busy ? "Thinking" : "Break it down"}</span>
-        </button>
+            </span>
+          </button>
+        </div>
       </form>
       {showNotice && (
         <div className="flex items-start gap-1 px-1">

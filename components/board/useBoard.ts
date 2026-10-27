@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { MAX_FOCUS, type Note, type NoteShape } from "@/lib/core/types";
 import { placeNote } from "@/lib/core/placement";
+import { asOneNote, toBoardNotes } from "@/lib/core/split";
 import type { BoardStore } from "@/components/board/store";
 
 function fmtHours(minutes: number) {
@@ -43,7 +44,7 @@ export function useBoard(
   const [notes, setNotes] = useState(initial);
   const [openId, setOpenId] = useState<string | null>(null);
   const [onboarded, setOnboarded] = useState(initialOnboarded);
-  const { save, remove, saveOnboarding } = store;
+  const { save, remove, saveOnboarding, insert } = store;
 
   useEffect(() => {
     store.persist?.(notes);
@@ -187,6 +188,21 @@ export function useBoard(
 
     edit(id: string, patch: Partial<Note>) {
       update(id, patch);
+    },
+
+    /** One sticky from the dump text, as typed. Throws on failure. */
+    async addOne(text: string, defaultShape: NoteShape | null): Promise<string | null> {
+      const one = asOneNote(text);
+      if (!one) return "Type a task first.";
+      const created = toBoardNotes(
+        [one],
+        notes.filter((n) => n.status === "board"),
+        defaultShape,
+        () => crypto.randomUUID(),
+      );
+      await insert(created);
+      setNotes((ns) => mergeNew(ns, created));
+      return null;
     },
 
     /** Splits a brain dump into notes. Returns a capacity/ambiguity warning, or null. Throws on failure. */

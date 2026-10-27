@@ -17,6 +17,18 @@ export const SplitResultSchema = z.object({
 export type SplitNote = z.infer<typeof SplitNoteSchema>;
 export type SplitResult = z.infer<typeof SplitResultSchema>;
 
+/** One sticky from the dump box as typed — no split, no AI. */
+export function asOneNote(text: string): SplitNote | null {
+  const raw = text.trim().replace(/\s+/g, " ");
+  if (!raw) return null;
+  return {
+    title: raw.slice(0, 60),
+    detail: raw.length > 60 ? raw.slice(60, 300).trim() : "",
+    estMinutes: 30,
+    priority: "medium",
+  };
+}
+
 /** Turns split results into new board notes, each placed clear of the ones before it. */
 export function toBoardNotes(
   split: SplitNote[],

@@ -308,3 +308,41 @@ summary:focus-visible {
     left: 100%;
   }
 }
+
+/* Dump pill hover accent. Sticky hues mixed toward --ink so they read on
+ * the inverted pill: full neon on the dark light-mode fill, deeper on the
+ * cream dark-mode fill. Sand and grey skipped — they wash out as accents.
+ * Order follows PAPER_COLORS in lib/core/types.ts. */
+@property --dump-hover {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #F5FF3D;
+}
+
+.dump-paper-hover {
+  --dump-mix: 100%;
+  --dump-hover: color-mix(in oklch, var(--paper-yellow) var(--dump-mix), var(--ink));
+  animation: dump-paper 6s linear infinite;
+  animation-play-state: paused;
+}
+
+.dark .dump-paper-hover {
+  --dump-mix: 58%;
+}
+
+.dump-paper-hover:hover {
+  animation-play-state: running;
+}
+
+@keyframes dump-paper {
+  0%, 100% { --dump-hover: color-mix(in oklch, var(--paper-yellow) var(--dump-mix), var(--ink)); }
+  10% { --dump-hover: color-mix(in oklch, var(--paper-lime) var(--dump-mix), var(--ink)); }
+  20% { --dump-hover: color-mix(in oklch, var(--paper-mint) var(--dump-mix), var(--ink)); }
+  30% { --dump-hover: color-mix(in oklch, var(--paper-teal) var(--dump-mix), var(--ink)); }
+  40% { --dump-hover: color-mix(in oklch, var(--paper-sky) var(--dump-mix), var(--ink)); }
+  50% { --dump-hover: color-mix(in oklch, var(--paper-lavender) var(--dump-mix), var(--ink)); }
+  60% { --dump-hover: color-mix(in oklch, var(--paper-lilac) var(--dump-mix), var(--ink)); }
+  70% { --dump-hover: color-mix(in oklch, var(--paper-pink) var(--dump-mix), var(--ink)); }
+  80% { --dump-hover: color-mix(in oklch, var(--paper-coral) var(--dump-mix), var(--ink)); }
+  90% { --dump-hover: color-mix(in oklch, var(--paper-peach) var(--dump-mix), var(--ink)); }
+}

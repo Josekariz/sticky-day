@@ -72,7 +72,11 @@ export function DayView({
 
   return (
     <div className="flex flex-1 flex-col gap-4">
-      <BrainDump onSubmit={b.addFromDump} quick={guest} />
+      <BrainDump
+        onSubmit={b.addFromDump}
+        onAddOne={(text) => b.addOne(text, defaultShape)}
+        quick={guest}
+      />
       {guest && (
         <ExampleDays
           examples={EXAMPLE_DAYS}

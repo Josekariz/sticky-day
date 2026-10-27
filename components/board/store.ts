@@ -13,6 +13,8 @@ export type BoardStore = {
   saveOnboarding(fields: { default_shape?: NoteShape | null }): Promise<void>;
   /** New notes for this text, placed clear of the board. Throws with a message to show. */
   split(text: string, board: Note[]): Promise<SplitResponse>;
+  /** Writes ready-made notes (manual add). Guest boards persist separately. */
+  insert(notes: Note[]): Promise<void>;
   /** Called with every note after each change; the guest store keeps its copy this way. */
   persist?(notes: Note[]): void;
   /** Moves notes made before signing in into this board, returning the ones added. */
@@ -51,6 +53,16 @@ export function supabaseStore(userId: string, dayId: string, capacityMinutes: nu
             .from("profiles")
             .update({ ...fields, onboarded_at: new Date().toISOString() })
             .eq("id", userId),
+        ),
+      );
+      if (error) throw new Error(error.message);
+    },
+
+    async insert(notes) {
+      if (notes.length === 0) return;
+      const { error } = await trackSave(
+        Promise.resolve(
+          supabase.from("notes").insert(notes.map((n) => noteToRow(n, dayId, userId))),
         ),
       );
       if (error) throw new Error(error.message);

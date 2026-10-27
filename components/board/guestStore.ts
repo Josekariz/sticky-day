@@ -25,6 +25,7 @@ export function guestStore(): BoardStore {
     save() {},
     remove() {},
     async saveOnboarding() {},
+    async insert() {},
 
     async split(text, board) {
       const split = splitLocal(text);
