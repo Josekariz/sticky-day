@@ -4,19 +4,22 @@ import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { NOTE_SHAPES, paperVar, type Priority, type Note } from "@/lib/core/types";
 import { SHAPE_LABELS, ShapeSwatch } from "./ShapeSwatch";
+import { TomorrowActionIcon } from "./TomorrowMark";
 
 type Props = {
   note: Note | null;
+  /** Signed-in today: the note can be queued for a fresh copy tomorrow. */
+  canQueue: boolean;
   onClose: () => void;
   onWorkOn: (id: string) => void;
   onDone: (id: string) => void;
   onTrash: (id: string) => void;
-  onEdit: (id: string, patch: Partial<Pick<Note, "title" | "detail" | "estMinutes" | "priority" | "shape">>) => void;
+  onEdit: (id: string, patch: Partial<Pick<Note, "title" | "detail" | "estMinutes" | "priority" | "shape" | "againTomorrow">>) => void;
 };
 
 const PRIORITY: Priority[] = ["low", "medium", "high"];
 
-export function PickupCard({ note, onClose, onWorkOn, onDone, onTrash, onEdit }: Props) {
+export function PickupCard({ note, canQueue, onClose, onWorkOn, onDone, onTrash, onEdit }: Props) {
   const [confirmTrash, setConfirmTrash] = useState(false);
 
   function close() {
@@ -132,7 +135,7 @@ export function PickupCard({ note, onClose, onWorkOn, onDone, onTrash, onEdit }:
               </button>
             </div>
 
-            <div className="relative flex h-6 items-center text-xs font-semibold text-ink-soft">
+            <div className="relative flex min-h-6 items-center justify-between gap-3 text-xs font-semibold text-ink-soft">
               {confirmTrash ? (
                 <span className="flex items-center gap-3">
                   Trash it?
@@ -142,6 +145,17 @@ export function PickupCard({ note, onClose, onWorkOn, onDone, onTrash, onEdit }:
               ) : (
                 <button onClick={() => setConfirmTrash(true)} className="underline underline-offset-2 hover:text-ink">
                   Trash it
+                </button>
+              )}
+              {canQueue && (
+                <button
+                  type="button"
+                  aria-pressed={note.againTomorrow}
+                  onClick={() => onEdit(note.id, { againTomorrow: !note.againTomorrow })}
+                  className={`inline-flex items-center gap-1 underline underline-offset-2 ${note.againTomorrow ? "text-ink" : "hover:text-ink"}`}
+                >
+                  <TomorrowActionIcon on={note.againTomorrow} />
+                  {note.againTomorrow ? "On for tomorrow" : "Do this tomorrow"}
                 </button>
               )}
             </div>

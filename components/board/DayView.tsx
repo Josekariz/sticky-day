@@ -142,6 +142,7 @@ export function DayView({
 
       <PickupCard
         note={b.openNote}
+        canQueue={!guest}
         onClose={b.close}
         onWorkOn={b.workOn}
         onDone={b.done}

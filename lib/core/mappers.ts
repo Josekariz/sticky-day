@@ -8,6 +8,7 @@ export type NoteRow = {
   x: number; y: number; rotation: number; started_at: string | null;
   completed_at?: string | null;
   carried_from: string | null;
+  again_tomorrow: boolean;
 };
 
 export function rowToNote(r: NoteRow): Note {
@@ -18,6 +19,7 @@ export function rowToNote(r: NoteRow): Note {
     x: r.x, y: r.y, rotation: r.rotation,
     startedAt: r.started_at ? new Date(r.started_at).getTime() : null,
     carriedFrom: r.carried_from,
+    againTomorrow: r.again_tomorrow ?? false,
   };
 }
 
@@ -29,6 +31,7 @@ export function noteToRow(n: Note, dayId: string, userId: string): NoteRow {
     x: n.x, y: n.y, rotation: n.rotation,
     started_at: n.startedAt ? new Date(n.startedAt).toISOString() : null,
     carried_from: n.carriedFrom,
+    again_tomorrow: n.againTomorrow,
   };
 }
 
@@ -53,5 +56,6 @@ export function patchToRow(p: Partial<Note>): Partial<NoteRow> {
   if (p.rotation !== undefined) r.rotation = p.rotation;
   if (p.startedAt !== undefined) r.started_at = p.startedAt ? new Date(p.startedAt).toISOString() : null;
   if (p.carriedFrom !== undefined) r.carried_from = p.carriedFrom;
+  if (p.againTomorrow !== undefined) r.again_tomorrow = p.againTomorrow;
   return r;
 }

@@ -67,6 +67,7 @@ export function Clipboard({
           const elapsed = n.spentMs + (live ? now - n.startedAt! : 0);
           const left = n.estMinutes * 60_000 - elapsed;
           const carried = !!n.carriedFrom;
+          const queued = n.againTomorrow;
           return (
             <motion.div
               key={n.id}
@@ -96,15 +97,15 @@ export function Clipboard({
                 filter: carried ? "saturate(0.55)" : undefined,
               }}
             >
-              {carried && (
+              {(carried || queued) && (
                 <span
                   className="pointer-events-none absolute left-2 top-1.5 text-[9px] font-semibold tracking-wide text-ink-soft/80"
                   aria-hidden
                 >
-                  from {weekdayShort(n.carriedFrom!)}
+                  {queued ? "for tomorrow" : `from ${weekdayShort(n.carriedFrom!)}`}
                 </span>
               )}
-              <div className={`relative font-hand text-xl font-semibold leading-tight ${carried ? "mt-3" : ""}`}>{n.title}</div>
+              <div className={`relative font-hand text-xl font-semibold leading-tight ${carried || queued ? "mt-3" : ""}`}>{n.title}</div>
               <div className="relative mt-2 flex items-baseline justify-between">
                 {/* A running clock reads a second or two later on the client than on the server. */}
                 <span className="text-2xl font-bold tabular-nums leading-none" suppressHydrationWarning>{fmt(elapsed)}</span>
