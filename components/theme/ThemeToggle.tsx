@@ -8,7 +8,7 @@ const useMounted = () => useSyncExternalStore(subscribe, () => true, () => false
 export function ThemeToggle() {
   const { resolvedTheme, setTheme } = useTheme();
   const mounted = useMounted();
-  if (!mounted) return <span className="inline-block w-10 h-10" />;
+  if (!mounted) return <span className="inline-block h-11 w-11 md:h-10 md:w-10" />;
 
   const dark = resolvedTheme === "dark";
   return (
@@ -16,7 +16,7 @@ export function ThemeToggle() {
       type="button"
       onClick={() => setTheme(dark ? "light" : "dark")}
       aria-label={dark ? "Switch to paper" : "Switch to neon"}
-      className="w-10 h-10 rounded-full border border-frame bg-surface flex items-center justify-center"
+      className="flex h-11 w-11 items-center justify-center rounded-full border border-frame bg-surface md:h-10 md:w-10"
     >
       {dark ? "☼" : "☾"}
     </button>

@@ -51,7 +51,7 @@ export function PickupCard({ note, onClose, onWorkOn, onDone, onTrash, onEdit }:
             <button
               onClick={close}
               aria-label="Close"
-              className="absolute right-3 top-3 grid h-10 w-10 place-items-center rounded-full text-ink-soft hover:bg-black/10 hover:text-ink"
+              className="absolute right-3 top-3 grid h-11 w-11 place-items-center rounded-full text-ink-soft hover:bg-black/10 hover:text-ink md:h-10 md:w-10"
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
             </button>
@@ -81,9 +81,9 @@ export function PickupCard({ note, onClose, onWorkOn, onDone, onTrash, onEdit }:
               <div className="flex flex-col gap-1">
                 <span className="text-[11px] font-bold uppercase tracking-widest text-ink-soft">Estimate</span>
                 <div className="flex items-center rounded-lg bg-black/5">
-                  <button aria-label="Less time" onClick={() => onEdit(note.id, { estMinutes: Math.max(5, note.estMinutes - 5) })} className="h-10 w-10 text-lg font-bold">−</button>
+                  <button aria-label="Less time" onClick={() => onEdit(note.id, { estMinutes: Math.max(5, note.estMinutes - 5) })} className="h-11 w-11 text-lg font-bold md:h-10 md:w-10">−</button>
                   <span className="w-16 text-center text-sm font-bold tabular-nums">{note.estMinutes} min</span>
-                  <button aria-label="More time" onClick={() => onEdit(note.id, { estMinutes: note.estMinutes + 5 })} className="h-10 w-10 text-lg font-bold">+</button>
+                  <button aria-label="More time" onClick={() => onEdit(note.id, { estMinutes: note.estMinutes + 5 })} className="h-11 w-11 text-lg font-bold md:h-10 md:w-10">+</button>
                 </div>
               </div>
               <div className="flex flex-1 flex-col gap-1">
@@ -94,7 +94,7 @@ export function PickupCard({ note, onClose, onWorkOn, onDone, onTrash, onEdit }:
                       key={p}
                       onClick={() => onEdit(note.id, { priority: p })}
                       aria-pressed={note.priority === p}
-                      className={`h-9 flex-1 rounded-md text-xs font-bold capitalize ${note.priority === p ? "bg-ink text-on-ink" : "text-ink-soft"}`}
+                      className={`h-11 min-w-11 flex-1 rounded-md text-xs font-bold capitalize md:h-9 md:min-w-0 ${note.priority === p ? "bg-ink text-on-ink" : "text-ink-soft"}`}
                     >
                       {p}
                     </button>
@@ -115,7 +115,7 @@ export function PickupCard({ note, onClose, onWorkOn, onDone, onTrash, onEdit }:
                     aria-label={SHAPE_LABELS[s]}
                     title={SHAPE_LABELS[s]}
                     onClick={() => note.shape !== s && onEdit(note.id, { shape: s })}
-                    className={`grid h-10 min-w-10 place-items-center rounded-lg px-1.5 ${note.shape === s ? "bg-black/10" : "hover:bg-black/5"}`}
+                    className={`grid h-11 min-w-11 flex-1 place-items-center rounded-lg px-1.5 md:h-10 md:min-w-10 md:flex-none ${note.shape === s ? "bg-black/10" : "hover:bg-black/5"}`}
                   >
                     <ShapeSwatch shape={s} color={note.color} size={24} outline strong={note.shape === s} />
                   </button>

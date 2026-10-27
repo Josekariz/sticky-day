@@ -76,14 +76,14 @@ export function BrainDump({
           onChange={(e) => setText(e.target.value)}
           aria-describedby="dump-ai-notice"
           placeholder="What's on today?"
-          className="flex-1 min-w-0 bg-transparent font-hand text-2xl outline-none placeholder:text-fg-soft"
+          className="min-w-0 flex-1 rounded-lg bg-transparent font-hand text-2xl outline-none placeholder:text-fg-soft focus-visible:shadow-[0_0_0_2px_var(--focus-gap),0_0_0_4px_var(--focus)]"
         />
         <button
           type="button"
           disabled
           title="Dictation coming soon"
           aria-label="Dictate (coming soon)"
-          className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-fg-soft opacity-40"
+          className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-fg-soft opacity-40 md:h-10 md:w-10"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
             <rect x="9" y="2" width="6" height="12" rx="3" />
@@ -125,7 +125,7 @@ export function BrainDump({
             type="button"
             onClick={dismissNotice}
             aria-label="Dismiss AI notice"
-            className="-my-1 grid h-6 w-6 shrink-0 place-items-center rounded-full text-fg-soft hover:text-fg"
+            className="-my-1 grid h-11 w-11 shrink-0 place-items-center rounded-full text-fg-soft hover:text-fg md:h-6 md:w-6"
           >
             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" aria-hidden>
               <path d="M5 5l14 14M19 5L5 19" />

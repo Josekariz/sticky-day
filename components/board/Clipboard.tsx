@@ -114,17 +114,17 @@ export function Clipboard({
               </div>
               <div className="relative mt-2 mr-6 flex gap-1.5">
                 {!live && (
-                  <button onClick={() => onResume(n.id)} className="h-9 flex-1 rounded-lg border border-ink text-xs font-bold">
+                  <button onClick={() => onResume(n.id)} className="h-11 flex-1 rounded-lg border border-ink text-xs font-bold md:h-9">
                     Resume
                   </button>
                 )}
-                <button onClick={() => onDone(n.id)} className="h-9 flex-1 rounded-lg bg-ink text-xs font-bold text-on-ink">
+                <button onClick={() => onDone(n.id)} className="h-11 flex-1 rounded-lg bg-ink text-xs font-bold text-on-ink md:h-9">
                   Done
                 </button>
                 <button
                   onClick={() => onPutBack(n.id)}
                   aria-label="Put back on the board"
-                  className="h-9 w-9 rounded-lg border border-clipboard-line text-xs font-bold"
+                  className="h-11 w-11 rounded-lg border border-clipboard-line text-xs font-bold md:h-9 md:w-9"
                 >
                   ↩
                 </button>

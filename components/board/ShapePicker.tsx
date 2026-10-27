@@ -59,8 +59,8 @@ export function ShapePicker({ value, onChange, onHover, tone, label }: Props) {
             onPointerEnter={() => onHover?.(choice)}
             onFocus={() => onHover?.(choice)}
             onBlur={() => onHover?.(undefined)}
-            className={`flex flex-col items-center gap-1.5 rounded-xl px-1 pb-1.5 pt-2.5 outline-none focus-visible:ring-2 ${
-              selected ? picked : "hover:bg-black/5 focus-visible:ring-current"
+            className={`flex flex-col items-center gap-1.5 rounded-xl px-1 pb-1.5 pt-2.5 ${
+              selected ? picked : "hover:bg-black/5"
             }`}
           >
             <span className="grid h-10 place-items-center">
