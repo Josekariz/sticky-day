@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useState, type ReactNode } from "react";
 
 function Note({ className }: { className?: string }) {
   return (
@@ -15,18 +15,30 @@ function Note({ className }: { className?: string }) {
   );
 }
 
-function Launch() {
+function Launch({ framed }: { framed?: boolean }) {
   return (
-    <div className="relative flex min-h-dvh items-center justify-center bg-pwa-splash">
-      <div className="pwa-launch-glow pointer-events-none absolute size-[min(92vw,28rem)] rounded-full" />
-      <Note className="relative size-[28vw] max-h-40 max-w-40" />
+    <div
+      className={`relative flex items-center justify-center bg-pwa-splash ${framed ? "min-h-full flex-1" : "min-h-dvh"}`}
+    >
+      <div className="pwa-launch-glow pointer-events-none absolute size-[min(70%,18rem)] rounded-full" />
+      <Note className="relative size-24" />
+    </div>
+  );
+}
+
+function Phone({ children }: { children: ReactNode }) {
+  return (
+    <div className="flex min-h-dvh items-center justify-center bg-black p-4">
+      <div className="relative flex h-[min(844px,100dvh)] w-[min(390px,100%)] flex-col overflow-hidden rounded-[2.25rem] ring-1 ring-fg/20">
+        {children}
+      </div>
     </div>
   );
 }
 
 function Home({ onOpen }: { onOpen: () => void }) {
   return (
-    <div className="dark flex min-h-dvh flex-col bg-bg px-8 pt-14 text-fg">
+    <div className="dark flex min-h-full flex-1 flex-col bg-bg px-8 pt-14 text-fg">
       <p className="text-center text-sm text-fg-soft">9:41</p>
       <div className="flex flex-1 flex-col items-center justify-end pb-24">
         <button type="button" onClick={onOpen} className="flex flex-col items-center gap-2">
@@ -48,6 +60,7 @@ function Preview() {
   const preview = useSearchParams().get("preview");
   const router = useRouter();
   const [phase, setPhase] = useState<"home" | "launch">(preview === "home" ? "home" : "launch");
+  const framed = preview === "home";
 
   useEffect(() => {
     if (phase !== "launch" || preview !== "home") return;
@@ -55,8 +68,10 @@ function Preview() {
     return () => clearTimeout(t);
   }, [phase, preview, router]);
 
-  if (phase === "home") return <Home onOpen={() => setPhase("launch")} />;
-  return <Launch />;
+  const screen =
+    phase === "home" ? <Home onOpen={() => setPhase("launch")} /> : <Launch framed={framed} />;
+  if (framed) return <Phone>{screen}</Phone>;
+  return screen;
 }
 
 export default function SplashPage() {
