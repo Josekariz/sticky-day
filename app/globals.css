@@ -346,3 +346,4 @@ summary:focus-visible {
   80% { --dump-hover: color-mix(in oklch, var(--paper-coral) var(--dump-mix), var(--ink)); }
   90% { --dump-hover: color-mix(in oklch, var(--paper-peach) var(--dump-mix), var(--ink)); }
 }
+
