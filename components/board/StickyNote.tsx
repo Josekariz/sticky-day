@@ -232,7 +232,7 @@ export function StickyNote(props: Props) {
             type="button"
             onClick={(e) => { e.stopPropagation(); props.onTrash(note.id); }}
             aria-label={`Trash "${note.title}"`}
-            className="absolute left-2 top-2 hidden h-8 w-8 md:grid place-items-center rounded-full bg-black/15 opacity-0 transition-opacity pointer-events-none hover:bg-black/30 focus-visible:opacity-100 group-hover:pointer-events-auto group-hover:opacity-100"
+            className="absolute left-2 top-2 hidden h-8 w-8 md:grid place-items-center rounded-full bg-on-ink text-ink opacity-0 transition-opacity pointer-events-none hover:bg-on-ink/80 focus-visible:opacity-100 group-hover:pointer-events-auto group-hover:opacity-100"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M3 6h18" /><path d="M8 6V4h8v2" /><path d="M6 6l1 14h10l1-14" />
@@ -246,7 +246,7 @@ export function StickyNote(props: Props) {
               props.onDone(note.id);
             }}
             aria-label={`Mark "${note.title}" done`}
-            className="absolute right-2 top-2 hidden h-8 w-8 md:grid place-items-center rounded-full bg-black/15 opacity-0 transition-opacity pointer-events-none hover:bg-black/30 focus-visible:opacity-100 group-hover:pointer-events-auto group-hover:opacity-100"
+            className="absolute right-2 top-2 hidden h-8 w-8 md:grid place-items-center rounded-full bg-on-ink text-ink opacity-0 transition-opacity pointer-events-none hover:bg-on-ink/80 focus-visible:opacity-100 group-hover:pointer-events-auto group-hover:opacity-100"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
               <path d="M20 6 9 17l-5-5" />

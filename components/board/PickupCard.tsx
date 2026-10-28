@@ -44,7 +44,7 @@ export function PickupCard({ note, canQueue, onClose, onWorkOn, onDone, onTrash,
             role="dialog"
             aria-labelledby="pickup-title"
             onClick={(e) => e.stopPropagation()}
-            className="sticky-note relative flex w-full max-w-md flex-col gap-5 p-7 pb-6 text-ink"
+            className="sticky-note relative flex max-h-[calc(100dvh-2rem)] w-full max-w-md flex-col gap-5 overflow-y-auto p-7 pb-6 text-ink"
             style={{ backgroundColor: paperVar(note.color), ["--paper" as string]: paperVar(note.color) }}
             initial={{ scale: 0.5, rotate: note.rotation, opacity: 0 }}
             animate={{ scale: 1, rotate: 0.6, opacity: 1 }}
@@ -61,11 +61,12 @@ export function PickupCard({ note, canQueue, onClose, onWorkOn, onDone, onTrash,
 
             <label className="relative flex flex-col gap-1 pr-10">
               <span className="text-[11px] font-bold uppercase tracking-widest text-ink-soft">Task</span>
-              <input
+              <textarea
                 id="pickup-title"
                 defaultValue={note.title}
+                rows={2}
                 onBlur={(e) => e.target.value.trim() && e.target.value !== note.title && onEdit(note.id, { title: e.target.value.trim() })}
-                className="w-full bg-transparent font-hand text-4xl font-bold leading-none outline-none border-b-2 border-transparent focus:border-black/30"
+                className="w-full resize-none bg-transparent font-hand text-3xl font-bold leading-tight outline-none border-b-2 border-transparent focus:border-black/30 md:text-4xl"
               />
             </label>
 
@@ -74,13 +75,14 @@ export function PickupCard({ note, canQueue, onClose, onWorkOn, onDone, onTrash,
               <textarea
                 defaultValue={note.detail}
                 rows={3}
+                autoFocus={note.status === "focus"}
                 placeholder="Anything worth remembering about this one…"
                 onBlur={(e) => e.target.value !== note.detail && onEdit(note.id, { detail: e.target.value })}
                 className="w-full resize-none rounded-lg bg-black/5 px-3 py-2 text-[15px] leading-relaxed outline-none placeholder:text-ink-soft focus:bg-black/10"
               />
             </label>
 
-            <div className="relative flex items-end gap-4">
+            <div className="relative flex flex-col gap-3 sm:flex-row sm:items-end sm:gap-4">
               <div className="flex flex-col gap-1">
                 <span className="text-[11px] font-bold uppercase tracking-widest text-ink-soft">Estimate</span>
                 <div className="flex items-center rounded-lg bg-black/5">
@@ -108,7 +110,7 @@ export function PickupCard({ note, canQueue, onClose, onWorkOn, onDone, onTrash,
 
             <div className="relative flex flex-col gap-1">
               <span className="text-[11px] font-bold uppercase tracking-widest text-ink-soft">Shape</span>
-              <div role="radiogroup" aria-label="Note shape" className="flex items-center gap-1">
+              <div role="radiogroup" aria-label="Note shape" className="flex flex-wrap items-center gap-1">
                 {NOTE_SHAPES.map((s) => (
                   <button
                     key={s}
@@ -118,7 +120,7 @@ export function PickupCard({ note, canQueue, onClose, onWorkOn, onDone, onTrash,
                     aria-label={SHAPE_LABELS[s]}
                     title={SHAPE_LABELS[s]}
                     onClick={() => note.shape !== s && onEdit(note.id, { shape: s })}
-                    className={`grid h-11 min-w-11 flex-1 place-items-center rounded-lg px-1.5 md:h-10 md:min-w-10 md:flex-none ${note.shape === s ? "bg-black/10" : "hover:bg-black/5"}`}
+                    className={`grid h-11 w-11 shrink-0 place-items-center rounded-lg md:h-10 md:w-10 ${note.shape === s ? "bg-black/10" : "hover:bg-black/5"}`}
                   >
                     <ShapeSwatch shape={s} color={note.color} size={24} outline strong={note.shape === s} />
                   </button>
@@ -127,11 +129,13 @@ export function PickupCard({ note, canQueue, onClose, onWorkOn, onDone, onTrash,
             </div>
 
             <div className="relative mt-1 flex gap-2">
-              <button onClick={() => onWorkOn(note.id)} className="h-12 flex-1 rounded-xl border-2 border-ink text-sm font-bold">
-                Work on it
-              </button>
+              {note.status !== "focus" && (
+                <button onClick={() => onWorkOn(note.id)} className="h-12 flex-1 rounded-xl border-2 border-ink text-sm font-bold">
+                  Work on it
+                </button>
+              )}
               <button onClick={() => onDone(note.id)} className="h-12 flex-1 rounded-xl bg-ink text-sm font-bold text-on-ink">
-                Done ✓
+                Task complete
               </button>
             </div>
 

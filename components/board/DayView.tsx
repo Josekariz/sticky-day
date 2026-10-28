@@ -111,11 +111,12 @@ export function DayView({
             </div>
           )}
         </div>
-        <aside className="flex flex-col gap-5 lg:w-72">
+        <aside className="mx-auto flex w-full max-w-sm flex-col gap-5 lg:mx-0 lg:w-72 lg:max-w-none">
           {aside}
           <Clipboard
             notes={b.focusNotes}
             armed={drop.over === "clipboard"}
+            onOpen={b.open}
             onDone={b.done}
             onPutBack={b.putBack}
             onResume={b.resume}
