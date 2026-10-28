@@ -42,11 +42,20 @@ export function pwaIcon(size: number, kind: "any" | "maskable") {
   );
 }
 
-/** Full-screen launch image: same note, with a halo. Not used on the home-screen tile. */
-export function pwaSplash(width: number, height: number) {
+const LIGHT_BG = "#EDEAE2";
+const LIGHT_FG = "#1F1D1A";
+const DARK_FG = "#F2EFE6";
+const GLOW_DARK =
+  "radial-gradient(circle at 50% 50%, rgba(245, 255, 61, 0.42) 0%, rgba(245, 255, 61, 0.18) 28%, rgba(245, 255, 61, 0.06) 52%, rgba(245, 255, 61, 0) 70%)";
+const GLOW_LIGHT =
+  "radial-gradient(circle at 50% 50%, rgba(245, 255, 61, 0.28) 0%, rgba(245, 255, 61, 0.10) 32%, rgba(245, 255, 61, 0) 62%)";
+
+/** Full-screen launch image: note, halo, and the name. Follows paper vs night. */
+export function pwaSplash(width: number, height: number, scheme: "light" | "dark") {
   const m = Math.min(width, height);
-  const note = Math.round(m * 0.28);
-  const glow = Math.round(m * 0.95);
+  const note = Math.round(m * 0.24);
+  const glow = Math.round(m * 0.88);
+  const dark = scheme === "dark";
 
   return new ImageResponse(
     (
@@ -55,23 +64,36 @@ export function pwaSplash(width: number, height: number) {
           width: "100%",
           height: "100%",
           display: "flex",
+          flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          background: TILE,
+          gap: Math.round(m * 0.04),
+          background: dark ? TILE : LIGHT_BG,
         }}
       >
         <div
           style={{
             display: "flex",
+            flexDirection: "column",
             alignItems: "center",
             justifyContent: "center",
+            gap: Math.round(m * 0.04),
             width: glow,
             height: glow,
-            background:
-              "radial-gradient(circle at 50% 50%, rgba(245, 255, 61, 0.42) 0%, rgba(245, 255, 61, 0.18) 28%, rgba(245, 255, 61, 0.06) 52%, rgba(245, 255, 61, 0) 70%)",
+            background: dark ? GLOW_DARK : GLOW_LIGHT,
           }}
         >
           <Note size={note} />
+          <div
+            style={{
+              display: "flex",
+              fontSize: Math.round(m * 0.07),
+              fontWeight: 700,
+              color: dark ? DARK_FG : LIGHT_FG,
+            }}
+          >
+            Sticky Day
+          </div>
         </div>
       </div>
     ),
@@ -79,10 +101,15 @@ export function pwaSplash(width: number, height: number) {
   );
 }
 
-export const SPLASH_SIZES: { w: number; h: number; media: string }[] = [
+const PHONES = [
   { w: 750, h: 1334, media: "(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2)" },
   { w: 1170, h: 2532, media: "(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3)" },
   { w: 1179, h: 2556, media: "(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3)" },
   { w: 1284, h: 2778, media: "(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3)" },
   { w: 1290, h: 2796, media: "(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3)" },
 ];
+
+export const SPLASH_SIZES = PHONES.flatMap((s) => [
+  { ...s, theme: "light" as const, media: s.media },
+  { ...s, theme: "dark" as const, media: `${s.media} and (prefers-color-scheme: dark)` },
+]);

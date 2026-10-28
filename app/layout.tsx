@@ -14,9 +14,9 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     title: "Sticky Day",
-    statusBarStyle: "black",
+    statusBarStyle: "black-translucent",
     startupImage: SPLASH_SIZES.map((s) => ({
-      url: `/splash/${s.w}/${s.h}`,
+      url: `/splash/${s.theme}/${s.w}/${s.h}`,
       media: s.media,
     })),
   },
