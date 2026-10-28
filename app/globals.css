@@ -40,6 +40,8 @@
   --focus: var(--fg);
   --focus-gap: var(--bg);
 
+  --pwa-splash: #1E1C17;
+
   --paper-yellow: #F5FF3D;  --paper-lime: #B8FF3D;   --paper-mint: #5CFF9E;
   --paper-teal: #3DFFE4;    --paper-sky: #4DC8FF;    --paper-lavender: #A78BFF;
   --paper-lilac: #E066FF;   --paper-pink: #FF5FA8;   --paper-coral: #FF6A4D;
@@ -101,6 +103,7 @@
   --color-tray-line: var(--tray-line);
   --color-on-tray: var(--on-tray);
   --color-paper-yellow: var(--paper-yellow);
+  --color-pwa-splash: var(--pwa-splash);
   --font-hand: var(--font-hand);
   --font-body: var(--font-body);
 }
@@ -345,4 +348,22 @@ summary:focus-visible {
   70% { --dump-hover: color-mix(in oklch, var(--paper-pink) var(--dump-mix), var(--ink)); }
   80% { --dump-hover: color-mix(in oklch, var(--paper-coral) var(--dump-mix), var(--ink)); }
   90% { --dump-hover: color-mix(in oklch, var(--paper-peach) var(--dump-mix), var(--ink)); }
+}
+
+.pwa-launch-glow {
+  background: radial-gradient(
+    circle at 50% 50%,
+    color-mix(in oklch, var(--paper-yellow) 42%, transparent) 0%,
+    color-mix(in oklch, var(--paper-yellow) 18%, transparent) 28%,
+    color-mix(in oklch, var(--paper-yellow) 6%, transparent) 52%,
+    transparent 70%
+  );
+}
+
+.pwa-note-top {
+  fill: color-mix(in oklch, var(--paper-yellow) 88%, white);
+}
+
+.pwa-note-fold {
+  fill: color-mix(in oklch, var(--paper-yellow) 72%, black);
 }
