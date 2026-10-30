@@ -20,6 +20,9 @@ export const SummarizeInputSchema = z.object({
   theme: z.string(),
   capacityMinutes: z.number().int(),
   done: z.array(DoneNoteSchema),
+  /** On the clipboard right now — still today. */
+  stillGoing: z.array(UnfinishedNoteSchema),
+  /** Left on the board — these carry to tomorrow. */
   unfinished: z.array(UnfinishedNoteSchema),
 });
 
@@ -39,11 +42,11 @@ export const SummarizeResultSchema = z.object({
   tomorrowNudge: z
     .string()
     .describe(
-      "One concrete move with a slot or reorder (e.g. first thing, after lunch, make it the top note). Not 'maybe try'. Empty string if nothing carried over.",
+      "One concrete move with a slot or reorder (e.g. first thing, after lunch, make it the top note). Not 'maybe try'. Empty string if nothing is left on the board. Never about a still-going note.",
     ),
   carryOver: z
     .array(z.string())
-    .describe("Titles of unfinished board/focus notes, exactly as given."),
+    .describe("Titles of leftover board notes, exactly as given. Never still-going titles."),
 });
 
 export type SummarizeResult = z.infer<typeof SummarizeResultSchema>;
@@ -112,10 +115,10 @@ Tone:
 - Short sentences are fine.
 
 Content:
-- story: second person, past tense. Name notes only by the titles given. What got cleared, what came first, anything that had carried over and finally got done. Do not invent notes.
+- story: second person, past tense. Name notes only by the titles given. What got cleared, what came first, anything that had carried over and finally got done. Still-going notes are not finished — they can get a "still on it" beat, not a tomorrow one. Do not invent notes.
 - read: 4–6 sentences about THIS day, using the person's real note titles — the odder the titles, the more you play with them (a day with "Research history of plastics" and "Watch YouTube" deserves a line about that). Don't re-list the day — the story already did. Mention at most three titles, and only the ones you're doing something with. Pick one form, rotating with the theme: a small observation, one gentle joke or pun (never more than one), a tiny story, or a question back to them. The theme is the undertone, never the topic — don't explain it, don't teach it. It should be impossible to paste this read into someone else's day. End on one line that makes tomorrow feel light.
-- tomorrowNudge: one sentence with one concrete move — a slot ("first thing", "after lunch") or a reorder ("make it the top note"). Not "maybe try". Empty string if nothing carried over.
-- carryOver: the titles of unfinished notes, exactly as listed. Empty array if none.
+- tomorrowNudge: one sentence with one concrete move — a slot ("first thing", "after lunch") or a reorder ("make it the top note"). Not "maybe try". Empty string if nothing is left on the board. Never tell them to do tomorrow a note they are still working on today.
+- carryOver: the titles of leftover board notes, exactly as listed. Empty array if none. Never include still-going titles.
 
 Hard rules:
 - Never invent details the notes don't contain (no "stroll", "treat", "dove in", or similar colour). Describe only what the titles say.
@@ -146,7 +149,10 @@ Theme for the read: ${input.theme}
 Done:
 ${input.done.length ? input.done.map((n) => `- <title>${n.title}</title>${n.carriedFrom ? ` (had carried from ${n.carriedFrom})` : ""}`).join("\n") : "(none)"}
 
-Unfinished:
+Still going (on the clipboard right now — this is today, not tomorrow):
+${input.stillGoing.length ? input.stillGoing.map((n) => `- <title>${n.title}</title>${n.carriedFrom ? ` (carried from ${n.carriedFrom})` : " (new today)"}`).join("\n") : "(none)"}
+
+Unfinished (left on the board — these carry to tomorrow):
 ${input.unfinished.length ? input.unfinished.map((n) => `- <title>${n.title}</title>${n.carriedFrom ? ` (carried from ${n.carriedFrom})` : " (new today)"}`).join("\n") : "(none)"}`,
     temperature: 0.7,
   });

@@ -15,6 +15,9 @@ export type SummaryBlock = {
   timezone: string;
   summary: StoredSummary | null;
   doneNotes: Note[];
+  /** On the clipboard right now — still today. */
+  focusNotes: Note[];
+  /** Left on the board — these carry to tomorrow. */
   unfinishedNotes: Note[];
   summaryTime: string;
   /** True when any note on the day changed after the summary was written. */
@@ -37,6 +40,7 @@ function toText(data: SummaryBlock): string {
     s.story,
     "",
     ...(data.doneNotes.length ? data.doneNotes.map((n) => `• ${n.title}`) : []),
+    ...(data.focusNotes.length ? data.focusNotes.map((n) => `• ${n.title} (still on it)`) : []),
     "",
     "Something to read",
     s.read,
@@ -50,7 +54,7 @@ function toText(data: SummaryBlock): string {
   return lines.join("\n");
 }
 
-function NoteLine({ note, tick }: { note: Note; tick?: boolean }) {
+function NoteLine({ note, tick, mark }: { note: Note; tick?: boolean; mark?: string }) {
   return (
     <li className="flex items-center gap-2.5 font-hand text-[20px] leading-snug text-fg">
       <span
@@ -59,6 +63,9 @@ function NoteLine({ note, tick }: { note: Note; tick?: boolean }) {
         aria-hidden
       />
       <span className="min-w-0">{note.title}</span>
+      {mark && (
+        <span className="shrink-0 text-[11px] font-semibold tracking-wide text-fg-soft">{mark}</span>
+      )}
       {tick && (
         <svg
           className="ml-0.5 shrink-0 text-fg-soft"
@@ -155,10 +162,13 @@ export function SummaryView({ data }: { data: SummaryBlock }) {
       <section className="flex flex-col gap-4">
         <h2 className="font-hand text-2xl font-semibold text-fg">Today you…</h2>
         {s.story && <p className="text-base leading-relaxed text-fg">{s.story}</p>}
-        {data.doneNotes.length > 0 && (
+        {(data.doneNotes.length > 0 || data.focusNotes.length > 0) && (
           <ul className="flex flex-col gap-2">
             {data.doneNotes.map((n) => (
               <NoteLine key={n.id} note={n} tick />
+            ))}
+            {data.focusNotes.map((n) => (
+              <NoteLine key={n.id} note={n} mark="still on it" />
             ))}
           </ul>
         )}

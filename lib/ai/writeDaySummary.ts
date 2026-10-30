@@ -201,8 +201,16 @@ export async function writeDaySummary(
         actualMinutes: n.actualMinutes ?? n.estMinutes,
         carriedFrom: n.carriedFrom,
       })),
+    stillGoing: notes
+      .filter((n) => n.status === "focus")
+      .map((n) => ({
+        title: n.title,
+        estMinutes: n.estMinutes,
+        spentMs: n.spentMs,
+        carriedFrom: n.carriedFrom,
+      })),
     unfinished: notes
-      .filter((n) => n.status === "board" || n.status === "focus")
+      .filter((n) => n.status === "board")
       .map((n) => ({
         title: n.title,
         estMinutes: n.estMinutes,
@@ -226,7 +234,7 @@ export async function writeDaySummary(
       {
         supabase,
         task: "summarize",
-        input: `${input.date}: ${input.done.length} done, ${input.unfinished.length} unfinished`,
+        input: `${input.date}: ${input.done.length} done, ${input.stillGoing.length} still going, ${input.unfinished.length} unfinished`,
       },
       { timeoutMs: SUMMARIZE_TIMEOUT_MS },
     );

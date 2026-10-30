@@ -66,7 +66,8 @@ export default async function SummaryPage() {
     timezone,
     summary,
     doneNotes: notes.filter((n) => n.status === "done"),
-    unfinishedNotes: notes.filter((n) => n.status === "board" || n.status === "focus"),
+    focusNotes: notes.filter((n) => n.status === "focus"),
+    unfinishedNotes: notes.filter((n) => n.status === "board"),
     summaryTime,
     stale,
   };
