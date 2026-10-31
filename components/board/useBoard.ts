@@ -43,6 +43,7 @@ export function useBoard(
 ) {
   const [notes, setNotes] = useState(initial);
   const [openId, setOpenId] = useState<string | null>(null);
+  const [doneAskId, setDoneAskId] = useState<string | null>(null);
   const [onboarded, setOnboarded] = useState(initialOnboarded);
   const { save, remove, saveOnboarding, insert } = store;
 
@@ -66,6 +67,24 @@ export function useBoard(
   const doneNotes = notes.filter((n) => n.status === "done");
   const trashedNotes = notes.filter((n) => n.status === "trashed");
   const openNote = notes.find((n) => n.id === openId) ?? null;
+  const doneAsk = notes.find((n) => n.id === doneAskId && n.againTomorrow) ?? null;
+
+  /** `keepTomorrow` leaves the queue on. False clears it in the same save as Done. */
+  function finishDone(n: Note, keepTomorrow: boolean) {
+    const paused = pause(n);
+    const tracked = paused.spentMs > 0;
+    const mins = tracked ? Math.max(1, Math.round(paused.spentMs / 60000)) : n.estMinutes;
+    const patch: Partial<Note> = {
+      status: "done",
+      startedAt: paused.startedAt,
+      spentMs: paused.spentMs,
+      actualMinutes: mins,
+    };
+    if (!keepTomorrow) patch.againTomorrow = false;
+    update(n.id, patch);
+    setOpenId(null);
+    setDoneAskId(null);
+  }
 
   return {
     boardNotes,
@@ -73,6 +92,7 @@ export function useBoard(
     doneNotes,
     trashedNotes,
     openNote,
+    doneAsk,
     onboarded,
 
     /** First-visit answer: the shape for new notes, and never show the card again. */
@@ -147,18 +167,25 @@ export function useBoard(
     done(id: string) {
       const n = notes.find((k) => k.id === id);
       if (!n) return;
-      const paused = pause(n);
-      const tracked = paused.spentMs > 0;
-      const mins = tracked
-        ? Math.max(1, Math.round(paused.spentMs / 60000))
-        : n.estMinutes;
-      update(id, {
-        status: "done",
-        startedAt: paused.startedAt,
-        spentMs: paused.spentMs,
-        actualMinutes: mins,
-      });
-      setOpenId(null);
+      // A note queued for tomorrow should not silently come back after Done.
+      if (n.againTomorrow) {
+        setDoneAskId(id);
+        return;
+      }
+      finishDone(n, true);
+    },
+
+    confirmDone(keepTomorrow: boolean) {
+      const n = notes.find((k) => k.id === doneAskId);
+      if (!n) {
+        setDoneAskId(null);
+        return;
+      }
+      finishDone(n, keepTomorrow);
+    },
+
+    cancelDone() {
+      setDoneAskId(null);
     },
 
     trash(id: string) {

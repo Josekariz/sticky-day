@@ -16,6 +16,7 @@ import { Clipboard } from "./Clipboard";
 import { DoneTray } from "./DoneTray";
 import { Bin } from "./Bin";
 import { PickupCard } from "./PickupCard";
+import { DoneTomorrowAsk } from "./DoneTomorrowAsk";
 import { FirstVisit } from "./FirstVisit";
 
 export function DayView({
@@ -149,6 +150,12 @@ export function DayView({
         onDone={b.done}
         onTrash={b.trash}
         onEdit={b.edit}
+      />
+      <DoneTomorrowAsk
+        note={b.doneAsk}
+        onKeep={() => b.confirmDone(true)}
+        onClear={() => b.confirmDone(false)}
+        onLeave={b.cancelDone}
       />
     </div>
   );
