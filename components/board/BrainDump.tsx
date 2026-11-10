@@ -79,7 +79,7 @@ export function BrainDump({
           onChange={(e) => setText(e.target.value)}
           aria-describedby="dump-ai-notice"
           placeholder="What's on today?"
-          className="min-w-0 flex-1 rounded-lg bg-transparent font-hand text-2xl outline-none placeholder:text-fg-soft focus-visible:shadow-[0_0_0_2px_var(--focus-gap),0_0_0_4px_var(--focus)]"
+          className="min-w-0 flex-1 rounded-lg bg-transparent px-3 font-hand text-2xl outline-none placeholder:text-fg-soft focus-visible:shadow-[0_0_0_2px_var(--focus-gap),0_0_0_4px_var(--focus)]"
         />
         <button
           type="button"
