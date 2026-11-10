@@ -1,10 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useId, useState, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { NOTE_SHAPES, paperVar, type Priority, type Note } from "@/lib/core/types";
+import {
+  NOTE_SHAPES,
+  PAPER_COLORS,
+  paperVar,
+  type Note,
+  type NoteShape,
+  type PaperColor,
+  type Priority,
+} from "@/lib/core/types";
 import { SHAPE_LABELS, ShapeSwatch } from "./ShapeSwatch";
 import { TomorrowActionIcon } from "./TomorrowMark";
+
+type LookOpen = "shape" | "color" | null;
 
 type Props = {
   note: Note | null;
@@ -14,17 +24,105 @@ type Props = {
   onWorkOn: (id: string) => void;
   onDone: (id: string) => void;
   onTrash: (id: string) => void;
-  onEdit: (id: string, patch: Partial<Pick<Note, "title" | "detail" | "estMinutes" | "priority" | "shape" | "againTomorrow">>) => void;
+  onEdit: (id: string, patch: Partial<Pick<Note, "title" | "detail" | "estMinutes" | "priority" | "shape" | "color" | "againTomorrow">>) => void;
 };
 
 const PRIORITY: Priority[] = ["low", "medium", "high"];
 
+function colorLabel(color: PaperColor) {
+  return color.charAt(0).toUpperCase() + color.slice(1);
+}
+
+function Chevron({ open }: { open: boolean }) {
+  return (
+    <svg
+      width="12"
+      height="12"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      className={`shrink-0 text-ink-soft transition-transform ${open ? "rotate-180" : ""}`}
+      aria-hidden
+    >
+      <path d="m6 9 6 6 6-6" />
+    </svg>
+  );
+}
+
+function LookTrigger({
+  open,
+  label,
+  controls,
+  onClick,
+  preview,
+  value,
+}: {
+  open: boolean;
+  label: string;
+  controls: string;
+  onClick: () => void;
+  preview: ReactNode;
+  value: string;
+}) {
+  return (
+    <button
+      type="button"
+      aria-expanded={open}
+      aria-controls={open ? controls : undefined}
+      onClick={onClick}
+      className={`flex h-11 min-w-0 flex-1 items-center gap-2 rounded-lg px-2.5 text-left md:h-10 ${
+        open ? "bg-black/10" : "bg-black/5 hover:bg-black/10"
+      }`}
+    >
+      <span className="grid shrink-0 place-items-center">{preview}</span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-[10px] font-bold uppercase tracking-widest text-ink-soft">{label}</span>
+        <span className="block truncate text-xs font-bold leading-tight">{value}</span>
+      </span>
+      <Chevron open={open} />
+    </button>
+  );
+}
+
 export function PickupCard({ note, canQueue, onClose, onWorkOn, onDone, onTrash, onEdit }: Props) {
   const [confirmTrash, setConfirmTrash] = useState(false);
+  const [lookOpen, setLookOpen] = useState<LookOpen>(null);
+  const shapePanelId = useId();
+  const colorPanelId = useId();
+
+  useEffect(() => {
+    setLookOpen(null);
+    setConfirmTrash(false);
+  }, [note?.id]);
 
   function close() {
     setConfirmTrash(false);
+    setLookOpen(null);
     onClose();
+  }
+
+  function toggleLook(which: Exclude<LookOpen, null>) {
+    setLookOpen((cur) => (cur === which ? null : which));
+  }
+
+  function pickShape(shape: NoteShape) {
+    if (!note || note.shape === shape) {
+      setLookOpen(null);
+      return;
+    }
+    onEdit(note.id, { shape });
+    setLookOpen(null);
+  }
+
+  function pickColor(color: PaperColor) {
+    if (!note || note.color === color) {
+      setLookOpen(null);
+      return;
+    }
+    onEdit(note.id, { color });
+    setLookOpen(null);
   }
 
   return (
@@ -38,7 +136,15 @@ export function PickupCard({ note, canQueue, onClose, onWorkOn, onDone, onTrash,
           exit={{ opacity: 0, pointerEvents: "none" }}
           onClick={close}
           tabIndex={-1}
-          onKeyDown={(e) => e.key === "Escape" && close()}
+          onKeyDown={(e) => {
+            if (e.key !== "Escape") return;
+            if (lookOpen) {
+              e.stopPropagation();
+              setLookOpen(null);
+              return;
+            }
+            close();
+          }}
         >
           <motion.div
             role="dialog"
@@ -108,24 +214,106 @@ export function PickupCard({ note, canQueue, onClose, onWorkOn, onDone, onTrash,
               </div>
             </div>
 
-            <div className="relative flex flex-col gap-1">
-              <span className="text-[11px] font-bold uppercase tracking-widest text-ink-soft">Shape</span>
-              <div role="radiogroup" aria-label="Note shape" className="flex flex-wrap items-center gap-1">
-                {NOTE_SHAPES.map((s) => (
-                  <button
-                    key={s}
-                    type="button"
-                    role="radio"
-                    aria-checked={note.shape === s}
-                    aria-label={SHAPE_LABELS[s]}
-                    title={SHAPE_LABELS[s]}
-                    onClick={() => note.shape !== s && onEdit(note.id, { shape: s })}
-                    className={`grid h-11 w-11 shrink-0 place-items-center rounded-lg md:h-10 md:w-10 ${note.shape === s ? "bg-black/10" : "hover:bg-black/5"}`}
-                  >
-                    <ShapeSwatch shape={s} color={note.color} size={24} outline strong={note.shape === s} />
-                  </button>
-                ))}
+            <div className="relative flex flex-col gap-2">
+              <div className="flex gap-2">
+                <LookTrigger
+                  open={lookOpen === "shape"}
+                  label="Shape"
+                  controls={shapePanelId}
+                  onClick={() => toggleLook("shape")}
+                  preview={<ShapeSwatch shape={note.shape} color={note.color} size={22} />}
+                  value={SHAPE_LABELS[note.shape]}
+                />
+                <LookTrigger
+                  open={lookOpen === "color"}
+                  label="Color"
+                  controls={colorPanelId}
+                  onClick={() => toggleLook("color")}
+                  preview={
+                    <span
+                      aria-hidden
+                      className="block h-[22px] w-[22px] rounded-full ring-1 ring-black/15"
+                      style={{ backgroundColor: paperVar(note.color) }}
+                    />
+                  }
+                  value={colorLabel(note.color)}
+                />
               </div>
+
+              <AnimatePresence initial={false}>
+                {lookOpen === "shape" && (
+                  <motion.div
+                    key="shape"
+                    id={shapePanelId}
+                    role="radiogroup"
+                    aria-label="Note shape"
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.18 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="flex flex-wrap items-center gap-1 rounded-lg bg-black/5 p-1.5">
+                      {NOTE_SHAPES.map((s) => (
+                        <button
+                          key={s}
+                          type="button"
+                          role="radio"
+                          aria-checked={note.shape === s}
+                          aria-label={SHAPE_LABELS[s]}
+                          title={SHAPE_LABELS[s]}
+                          onClick={() => pickShape(s)}
+                          className={`grid h-11 w-11 shrink-0 place-items-center rounded-lg md:h-10 md:w-10 ${
+                            note.shape === s ? "bg-black/10" : "hover:bg-black/5"
+                          }`}
+                        >
+                          <ShapeSwatch shape={s} color={note.color} size={24} outline strong={note.shape === s} />
+                        </button>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+
+                {lookOpen === "color" && (
+                  <motion.div
+                    key="color"
+                    id={colorPanelId}
+                    role="radiogroup"
+                    aria-label="Note color"
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.18 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="grid grid-cols-6 gap-1 rounded-lg bg-black/5 p-1.5">
+                      {PAPER_COLORS.map((c) => {
+                        const selected = note.color === c;
+                        return (
+                          <button
+                            key={c}
+                            type="button"
+                            role="radio"
+                            aria-checked={selected}
+                            aria-label={colorLabel(c)}
+                            title={colorLabel(c)}
+                            onClick={() => pickColor(c)}
+                            className={`grid h-11 place-items-center rounded-lg md:h-10 ${
+                              selected ? "bg-black/10 ring-2 ring-ink" : "hover:bg-black/5"
+                            }`}
+                          >
+                            <span
+                              aria-hidden
+                              className="block h-6 w-6 rounded-full ring-1 ring-black/15"
+                              style={{ backgroundColor: paperVar(c) }}
+                            />
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
             <div className="relative mt-1 flex gap-2">
