@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Caveat, DM_Sans } from "next/font/google";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
+import { BootSplash } from "@/components/theme/BootSplash";
 import { SPLASH_SIZES } from "@/lib/pwa/icon";
 import "./globals.css";
 
@@ -27,6 +28,7 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   viewportFit: "cover",
+  colorScheme: "light dark",
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#EDEAE2" },
     { media: "(prefers-color-scheme: dark)", color: "#15140F" },
@@ -41,8 +43,13 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${hand.variable} ${body.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-bg text-fg font-body">
+        <div id="boot-splash" aria-hidden="true">
+          <div className="boot-splash-note" />
+          <span className="boot-splash-title">Sticky Day</span>
+        </div>
+        <BootSplash />
         <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>
   );
-} 
+}

@@ -5,9 +5,15 @@ import { ThemeProvider as NextThemes } from "next-themes";
 // type keeps React 19 from warning about a <script> inside a component.
 const scriptProps = { type: typeof window === "undefined" ? undefined : "application/json" };
 
+/** Always follow the phone/OS appearance — no manual light/dark lock. */
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   return (
-    <NextThemes attribute="class" defaultTheme="system" enableSystem scriptProps={scriptProps}>
+    <NextThemes
+      attribute="class"
+      forcedTheme="system"
+      enableSystem
+      scriptProps={scriptProps}
+    >
       {children}
     </NextThemes>
   );

@@ -347,3 +347,45 @@ summary:focus-visible {
   90% { --dump-hover: color-mix(in oklch, var(--paper-peach) var(--dump-mix), var(--ink)); }
 }
 
+/* First paint while JS boots — follows the phone’s light/dark. */
+#boot-splash {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+  background: #edeae2;
+  color: #1f1d1a;
+  pointer-events: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  #boot-splash {
+    background: #15140f;
+    color: #f5ff3d;
+  }
+}
+
+html[data-booted] #boot-splash {
+  display: none;
+}
+
+.boot-splash-note {
+  width: min(42vw, 11rem);
+  height: min(42vw, 11rem);
+  background: #f5ff3d;
+  transform: rotate(-5deg);
+  box-shadow: inset 0 1.1rem 0 #e4ee2a;
+  clip-path: polygon(0 0, 100% 0, 100% 78%, 78% 100%, 0 100%);
+}
+
+.boot-splash-title {
+  font-family: var(--font-hand), "Caveat", cursive;
+  font-size: clamp(2.5rem, 10vw, 3.75rem);
+  font-weight: 700;
+  line-height: 1;
+}
+
