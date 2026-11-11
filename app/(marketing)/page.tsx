@@ -14,7 +14,7 @@ export default async function LandingPage({ searchParams }: PageProps<"/">) {
 
   return (
     <main className="flex w-full flex-1 flex-col gap-4">
-      <header className="flex flex-wrap items-baseline gap-x-4 gap-y-1 pr-14">
+      <header className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
         <h1 className="font-hand text-5xl font-bold leading-none">Sticky Day</h1>
         <p className="text-sm text-fg-soft">
           Type what you hope to get done. It becomes sticky notes.{" "}

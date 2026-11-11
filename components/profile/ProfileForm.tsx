@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { formatSummaryTime } from "@/lib/core/date";
 import { ShapePicker, type ShapeChoice } from "@/components/board/ShapePicker";
+import { AppearanceSelect } from "@/components/theme/AppearanceSelect";
 
 type Props = {
   userId: string;
@@ -97,6 +98,14 @@ export function ProfileForm({
         />
         <span className="text-xs text-fg-soft">
           After this time (in your timezone), today’s summary writes itself.
+        </span>
+      </label>
+
+      <label className="flex flex-col gap-1.5">
+        <span className="text-sm font-semibold">Appearance</span>
+        <AppearanceSelect className="w-36" />
+        <span className="text-xs text-fg-soft">
+          Auto follows your device. Saved to your account.
         </span>
       </label>
 

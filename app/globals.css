@@ -138,7 +138,8 @@ summary:focus-visible {
     0 16px 24px -10px rgba(0,0,0,0.4);
 }
 
-/* lifted bottom-right corner */
+/* lifted bottom-right corner — underside stays paper-cream in both themes
+   (var(--board) goes near-black in dark mode and looked like a broken triangle). */
 .sticky-note::after {
   content: "";
   position: absolute;
@@ -146,9 +147,24 @@ summary:focus-visible {
   bottom: 0;
   width: 30px;
   height: 30px;
-  background: linear-gradient(135deg, var(--paper-fold) 0 50%, var(--fold-under, var(--board)) 50% 100%);
+  background: linear-gradient(135deg, var(--paper-fold) 0 50%, var(--fold-under, #fbfaf6) 50% 100%);
   box-shadow: -2px -2px 4px rgba(0,0,0,0.18);
   pointer-events: none;
+}
+
+/* Paper notes always host light fields — don’t let .dark’s color-scheme
+   bleach placeholders (light text on pale pink/white inputs). */
+.sticky-note input,
+.sticky-note textarea,
+.sticky-note select {
+  color-scheme: light;
+  color: #1f1d1a;
+}
+
+.sticky-note input::placeholder,
+.sticky-note textarea::placeholder {
+  color: #5a554b;
+  opacity: 1;
 }
 
 /* faint paper grain */
@@ -347,7 +363,8 @@ summary:focus-visible {
   90% { --dump-hover: color-mix(in oklch, var(--paper-peach) var(--dump-mix), var(--ink)); }
 }
 
-/* First paint while JS boots — follows the phone’s light/dark. */
+/* First paint while JS boots — follows the phone’s light/dark.
+   CSS failsafe hides it if JS never sets data-booted (stuck overlay). */
 #boot-splash {
   position: fixed;
   inset: 0;
@@ -360,6 +377,14 @@ summary:focus-visible {
   background: #edeae2;
   color: #1f1d1a;
   pointer-events: none;
+  animation: boot-splash-fallback 0s 2.5s forwards;
+}
+
+@keyframes boot-splash-fallback {
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
 }
 
 @media (prefers-color-scheme: dark) {
@@ -371,6 +396,7 @@ summary:focus-visible {
 
 html[data-booted] #boot-splash {
   display: none;
+  animation: none;
 }
 
 .boot-splash-note {
