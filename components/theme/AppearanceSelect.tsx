@@ -3,7 +3,6 @@
 import { useTheme } from "next-themes";
 import { useSyncExternalStore } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { parseAppearance, type Appearance } from "@/lib/core/appearance";
 import { useAppearanceAccount } from "@/components/theme/AppearanceAccount";
 
 const subscribe = () => () => {};
@@ -29,8 +28,8 @@ function MoonIcon() {
 type Tone = "compact" | "full";
 
 /**
- * Auto by default. Sun / moon lock Light or Dark; tap the active one again for Auto.
- * Signed-in choices save to the profile.
+ * One icon for the opposite of what’s on screen (sun in dark, moon in light).
+ * Starts as Auto (device); first tap locks Light or Dark. Signed-in saves to profile.
  */
 export function AppearanceSelect({
   className = "",
@@ -39,24 +38,23 @@ export function AppearanceSelect({
   className?: string;
   tone?: Tone;
 }) {
-  const { theme, setTheme } = useTheme();
+  const { resolvedTheme, setTheme } = useTheme();
   const account = useAppearanceAccount();
   const mounted = useMounted();
 
   if (!mounted) {
     return (
       <span
-        className={`inline-flex h-11 w-[5.5rem] rounded-full border border-frame bg-surface ${className}`}
+        className={`inline-block h-11 w-11 rounded-full border border-frame bg-surface md:h-10 md:w-10 ${className}`}
         aria-hidden
       />
     );
   }
 
-  const value = parseAppearance(theme);
-  const lightOn = value === "light";
-  const darkOn = value === "dark";
+  const dark = resolvedTheme === "dark";
+  const next = dark ? "light" : "dark";
 
-  async function save(next: Appearance) {
+  async function toggle() {
     setTheme(next);
     if (!account) return;
     const { error } = await createClient()
@@ -66,51 +64,23 @@ export function AppearanceSelect({
     if (error) console.error("appearance save failed", error.message);
   }
 
-  function pick(mode: "light" | "dark") {
-    // Second tap on the active icon returns to Auto (device).
-    void save(value === mode ? "system" : mode);
-  }
-
-  const hint =
-    value === "light"
-      ? "Paper board. Tap the sun again to match your device."
-      : value === "dark"
-        ? "Neon board. Tap the moon again to match your device."
-        : "Matching your device. Tap sun or moon to lock a look.";
-
   return (
     <div className={`flex flex-col gap-1.5 ${className}`}>
-      <div
-        role="group"
-        aria-label="Appearance"
-        className="inline-flex h-11 items-center gap-0.5 rounded-full border border-frame bg-surface p-1"
+      <button
+        type="button"
+        onClick={() => void toggle()}
+        aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
+        title={dark ? "Light" : "Dark"}
+        className="flex h-11 w-11 items-center justify-center rounded-full border border-frame bg-surface text-fg md:h-10 md:w-10"
       >
-        <button
-          type="button"
-          aria-pressed={lightOn}
-          aria-label={lightOn ? "Light mode on. Tap again for Auto." : "Use light mode"}
-          title="Light"
-          onClick={() => pick("light")}
-          className={`grid h-9 w-9 place-items-center rounded-full transition-colors ${
-            lightOn ? "bg-fg text-bg" : "text-fg-soft hover:text-fg"
-          }`}
-        >
-          <SunIcon />
-        </button>
-        <button
-          type="button"
-          aria-pressed={darkOn}
-          aria-label={darkOn ? "Dark mode on. Tap again for Auto." : "Use dark mode"}
-          title="Dark"
-          onClick={() => pick("dark")}
-          className={`grid h-9 w-9 place-items-center rounded-full transition-colors ${
-            darkOn ? "bg-fg text-bg" : "text-fg-soft hover:text-fg"
-          }`}
-        >
-          <MoonIcon />
-        </button>
-      </div>
-      {tone === "full" && <p className="text-xs text-fg-soft">{hint}</p>}
+        {dark ? <SunIcon /> : <MoonIcon />}
+      </button>
+      {tone === "full" && (
+        <p className="text-xs text-fg-soft">
+          {dark ? "Dark on — tap for paper." : "Light on — tap for neon."}
+          {account ? " Saved to your account." : ""}
+        </p>
+      )}
     </div>
   );
 }
