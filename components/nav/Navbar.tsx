@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { SignOutButton } from "@/components/auth/SignOutButton";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { flushPendingSaves, hasPendingSaves } from "@/components/board/pendingSaves";
 import { ManualTopProgress, NavTopProgress, PendingLabel } from "@/components/nav/PendingNav";
 
@@ -108,6 +109,9 @@ export function Navbar({
         </nav>
 
         <div className="flex items-center gap-2 justify-self-end md:gap-3">
+          <div className="hidden md:block">
+            <ThemeToggle />
+          </div>
           <Link
             href="/profile"
             onClick={(e) => void onNavClick(e, "/profile")}
@@ -176,6 +180,10 @@ export function Navbar({
                 </Link>
               );
             })}
+            <div className="flex h-12 items-center justify-between rounded-xl px-4">
+              <span className="font-semibold text-fg">Appearance</span>
+              <ThemeToggle />
+            </div>
             <SignOutButton className="flex h-12 items-center justify-center rounded-xl px-4 font-semibold text-danger" />
           </div>
         )}

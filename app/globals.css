@@ -384,8 +384,9 @@ html[data-booted] #boot-splash {
 
 .boot-splash-title {
   font-family: var(--font-hand), "Caveat", cursive;
-  font-size: clamp(2.5rem, 10vw, 3.75rem);
+  font-size: clamp(2.75rem, 12vw, 4.25rem);
   font-weight: 700;
   line-height: 1;
+  letter-spacing: -0.02em;
 }
 
