@@ -146,6 +146,14 @@ export function BrainDump({
         <div className="flex items-start gap-1 px-1">
           <p id="dump-ai-notice" className="text-xs text-fg-soft">
             {notice}{" "}
+            {quick && (
+              <>
+                <Link href="/about" className="underline underline-offset-2 hover:text-fg">
+                  About
+                </Link>
+                <span aria-hidden> · </span>
+              </>
+            )}
             <Link href="/privacy" className="underline underline-offset-2 hover:text-fg">
               Privacy
             </Link>
