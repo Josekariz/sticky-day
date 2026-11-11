@@ -177,10 +177,10 @@ export function Navbar({
                 </Link>
               );
             })}
-            <label className="flex h-12 items-center justify-between gap-3 rounded-xl px-4">
-              <span className="font-semibold text-fg">Appearance</span>
-              <AppearanceSelect />
-            </label>
+            <div className="flex flex-col gap-2 rounded-xl px-4 py-3">
+              <span className="text-sm font-semibold text-fg">Appearance</span>
+              <AppearanceSelect tone="full" />
+            </div>
             <SignOutButton className="flex h-12 items-center justify-center rounded-xl px-4 font-semibold text-danger" />
           </div>
         )}

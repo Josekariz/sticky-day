@@ -101,13 +101,10 @@ export function ProfileForm({
         </span>
       </label>
 
-      <label className="flex flex-col gap-1.5">
+      <div className="flex flex-col gap-1.5">
         <span className="text-sm font-semibold">Appearance</span>
-        <AppearanceSelect className="w-36" />
-        <span className="text-xs text-fg-soft">
-          Auto follows your device. Saved to your account.
-        </span>
-      </label>
+        <AppearanceSelect tone="full" />
+      </div>
 
       <div className="flex flex-col gap-1.5">
         <span className="text-sm font-semibold">Shape for new notes</span>
