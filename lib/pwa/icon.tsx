@@ -7,20 +7,43 @@ const STICKY_TOP = "#E4EE2A";
 const FOLD = "#B8C22A";
 
 function Note({ size }: { size: number }) {
+  // Nearly edge-to-edge in the viewBox so home-screen icons stay loud after OS rounding.
   return (
     <svg width={size} height={size} viewBox="0 0 32 32">
-      <g transform="rotate(-6 16 16)">
-        <path d="M5 5h22v17l-5 5H5z" fill={STICKY} />
-        <path d="M22 27l5-5h-5z" fill={FOLD} />
-        <path d="M5 5h22v4H5z" fill={STICKY_TOP} />
+      <g transform="rotate(-5 16 16)">
+        <path d="M1.5 1.5h29v22.5l-6.5 6.5H1.5z" fill={STICKY} />
+        <path d="M24 30.5l6.5-6.5H24z" fill={FOLD} />
+        <path d="M1.5 1.5h29v5H1.5z" fill={STICKY_TOP} />
       </g>
     </svg>
   );
 }
 
+/** Caveat bold for splash wordmark — ImageResponse ignores CSS font stacks. */
+async function loadHandFont(): Promise<ArrayBuffer | null> {
+  try {
+    const css = await fetch(
+      "https://fonts.googleapis.com/css2?family=Caveat:wght@700&text=Sticky%20Day&display=swap",
+      {
+        headers: { "User-Agent": "Mozilla/5.0" },
+        next: { revalidate: 60 * 60 * 24 * 30 },
+      },
+    );
+    if (!css.ok) return null;
+    const body = await css.text();
+    const url = body.match(/url\(([^)]+)\)/)?.[1];
+    if (!url) return null;
+    const font = await fetch(url, { next: { revalidate: 60 * 60 * 24 * 30 } });
+    if (!font.ok) return null;
+    return await font.arrayBuffer();
+  } catch {
+    return null;
+  }
+}
+
 export function pwaIcon(size: number, kind: "any" | "maskable") {
-  // Maskable safe zone is the centre 80%; extra pad so the fold survives a circle crop.
-  const pad = kind === "maskable" ? 0.22 : 0.14;
+  // Keep the sticky large on the home screen; maskable still needs a little safe pad.
+  const pad = kind === "maskable" ? 0.12 : 0.04;
   const inner = Math.round(size * (1 - pad * 2));
 
   return new ImageResponse(
@@ -45,17 +68,13 @@ export function pwaIcon(size: number, kind: "any" | "maskable") {
 const LIGHT_BG = "#EDEAE2";
 const LIGHT_FG = "#1F1D1A";
 const DARK_FG = "#F2EFE6";
-const GLOW_DARK =
-  "radial-gradient(circle at 50% 50%, rgba(245, 255, 61, 0.42) 0%, rgba(245, 255, 61, 0.18) 28%, rgba(245, 255, 61, 0.06) 52%, rgba(245, 255, 61, 0) 70%)";
-const GLOW_LIGHT =
-  "radial-gradient(circle at 50% 50%, rgba(245, 255, 61, 0.28) 0%, rgba(245, 255, 61, 0.10) 32%, rgba(245, 255, 61, 0) 62%)";
 
-/** Full-screen launch image: note, halo, and the name. Follows paper vs night. */
-export function pwaSplash(width: number, height: number, scheme: "light" | "dark") {
+/** Full-screen launch image: big note + Sticky Day wordmark. */
+export async function pwaSplash(width: number, height: number, scheme: "light" | "dark") {
   const m = Math.min(width, height);
-  const note = Math.round(m * 0.24);
-  const glow = Math.round(m * 0.88);
+  const note = Math.round(m * 0.46);
   const dark = scheme === "dark";
+  const hand = await loadHandFont();
 
   return new ImageResponse(
     (
@@ -67,37 +86,42 @@ export function pwaSplash(width: number, height: number, scheme: "light" | "dark
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          gap: Math.round(m * 0.04),
+          gap: Math.round(m * 0.05),
           background: dark ? TILE : LIGHT_BG,
         }}
       >
+        <Note size={note} />
         <div
           style={{
             display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: Math.round(m * 0.04),
-            width: glow,
-            height: glow,
-            background: dark ? GLOW_DARK : GLOW_LIGHT,
+            fontFamily: hand ? "Caveat" : "sans-serif",
+            fontSize: Math.round(m * 0.13),
+            fontWeight: 700,
+            letterSpacing: "-0.02em",
+            color: dark ? STICKY : LIGHT_FG,
+            lineHeight: 1,
           }}
         >
-          <Note size={note} />
-          <div
-            style={{
-              display: "flex",
-              fontSize: Math.round(m * 0.07),
-              fontWeight: 700,
-              color: dark ? DARK_FG : LIGHT_FG,
-            }}
-          >
-            Sticky Day
-          </div>
+          Sticky Day
         </div>
       </div>
     ),
-    { width, height },
+    {
+      width,
+      height,
+      ...(hand
+        ? {
+            fonts: [
+              {
+                name: "Caveat",
+                data: hand,
+                style: "normal" as const,
+                weight: 700 as const,
+              },
+            ],
+          }
+        : {}),
+    },
   );
 }
 
