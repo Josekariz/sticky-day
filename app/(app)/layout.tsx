@@ -3,7 +3,9 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Navbar } from "@/components/nav/Navbar";
 import { SyncTimezone } from "@/components/profile/SyncTimezone";
+import { AppearanceAccount } from "@/components/theme/AppearanceAccount";
 import { isSummaryDue, todayFor, yesterdayFor } from "@/lib/core/date";
+import { parseAppearance } from "@/lib/core/appearance";
 import { isUnreadLetter } from "@/lib/summary/unread";
 import { resolveDisplayName } from "@/lib/core/name";
 import { isSummaryBusy, parseStoredSummary } from "@/lib/ai/tasks/summarize";
@@ -16,12 +18,13 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("display_name, timezone, summary_time")
+    .select("display_name, timezone, summary_time, appearance")
     .eq("id", user.id)
     .maybeSingle();
 
   const timezone = (profile?.timezone as string | null | undefined) ?? "UTC";
   const summaryTime = String(profile?.summary_time ?? "18:00");
+  const appearance = parseAppearance(profile?.appearance);
   const today = todayFor(timezone);
   const yesterday = yesterdayFor(timezone);
 
@@ -73,7 +76,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
   const avatar: string | null = user.user_metadata.avatar_url ?? null;
 
   return (
-    <>
+    <AppearanceAccount userId={user.id} appearance={appearance}>
       <SyncTimezone userId={user.id} storedTimezone={timezone} />
       <Navbar
         initials={initials}
@@ -82,6 +85,6 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
         unreadHref={unreadHref}
       />
       <div className="flex flex-1 flex-col overflow-x-clip px-2 py-4 md:overflow-x-visible md:p-8">{children}</div>
-    </>
+    </AppearanceAccount>
   );
 }
