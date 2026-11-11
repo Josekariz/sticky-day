@@ -26,10 +26,11 @@ function shiftMonth(year: number, month: number, delta: number): string {
 export default async function CalendarPage({
   searchParams,
 }: {
-  searchParams: Promise<{ m?: string | string[] }>;
+  searchParams: Promise<{ m?: string | string[]; day?: string | string[] }>;
 }) {
   const sp = await searchParams;
   const raw = Array.isArray(sp.m) ? sp.m[0] : sp.m;
+  const dayRaw = Array.isArray(sp.day) ? sp.day[0] : sp.day;
 
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -46,6 +47,13 @@ export default async function CalendarPage({
 
   const { year, month } = parseMonth(raw, today);
   const { daysInMonth, firstWeekday } = monthGrid(year, month);
+  const openDay =
+    dayRaw &&
+    /^\d{4}-\d{2}-\d{2}$/.test(dayRaw) &&
+    dayRaw.slice(0, 7) === monthParam(year, month) &&
+    dayRaw <= today
+      ? dayRaw
+      : null;
 
   const start = `${monthParam(year, month)}-01`;
   const end = `${monthParam(year, month)}-${String(daysInMonth).padStart(2, "0")}`;
@@ -81,6 +89,7 @@ export default async function CalendarPage({
         firstWeekday={firstWeekday}
         days={days}
         today={today}
+        initialDay={openDay}
         prevHref={`/calendar?m=${shiftMonth(year, month, -1)}`}
         nextHref={`/calendar?m=${shiftMonth(year, month, 1)}`}
       />

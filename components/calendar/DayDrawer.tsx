@@ -22,21 +22,25 @@ type Face = "glance" | "read";
 type Props = {
   date: string | null;
   today: string;
+  dayId: string | null;
   summary: StoredSummary | null;
   notes: DayDrawerNote[] | null;
   loading: boolean;
   onClose: () => void;
   panelRef: Ref<HTMLElement>;
+  onMarkRead?: (dayId: string) => void;
 };
 
 export function DayDrawer({
   date,
   today,
+  dayId,
   summary,
   notes,
   loading,
   onClose,
   panelRef,
+  onMarkRead,
 }: Props) {
   const [face, setFace] = useState<Face>("glance");
 
@@ -52,6 +56,11 @@ export function DayDrawer({
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [date, onClose]);
+
+  useEffect(() => {
+    if (face !== "read" || !dayId || !summary) return;
+    onMarkRead?.(dayId);
+  }, [face, dayId, summary, onMarkRead]);
 
   const open = date !== null;
   const isToday = date === today;

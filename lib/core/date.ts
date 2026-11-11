@@ -50,6 +50,18 @@ export function todayFor(tz: string, now = new Date()): string {
   return `${y}-${pad2(m)}-${pad2(d)}`;
 }
 
+/** Shift a YYYY-MM-DD calendar date by whole days (no timezone). */
+export function shiftDate(isoDate: string, deltaDays: number): string {
+  const [y, m, d] = isoDate.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d + deltaDays));
+  return `${dt.getUTCFullYear()}-${pad2(dt.getUTCMonth() + 1)}-${pad2(dt.getUTCDate())}`;
+}
+
+/** Yesterday's calendar date YYYY-MM-DD in timezone `tz`. */
+export function yesterdayFor(tz: string, now = new Date()): string {
+  return shiftDate(todayFor(tz, now), -1);
+}
+
 /**
  * True when local time in `tz` is at or past `summaryTime` (HH:MM or HH:MM:SS).
  * Pure: pass `now` explicitly in tests.

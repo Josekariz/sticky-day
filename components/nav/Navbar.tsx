@@ -14,7 +14,19 @@ const LINKS = [
   { href: "/summary", label: "Your day" },
 ];
 
-export function Navbar({ initials, avatar }: { initials: string; avatar: string | null }) {
+export function Navbar({
+  initials,
+  avatar,
+  unreadLetter = false,
+  unreadHref = "/summary",
+}: {
+  initials: string;
+  avatar: string | null;
+  /** Red dot on Your day when a letter is waiting. */
+  unreadLetter?: boolean;
+  /** Your day link target when unread (today vs yesterday in calendar). */
+  unreadHref?: string;
+}) {
   const path = usePathname();
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -22,6 +34,7 @@ export function Navbar({ initials, avatar }: { initials: string; avatar: string 
   const sheet = useRef<HTMLDivElement>(null);
   const toggle = useRef<HTMLButtonElement>(null);
   const flushNav = flushHref !== null && path !== flushHref && !path.startsWith(flushHref);
+  const unread = unreadLetter;
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -68,18 +81,28 @@ export function Navbar({ initials, avatar }: { initials: string; avatar: string 
         <nav className="hidden gap-1 md:flex">
           {LINKS.map((l) => {
             const active = path.startsWith(l.href);
+            const isYourDay = l.href === "/summary";
+            const href = isYourDay && unread ? unreadHref : l.href;
             return (
               <Link
                 key={l.href}
-                href={l.href}
-                onClick={(e) => void onNavClick(e, l.href)}
+                href={href}
+                onClick={(e) => {
+                  void onNavClick(e, href);
+                }}
                 aria-current={active ? "page" : undefined}
-                className={`flex h-9 items-center rounded-xl px-3.5 text-sm font-semibold ${
+                className={`relative flex h-9 items-center rounded-xl px-3.5 text-sm font-semibold ${
                   active ? "bg-fg text-bg" : "text-fg-soft hover:text-fg"
                 }`}
               >
                 <NavTopProgress />
                 <PendingLabel>{l.label}</PendingLabel>
+                {isYourDay && unread && (
+                  <span
+                    className="absolute right-1.5 top-1.5 size-1.5 rounded-full bg-danger"
+                    aria-label="Unread Your day"
+                  />
+                )}
               </Link>
             );
           })}
@@ -130,18 +153,28 @@ export function Navbar({ initials, avatar }: { initials: string; avatar: string 
           >
             {LINKS.map((l) => {
               const active = path.startsWith(l.href);
+              const isYourDay = l.href === "/summary";
+              const href = isYourDay && unread ? unreadHref : l.href;
               return (
                 <Link
                   key={l.href}
-                  href={l.href}
-                  onClick={(e) => void onNavClick(e, l.href)}
+                  href={href}
+                  onClick={(e) => {
+                    void onNavClick(e, href);
+                  }}
                   aria-current={active ? "page" : undefined}
-                  className={`flex h-12 items-center justify-center rounded-xl px-4 font-semibold ${
+                  className={`relative flex h-12 items-center justify-center rounded-xl px-4 font-semibold ${
                     active ? "bg-fg text-bg" : "text-fg"
                   }`}
                 >
                   <NavTopProgress />
                   <PendingLabel>{l.label}</PendingLabel>
+                  {isYourDay && unread && (
+                    <span
+                      className="absolute right-3 top-3 size-2 rounded-full bg-danger"
+                      aria-label="Unread Your day"
+                    />
+                  )}
                 </Link>
               );
             })}

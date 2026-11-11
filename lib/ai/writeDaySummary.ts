@@ -245,7 +245,11 @@ export async function writeDaySummary(
 
   const { error: saveErr } = await supabase
     .from("days")
-    .update({ summary: result })
+    .update({
+      summary: result,
+      // Force rewrite is a new letter — show the unread dot again.
+      ...(force ? { summary_read_at: null } : {}),
+    })
     .eq("id", dayId)
     .eq("user_id", userId);
   if (saveErr) console.error("summary save failed", saveErr.message);

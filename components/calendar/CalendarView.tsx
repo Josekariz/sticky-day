@@ -2,8 +2,10 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import type { StoredSummary } from "@/lib/ai/tasks/summarize";
+import { markSummaryRead } from "@/lib/summary/markRead";
 import { DayDrawer, type DayDrawerNote } from "./DayDrawer";
 
 export type CalendarDay = {
@@ -31,6 +33,7 @@ export function CalendarView({
   firstWeekday,
   days,
   today,
+  initialDay,
   prevHref,
   nextHref,
 }: {
@@ -41,12 +44,18 @@ export function CalendarView({
   firstWeekday: number;
   days: CalendarDay[];
   today: string;
+  initialDay?: string | null;
   prevHref: string;
   nextHref: string;
 }) {
+  const router = useRouter();
   const byDate = new Map(days.map((d) => [d.date, d]));
-  const [selected, setSelected] = useState<string | null>(null);
-  const [fetched, setFetched] = useState<{ date: string; notes: DayDrawerNote[] } | null>(null);
+  const [selected, setSelected] = useState<string | null>(initialDay ?? null);
+  const [fetched, setFetched] = useState<{
+    date: string;
+    dayId: string | null;
+    notes: DayDrawerNote[];
+  } | null>(null);
 
   useEffect(() => {
     if (!selected) return;
@@ -64,7 +73,7 @@ export function CalendarView({
 
       if (cancelled) return;
       if (!day) {
-        setFetched({ date, notes: [] });
+        setFetched({ date, dayId: null, notes: [] });
         return;
       }
 
@@ -76,7 +85,11 @@ export function CalendarView({
         .order("created_at");
 
       if (cancelled) return;
-      setFetched({ date, notes: (rows as DayDrawerNote[] | null) ?? [] });
+      setFetched({
+        date,
+        dayId: day.id as string,
+        notes: (rows as DayDrawerNote[] | null) ?? [],
+      });
     })();
 
     return () => {
@@ -85,6 +98,14 @@ export function CalendarView({
   }, [selected, userId]);
 
   const close = useCallback(() => setSelected(null), []);
+  const markRead = useCallback(
+    (dayId: string) => {
+      void markSummaryRead(createClient(), dayId).then((ok) => {
+        if (ok) router.refresh();
+      });
+    },
+    [router],
+  );
   const drawerRef = useRef<HTMLElement>(null);
   const gridRef = useRef<HTMLDivElement>(null);
 
@@ -100,6 +121,7 @@ export function CalendarView({
   }, [selected]);
 
   const notes = selected && fetched?.date === selected ? fetched.notes : null;
+  const dayId = selected && fetched?.date === selected ? fetched.dayId : null;
   const loading = selected !== null && fetched?.date !== selected;
   const info = selected ? byDate.get(selected) : undefined;
 
@@ -197,11 +219,13 @@ export function CalendarView({
       <DayDrawer
         date={selected}
         today={today}
+        dayId={dayId}
         summary={info?.summary ?? null}
         notes={notes}
         loading={loading}
         onClose={close}
         panelRef={drawerRef}
+        onMarkRead={markRead}
       />
     </div>
   );

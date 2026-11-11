@@ -6,6 +6,8 @@ import { firstNameOf, resolveDisplayName } from "@/lib/core/name";
 import { SummaryView, type SummaryBlock } from "@/components/summary/SummaryView";
 import { parseStoredSummary } from "@/lib/ai/tasks/summarize";
 import { ensureTodayDay } from "@/lib/ai/writeDaySummary";
+import { markSummaryRead } from "@/lib/summary/markRead";
+import { RefreshAfterRead } from "@/components/summary/RefreshAfterRead";
 
 type NoteRowWithTimes = NoteRow & {
   created_at?: string;
@@ -37,6 +39,19 @@ export default async function SummaryPage() {
 
   const day = await ensureTodayDay(supabase, userId, today);
 
+  const { data: dayRow } = await supabase
+    .from("days")
+    .select("summary, summary_read_at")
+    .eq("id", day.id)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  const summary = parseStoredSummary(dayRow?.summary ?? day.summary);
+  let didMark = false;
+  if (summary && dayRow?.summary_read_at == null) {
+    didMark = await markSummaryRead(supabase, day.id);
+  }
+
   const { data: rows } = await supabase
     .from("notes")
     .select("*, carried_from")
@@ -46,7 +61,6 @@ export default async function SummaryPage() {
 
   const noteRows = (rows as NoteRowWithTimes[] | null) ?? [];
   const notes = noteRows.map(rowToNote);
-  const summary = parseStoredSummary(day.summary);
 
   let latestNoteMs = 0;
   for (const r of noteRows) {
@@ -74,6 +88,7 @@ export default async function SummaryPage() {
 
   return (
     <main className="flex flex-1 flex-col py-2">
+      <RefreshAfterRead didMark={didMark} />
       <SummaryView data={data} />
     </main>
   );

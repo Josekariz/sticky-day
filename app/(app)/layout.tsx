@@ -3,7 +3,8 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Navbar } from "@/components/nav/Navbar";
 import { SyncTimezone } from "@/components/profile/SyncTimezone";
-import { isSummaryDue, todayFor } from "@/lib/core/date";
+import { isSummaryDue, todayFor, yesterdayFor } from "@/lib/core/date";
+import { isUnreadLetter } from "@/lib/summary/unread";
 import { resolveDisplayName } from "@/lib/core/name";
 import { isSummaryBusy, parseStoredSummary } from "@/lib/ai/tasks/summarize";
 import { writeDaySummary } from "@/lib/ai/writeDaySummary";
@@ -22,6 +23,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
   const timezone = (profile?.timezone as string | null | undefined) ?? "UTC";
   const summaryTime = String(profile?.summary_time ?? "18:00");
   const today = todayFor(timezone);
+  const yesterday = yesterdayFor(timezone);
 
   if (isSummaryDue(new Date(), timezone, summaryTime)) {
     const { data: day } = await supabase
@@ -42,6 +44,26 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
     }
   }
 
+  const { data: unreadRows } = await supabase
+    .from("days")
+    .select("date, summary, summary_read_at")
+    .eq("user_id", user.id)
+    .in("date", [today, yesterday]);
+
+  const todayUnread = (unreadRows ?? []).find(
+    (r) => r.date === today && isUnreadLetter(r.summary, r.summary_read_at as string | null | undefined),
+  );
+  const yesterdayUnread = (unreadRows ?? []).find(
+    (r) =>
+      r.date === yesterday && isUnreadLetter(r.summary, r.summary_read_at as string | null | undefined),
+  );
+  const unreadLetter = !!(todayUnread || yesterdayUnread);
+  const unreadHref = todayUnread
+    ? "/summary"
+    : yesterdayUnread
+      ? `/calendar?m=${yesterday.slice(0, 7)}&day=${yesterday}`
+      : "/summary";
+
   const name = resolveDisplayName(
     profile?.display_name as string | null | undefined,
     user.user_metadata ?? {},
@@ -53,7 +75,12 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
   return (
     <>
       <SyncTimezone userId={user.id} storedTimezone={timezone} />
-      <Navbar initials={initials} avatar={avatar} />
+      <Navbar
+        initials={initials}
+        avatar={avatar}
+        unreadLetter={unreadLetter}
+        unreadHref={unreadHref}
+      />
       <div className="flex flex-1 flex-col overflow-x-clip px-2 py-4 md:overflow-x-visible md:p-8">{children}</div>
     </>
   );

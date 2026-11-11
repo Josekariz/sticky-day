@@ -14,7 +14,13 @@ type Props = {
   defaultShape: ShapeChoice;
 };
 
-export function ProfileForm({ userId, displayName, capacityMinutes, summaryTime, defaultShape }: Props) {
+export function ProfileForm({
+  userId,
+  displayName,
+  capacityMinutes,
+  summaryTime,
+  defaultShape,
+}: Props) {
   const router = useRouter();
   const [name, setName] = useState(displayName);
   const [hours, setHours] = useState(String(capacityMinutes / 60));
