@@ -2,11 +2,11 @@ import { ThemeToggle } from "@/components/theme/ThemeToggle";
 
 export default function MarketingLayout({ children }: LayoutProps<"/">) {
   return (
-    <div className="flex flex-1 flex-col items-center justify-center p-6">
-      <div className="fixed right-6 top-6">
+    <div className="relative flex flex-1 flex-col items-center justify-center p-6">
+      <div className="absolute right-6 top-6 z-20">
         <ThemeToggle />
       </div>
-      {children}
+      <div className="flex w-full min-w-0 flex-1 flex-col">{children}</div>
     </div>
   );
 }
