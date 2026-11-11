@@ -4,7 +4,7 @@ import { ContactNote } from "@/components/marketing/ContactNote";
 
 export default function AboutPage() {
   return (
-    <main className="flex w-full max-w-4xl flex-col gap-8">
+    <main className="mx-auto my-auto flex w-full max-w-4xl flex-col gap-8">
       <Link href="/" className="self-start text-sm text-fg-soft underline-offset-4 hover:underline">
         ← Back
       </Link>
