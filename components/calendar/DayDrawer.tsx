@@ -1,10 +1,13 @@
 "use client";
 
-import { useEffect, type Ref } from "react";
+import { useEffect, useState, type Ref } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
-import { dayHeading, writtenCaption } from "@/lib/core/date";
+import { dayHeading, writtenTime } from "@/lib/core/date";
+import { signOffFor } from "@/lib/core/themes";
 import type { NoteStatus } from "@/lib/core/types";
+import type { StoredSummary } from "@/lib/ai/tasks/summarize";
+import { summaryStory } from "@/lib/ai/tasks/summarize";
 import { NavTopProgress, PendingLabel } from "@/components/nav/PendingNav";
 
 export type DayDrawerNote = {
@@ -14,11 +17,12 @@ export type DayDrawerNote = {
   status: NoteStatus;
 };
 
+type Face = "glance" | "read";
+
 type Props = {
   date: string | null;
   today: string;
-  summary: string | null;
-  summaryCreatedAt: string | null;
+  summary: StoredSummary | null;
   notes: DayDrawerNote[] | null;
   loading: boolean;
   onClose: () => void;
@@ -29,12 +33,17 @@ export function DayDrawer({
   date,
   today,
   summary,
-  summaryCreatedAt,
   notes,
   loading,
   onClose,
   panelRef,
 }: Props) {
+  const [face, setFace] = useState<Face>("glance");
+
+  useEffect(() => {
+    setFace("glance");
+  }, [date]);
+
   useEffect(() => {
     if (!date) return;
     function onKey(e: KeyboardEvent) {
@@ -49,6 +58,7 @@ export function DayDrawer({
   const doneNotes = notes?.filter((n) => n.status === "done") ?? [];
   const unfinishedNotes = notes?.filter((n) => n.status === "board" || n.status === "focus") ?? [];
   const trashedNotes = notes?.filter((n) => n.status === "trashed") ?? [];
+  const hasLetter = !!summary && (!!summaryStory(summary) || !!summary.read);
 
   return (
     <AnimatePresence>
@@ -73,29 +83,99 @@ export function DayDrawer({
             </button>
           </header>
 
-          {summary && (
-            <div className="flex flex-col gap-2">
-              <p className="text-sm leading-relaxed text-fg">{summary}</p>
-              {summaryCreatedAt && (
-                <p className="text-xs text-fg-soft">{writtenCaption(summaryCreatedAt)}</p>
-              )}
-            </div>
-          )}
+          <div
+            role="tablist"
+            aria-label="Day view"
+            className="flex rounded-xl border border-frame p-1"
+          >
+            <FaceTab
+              id="day-face-glance"
+              selected={face === "glance"}
+              onSelect={() => setFace("glance")}
+              label="Glance"
+              emoji="👀"
+            />
+            <FaceTab
+              id="day-face-read"
+              selected={face === "read"}
+              onSelect={() => setFace("read")}
+              label="Read"
+              emoji="📖"
+            />
+          </div>
 
-          {loading ? (
-            <p className="text-sm text-fg-soft">Loading notes…</p>
-          ) : (
-            <div className="flex flex-col gap-5">
-              <NoteGroup label="Done" items={doneNotes} mode="done" />
-              <NoteGroup label="Unfinished" items={unfinishedNotes} mode="plain" />
-              <NoteGroup label="Trashed" items={trashedNotes} mode="plain" />
-              {!summary && notes && notes.length === 0 && (
-                <p className="py-8 text-center font-hand text-2xl text-fg-soft">Nothing logged.</p>
-              )}
-            </div>
-          )}
+          <AnimatePresence mode="wait">
+            {face === "glance" ? (
+              <motion.div
+                key="glance"
+                role="tabpanel"
+                aria-labelledby="day-face-glance"
+                className="flex flex-1 flex-col gap-5"
+                initial={{ opacity: 0, x: -8 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 8 }}
+                transition={{ duration: 0.15 }}
+              >
+                {loading ? (
+                  <p className="text-sm text-fg-soft">Loading notes…</p>
+                ) : (
+                  <>
+                    <NoteGroup label="Done" items={doneNotes} mode="done" />
+                    <NoteGroup label="Unfinished" items={unfinishedNotes} mode="plain" />
+                    <NoteGroup label="Trashed" items={trashedNotes} mode="plain" />
+                    {notes && notes.length === 0 && (
+                      <p className="py-8 text-center font-hand text-2xl text-fg-soft">Nothing logged.</p>
+                    )}
+                    {hasLetter && (
+                      <p className="text-sm text-fg-soft">
+                        Letter waiting ·{" "}
+                        <button
+                          type="button"
+                          onClick={() => setFace("read")}
+                          className="font-semibold underline underline-offset-2"
+                        >
+                          Read
+                        </button>
+                      </p>
+                    )}
+                  </>
+                )}
+              </motion.div>
+            ) : (
+              <motion.div
+                key="read"
+                role="tabpanel"
+                aria-labelledby="day-face-read"
+                className="flex flex-1 flex-col gap-6"
+                initial={{ opacity: 0, x: 8 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -8 }}
+                transition={{ duration: 0.15 }}
+              >
+                {hasLetter && summary ? (
+                  <LetterBody
+                    date={date}
+                    summary={summary}
+                    unfinishedTitles={unfinishedNotes.map((n) => n.title)}
+                  />
+                ) : (
+                  <div className="flex flex-col gap-3 py-6">
+                    <p className="font-hand text-2xl text-fg-soft">No letter for this day.</p>
+                    {isToday && (
+                      <Link
+                        href="/summary"
+                        className="self-start text-sm font-semibold underline underline-offset-2"
+                      >
+                        Your day
+                      </Link>
+                    )}
+                  </div>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-          {isToday && (
+          {isToday && face === "glance" && (
             <footer className="mt-auto border-t border-frame pt-4">
               <Link
                 href="/board"
@@ -109,6 +189,87 @@ export function DayDrawer({
         </motion.aside>
       )}
     </AnimatePresence>
+  );
+}
+
+function FaceTab({
+  id,
+  selected,
+  onSelect,
+  label,
+  emoji,
+}: {
+  id: string;
+  selected: boolean;
+  onSelect: () => void;
+  label: string;
+  emoji: string;
+}) {
+  return (
+    <button
+      id={id}
+      type="button"
+      role="tab"
+      aria-selected={selected}
+      onClick={onSelect}
+      className={`flex h-10 flex-1 items-center justify-center gap-1.5 rounded-lg text-sm font-semibold transition-colors ${
+        selected ? "bg-fg text-bg" : "text-fg-soft hover:text-fg"
+      }`}
+    >
+      <span aria-hidden>{emoji}</span>
+      {label}
+    </button>
+  );
+}
+
+function LetterBody({
+  date,
+  summary,
+  unfinishedTitles,
+}: {
+  date: string;
+  summary: StoredSummary;
+  unfinishedTitles: string[];
+}) {
+  const story = summaryStory(summary);
+  const showTomorrow = unfinishedTitles.length > 0 || !!summary.tomorrowNudge;
+
+  return (
+    <>
+      {story && (
+        <section className="flex flex-col gap-3">
+          <h3 className="font-hand text-2xl font-semibold text-fg">Today you…</h3>
+          <p className="text-base leading-relaxed text-fg">{story}</p>
+        </section>
+      )}
+      {summary.read && (
+        <section className="flex flex-col gap-3">
+          <h3 className="font-hand text-2xl font-semibold text-fg">Something to read</h3>
+          <p className="text-[17px] leading-[1.6] text-fg">{summary.read}</p>
+        </section>
+      )}
+      {showTomorrow && (
+        <section className="flex flex-col gap-3">
+          <h3 className="font-hand text-2xl font-semibold text-fg">Tomorrow</h3>
+          {unfinishedTitles.length > 0 && (
+            <ul className="flex flex-col gap-2">
+              {unfinishedTitles.map((title) => (
+                <li key={title} className="font-hand text-xl leading-snug text-fg">
+                  {title}
+                </li>
+              ))}
+            </ul>
+          )}
+          {summary.tomorrowNudge && (
+            <p className="text-base leading-relaxed text-fg">{summary.tomorrowNudge}</p>
+          )}
+        </section>
+      )}
+      <p className="font-hand text-xl text-fg">{signOffFor(date)}</p>
+      {summary.createdAt && (
+        <p className="text-xs text-fg-soft">{writtenTime(summary.createdAt)}</p>
+      )}
+    </>
   );
 }
 

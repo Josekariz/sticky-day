@@ -3,14 +3,14 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import type { StoredSummary } from "@/lib/ai/tasks/summarize";
 import { DayDrawer, type DayDrawerNote } from "./DayDrawer";
 
 export type CalendarDay = {
   date: string;
   done: number;
   total: number;
-  summary: string | null;
-  summaryCreatedAt: string | null;
+  summary: StoredSummary | null;
 };
 
 const C = 2 * Math.PI * 9;
@@ -198,7 +198,6 @@ export function CalendarView({
         date={selected}
         today={today}
         summary={info?.summary ?? null}
-        summaryCreatedAt={info?.summaryCreatedAt ?? null}
         notes={notes}
         loading={loading}
         onClose={close}
