@@ -148,13 +148,13 @@ export function BrainDump({
             {notice}{" "}
             {quick && (
               <>
-                <Link href="/about" className="underline underline-offset-2 hover:text-fg">
+                <Link href="/about" className="dump-notice-link">
                   About
                 </Link>
                 <span aria-hidden> · </span>
               </>
             )}
-            <Link href="/privacy" className="underline underline-offset-2 hover:text-fg">
+            <Link href="/privacy" className="dump-notice-link" data-paper="sky">
               Privacy
             </Link>
           </p>

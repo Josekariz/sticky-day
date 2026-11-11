@@ -138,6 +138,34 @@ summary:focus-visible {
     0 16px 24px -10px rgba(0,0,0,0.4);
 }
 
+/* Inline About / Privacy links — readable on paper, neon on the dark board */
+.dump-notice-link {
+  --link-ink: #9a7b00;
+  --glow-paper: var(--paper-yellow);
+  font-weight: 600;
+  color: var(--link-ink);
+  text-decoration-line: underline;
+  text-underline-offset: 2px;
+  text-shadow:
+    0 0 8px color-mix(in oklch, var(--glow-paper) 45%, transparent),
+    0 0 16px color-mix(in oklch, var(--glow-paper) 30%, transparent);
+}
+.dump-notice-link[data-paper="sky"] {
+  --link-ink: #0b6e99;
+  --glow-paper: var(--paper-sky);
+}
+.dark .dump-notice-link {
+  --link-ink: var(--glow-paper);
+  text-shadow:
+    0 0 10px color-mix(in oklch, var(--glow-paper) 55%, transparent),
+    0 0 22px color-mix(in oklch, var(--glow-paper) 40%, transparent);
+}
+.dump-notice-link:hover {
+  text-shadow:
+    0 0 12px color-mix(in oklch, var(--glow-paper) 70%, transparent),
+    0 0 24px color-mix(in oklch, var(--glow-paper) 45%, transparent);
+}
+
 /* lifted bottom-right corner — underside stays paper-cream in both themes
    (var(--board) goes near-black in dark mode and looked like a broken triangle). */
 .sticky-note::after {
