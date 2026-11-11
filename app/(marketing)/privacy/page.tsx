@@ -57,10 +57,13 @@ export default function PrivacyPage() {
 
         <AboutNote title="Where it’s meant to be used" color="mint" rotation={-1} delay={0.2}>
           <p>
-            Because of Google’s free-tier terms, this hosted version is for people outside the EEA,
-            the UK and Switzerland for now.
+            Nairobi, Kenya, and most of the world are fine — including you reading this.
           </p>
-          <p>If you’re there, run your own copy, or wait for your own key.</p>
+          <p>
+            The only pause is for the EEA, the UK and Switzerland: Google’s free-tier AI terms are
+            stricter there, so this shared hosted copy isn’t aimed at those places yet.
+          </p>
+          <p>If you’re in those regions, run your own copy with your own keys, or wait for BYOK.</p>
         </AboutNote>
 
         <AboutNote title="Trying it without signing in" color="peach" rotation={-2} delay={0.25}>
