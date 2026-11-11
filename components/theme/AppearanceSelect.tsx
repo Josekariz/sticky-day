@@ -9,38 +9,19 @@ import { useAppearanceAccount } from "@/components/theme/AppearanceAccount";
 const subscribe = () => () => {};
 const useMounted = () => useSyncExternalStore(subscribe, () => true, () => false);
 
-const OPTIONS: {
-  value: Appearance;
-  label: string;
-  hint: string;
-  icon: "auto" | "light" | "dark";
-}[] = [
-  { value: "system", label: "Auto", hint: "Match your device", icon: "auto" },
-  { value: "light", label: "Light", hint: "Paper board", icon: "light" },
-  { value: "dark", label: "Dark", hint: "Neon board", icon: "dark" },
-];
-
-function Icon({ name }: { name: "auto" | "light" | "dark" }) {
-  if (name === "light") {
-    return (
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden>
-        <circle cx="12" cy="12" r="4" />
-        <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
-      </svg>
-    );
-  }
-  if (name === "dark") {
-    return (
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-        <path d="M21 14.5A8.5 8.5 0 0 1 9.5 3 7 7 0 1 0 21 14.5z" />
-      </svg>
-    );
-  }
+function SunIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-      <rect x="3" y="4" width="18" height="14" rx="2" />
-      <path d="M8 20h8M12 18v2" />
-      <path d="M12 7v6M9.5 9.5 12 7l2.5 2.5" />
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden>
+      <circle cx="12" cy="12" r="4" />
+      <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
+    </svg>
+  );
+}
+
+function MoonIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M21 14.5A8.5 8.5 0 0 1 9.5 3 7 7 0 1 0 21 14.5z" />
     </svg>
   );
 }
@@ -48,8 +29,7 @@ function Icon({ name }: { name: "auto" | "light" | "dark" }) {
 type Tone = "compact" | "full";
 
 /**
- * Segmented Light / Dark / Auto control.
- * compact = marketing header; full = profile + mobile menu.
+ * Auto by default. Sun / moon lock Light or Dark; tap the active one again for Auto.
  * Signed-in choices save to the profile.
  */
 export function AppearanceSelect({
@@ -66,15 +46,17 @@ export function AppearanceSelect({
   if (!mounted) {
     return (
       <span
-        className={`block h-11 rounded-xl border border-frame bg-surface ${tone === "compact" ? "w-[11.5rem]" : "w-full"} ${className}`}
+        className={`inline-flex h-11 w-[5.5rem] rounded-full border border-frame bg-surface ${className}`}
         aria-hidden
       />
     );
   }
 
   const value = parseAppearance(theme);
+  const lightOn = value === "light";
+  const darkOn = value === "dark";
 
-  async function onChange(next: Appearance) {
+  async function save(next: Appearance) {
     setTheme(next);
     if (!account) return;
     const { error } = await createClient()
@@ -84,44 +66,51 @@ export function AppearanceSelect({
     if (error) console.error("appearance save failed", error.message);
   }
 
-  const active = OPTIONS.find((o) => o.value === value) ?? OPTIONS[0];
+  function pick(mode: "light" | "dark") {
+    // Second tap on the active icon returns to Auto (device).
+    void save(value === mode ? "system" : mode);
+  }
+
+  const hint =
+    value === "light"
+      ? "Paper board. Tap the sun again to match your device."
+      : value === "dark"
+        ? "Neon board. Tap the moon again to match your device."
+        : "Matching your device. Tap sun or moon to lock a look.";
 
   return (
     <div className={`flex flex-col gap-1.5 ${className}`}>
       <div
-        role="radiogroup"
+        role="group"
         aria-label="Appearance"
-        className={`grid grid-cols-3 rounded-xl border border-frame bg-surface p-1 ${
-          tone === "compact" ? "w-[11.5rem]" : "w-full"
-        }`}
+        className="inline-flex h-11 items-center gap-0.5 rounded-full border border-frame bg-surface p-1"
       >
-        {OPTIONS.map((o) => {
-          const selected = o.value === value;
-          return (
-            <button
-              key={o.value}
-              type="button"
-              role="radio"
-              aria-checked={selected}
-              aria-label={`${o.label}: ${o.hint}`}
-              title={o.hint}
-              onClick={() => void onChange(o.value)}
-              className={`flex h-9 items-center justify-center gap-1.5 rounded-lg text-xs font-semibold transition-colors ${
-                selected ? "bg-fg text-bg" : "text-fg-soft hover:text-fg"
-              }`}
-            >
-              <Icon name={o.icon} />
-              <span>{o.label}</span>
-            </button>
-          );
-        })}
+        <button
+          type="button"
+          aria-pressed={lightOn}
+          aria-label={lightOn ? "Light mode on. Tap again for Auto." : "Use light mode"}
+          title="Light"
+          onClick={() => pick("light")}
+          className={`grid h-9 w-9 place-items-center rounded-full transition-colors ${
+            lightOn ? "bg-fg text-bg" : "text-fg-soft hover:text-fg"
+          }`}
+        >
+          <SunIcon />
+        </button>
+        <button
+          type="button"
+          aria-pressed={darkOn}
+          aria-label={darkOn ? "Dark mode on. Tap again for Auto." : "Use dark mode"}
+          title="Dark"
+          onClick={() => pick("dark")}
+          className={`grid h-9 w-9 place-items-center rounded-full transition-colors ${
+            darkOn ? "bg-fg text-bg" : "text-fg-soft hover:text-fg"
+          }`}
+        >
+          <MoonIcon />
+        </button>
       </div>
-      {tone === "full" && (
-        <p className="text-xs text-fg-soft">
-          {active.hint}
-          {account ? " · Saved to your account." : ""}
-        </p>
-      )}
+      {tone === "full" && <p className="text-xs text-fg-soft">{hint}</p>}
     </div>
   );
 }
