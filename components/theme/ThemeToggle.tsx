@@ -1,26 +1,8 @@
 "use client";
-import { useTheme } from "next-themes";
-import { useSyncExternalStore } from "react";
 
-const subscribe = () => () => {};
-const useMounted = () => useSyncExternalStore(subscribe, () => true, () => false);
+import { AppearanceSelect } from "@/components/theme/AppearanceSelect";
 
+/** Desktop header control — same Light / Dark / Auto choices as the menu. */
 export function ThemeToggle({ className = "" }: { className?: string }) {
-  const { resolvedTheme, setTheme } = useTheme();
-  const mounted = useMounted();
-  if (!mounted) {
-    return <span className={`inline-block h-11 w-11 md:h-10 md:w-10 ${className}`} />;
-  }
-
-  const dark = resolvedTheme === "dark";
-  return (
-    <button
-      type="button"
-      onClick={() => setTheme(dark ? "light" : "dark")}
-      aria-label={dark ? "Switch to paper" : "Switch to neon"}
-      className={`flex h-11 w-11 items-center justify-center rounded-full border border-frame bg-surface md:h-10 md:w-10 ${className}`}
-    >
-      {dark ? "☼" : "☾"}
-    </button>
-  );
+  return <AppearanceSelect className={className} />;
 }
