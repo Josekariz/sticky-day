@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect } from "react";
+import { createContext, useContext, useLayoutEffect } from "react";
 import { useTheme } from "next-themes";
 import type { Appearance } from "@/lib/core/appearance";
 
@@ -22,7 +22,7 @@ export function AppearanceAccount({
 }) {
   const { setTheme } = useTheme();
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     setTheme(appearance);
   }, [appearance, setTheme]);
 

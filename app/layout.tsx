@@ -47,8 +47,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <div className="boot-splash-note" />
           <span className="boot-splash-title">Sticky Day</span>
         </div>
-        <BootSplash />
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          <BootSplash />
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );
