@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useRef, useState, type MouseEvent } from "react";
+import { useEffect, useRef, useState, useTransition, type MouseEvent } from "react";
 import { SignOutButton } from "@/components/auth/SignOutButton";
 import { AppearanceSelect } from "@/components/theme/AppearanceSelect";
 import { flushPendingSaves, hasPendingSaves } from "@/components/board/pendingSaves";
@@ -31,6 +31,7 @@ export function Navbar({
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
   const [flushHref, setFlushHref] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
   const sheet = useRef<HTMLDivElement>(null);
   const toggle = useRef<HTMLButtonElement>(null);
   const flushNav = flushHref !== null && path !== flushHref && !path.startsWith(flushHref);
@@ -65,9 +66,17 @@ export function Navbar({
     router.push(href);
   }
 
+  async function onRefresh() {
+    if (isPending) return;
+    await flushPendingSaves(1000);
+    startTransition(() => {
+      router.refresh();
+    });
+  }
+
   return (
     <>
-      <ManualTopProgress active={flushNav} />
+      <ManualTopProgress active={flushNav || isPending} />
       <header className="relative flex h-16 items-center justify-between border-b border-frame px-4 md:grid md:grid-cols-[1fr_auto_1fr] md:px-8">
         <Link
           href="/board"
@@ -109,6 +118,25 @@ export function Navbar({
         </nav>
 
         <div className="flex items-center gap-2 justify-self-end md:gap-3">
+          <button
+            type="button"
+            aria-label="Refresh"
+            disabled={isPending}
+            aria-busy={isPending}
+            onClick={() => void onRefresh()}
+            className="grid h-11 w-11 place-items-center rounded-full text-fg-soft hover:bg-frame/40 hover:text-fg disabled:opacity-60 md:h-10 md:w-10"
+          >
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              aria-hidden
+              className={isPending ? "animate-spin" : undefined}
+            >
+              <path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46A7.93 7.93 0 0 0 20 12c0-4.42-3.58-8-8-8m0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74A7.93 7.93 0 0 0 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4z" />
+            </svg>
+          </button>
           <Link
             href="/profile"
             onClick={(e) => void onNavClick(e, "/profile")}

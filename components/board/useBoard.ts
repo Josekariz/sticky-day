@@ -40,6 +40,16 @@ export function useBoard(
   const [onboarded, setOnboarded] = useState(initialOnboarded);
   const { save, remove, saveOnboarding, insert } = store;
 
+  // Signed-in only: adopt notes after router.refresh(). Guest boards own localStorage
+  // and re-pass a new initial array on every parent render — don't clobber them.
+  useEffect(() => {
+    if (store.persist) return;
+    setNotes(initial);
+    setOnboarded(initialOnboarded);
+    setOpenId(null);
+    setDoneAskId(null);
+  }, [initial, initialOnboarded, store]);
+
   useEffect(() => {
     store.persist?.(notes);
   }, [store, notes]);
