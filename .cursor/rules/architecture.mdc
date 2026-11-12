@@ -46,7 +46,7 @@ session check that redirects to `/` when signed out.
    `public.user_today()`.
 
 7. **At most `MAX_FOCUS` (3) notes in focus**, enforced by the `enforce_focus_cap`
-   trigger; only the newest timer runs.
+   trigger; every focus note's timer may run at once.
 
 8. **AI output is validated with Zod (`generateObject`) before it touches state or
    the database.** A parse failure is an expected branch: retry once, then a clear

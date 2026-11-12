@@ -124,12 +124,18 @@ export function useBoard(
     workOn(id: string) {
       setNotes((ns) => {
         const already = ns.filter((n) => n.status === "focus" && n.id !== id);
-        let acc = ns.map((n) => (n.status === "focus" ? pause(n) : n));
+        // Other clipboard timers keep running; only kick the oldest if at the cap.
+        let acc = ns;
         if (already.length >= MAX_FOCUS) {
           const oldest = already[0];
-          acc = acc.map((n) => (n.id === oldest.id ? { ...pause(n), status: "board" } : n));
+          acc = acc.map((n) => (n.id === oldest.id ? { ...pause(n), status: "board" as const } : n));
         }
-        acc = acc.map((n) => (n.id === id ? { ...n, status: "focus" as const, startedAt: Date.now() } : n));
+        acc = acc.map((n) => {
+          if (n.id !== id) return n;
+          // Already timing on the clipboard — leave the clock alone.
+          if (n.status === "focus" && n.startedAt) return n;
+          return { ...n, status: "focus" as const, startedAt: Date.now() };
+        });
         const pinned = acc.find((n) => n.id === id);
         if (!pinned) return acc;
         const result = [...acc.filter((n) => n.id !== id), pinned];
@@ -147,10 +153,9 @@ export function useBoard(
 
     resume(id: string) {
       setNotes((ns) => {
-        const result = ns.map((n) => {
-          if (n.status !== "focus") return n;
-          return n.id === id ? { ...n, startedAt: Date.now() } : pause(n);
-        });
+        const result = ns.map((n) =>
+          n.id === id && n.status === "focus" ? { ...n, startedAt: Date.now() } : n,
+        );
         for (const n of result) {
           const p = ns.find((k) => k.id === n.id)!;
           const patch = changedTimerFields(p, n);
