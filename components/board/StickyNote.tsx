@@ -4,6 +4,7 @@ import { motion, useMotionValue } from "framer-motion";
 import { useRef, useSyncExternalStore, type RefObject } from "react";
 import { paperVar, type Note, type NoteShape } from "@/lib/core/types";
 import { weekdayShort } from "@/lib/core/date";
+import { noteSizeVars } from "@/lib/core/noteSize";
 import { centreOf, type DropTarget } from "./useDropTargets";
 import { TomorrowBadge } from "./TomorrowMark";
 
@@ -46,11 +47,11 @@ const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
 // that; only count it as a drag (and swallow the click) past this distance.
 const DRAG_PX = 8;
 
-// Text box per shape — sized so a three-line title and the chips stay inside
-// the outline. Mobile uses the same layout with tighter padding.
+// Title + priority sit as one centered stack — short notes (no detail on the
+// face) used to look empty with the title up top and a lone chip at the bottom.
 const BODY: Record<NoteShape, string> = {
-  square: "p-3 pb-2.5 md:p-4 md:pb-3",
-  rounded: "p-3.5 pb-3.5 md:p-5 md:pb-5",
+  square: "items-center justify-center gap-1.5 p-3 text-center md:gap-2 md:p-4",
+  rounded: "items-center justify-center gap-1.5 p-3.5 text-center md:gap-2 md:p-5",
   circle: "items-center justify-center gap-0.5 px-4 py-4 text-center md:gap-1 md:px-6 md:py-6",
   // Padding is % of the width (= height): the content box spans the band from
   // just under the cleft to where the sides get too narrow for the chips.
@@ -58,18 +59,18 @@ const BODY: Record<NoteShape, string> = {
   pill: "items-center justify-center gap-0.5 px-6 py-1.5 text-center md:gap-1 md:px-11 md:py-2",
 };
 const TITLE: Record<NoteShape, string> = {
-  square: "px-4 md:px-6",
-  rounded: "px-4 md:px-6",
+  square: "px-2 md:px-3",
+  rounded: "px-2 md:px-3",
   circle: "",
   heart: "",
   pill: "",
 };
 const CHIPS: Record<NoteShape, string> = {
-  square: "pr-6 md:pr-8",
-  rounded: "pr-0",
-  circle: "mt-0 pr-0 justify-center",
-  heart: "mt-0 pr-0 justify-center",
-  pill: "mt-0 pr-0 justify-center",
+  square: "justify-center",
+  rounded: "justify-center",
+  circle: "justify-center",
+  heart: "justify-center",
+  pill: "justify-center",
 };
 const STAMP: Record<NoteShape, string> = {
   square: "absolute bottom-8 left-2.5 md:bottom-10 md:left-4",
@@ -99,6 +100,7 @@ export function StickyNote(props: Props) {
   const queued = note.againTomorrow;
   const stamped = carried || queued;
   const shape = note.shape;
+  const sizeVars = noteSizeVars(note.title, shape);
   // Heart + stamps leave less room for a third title line.
   const clamp = stamped || shape === "heart" ? "line-clamp-2" : "line-clamp-3";
 
@@ -145,6 +147,7 @@ export function StickyNote(props: Props) {
               rotate: note.rotation,
               ["--paper" as string]: paper,
               opacity: faded ? 0.72 : 1,
+              ...sizeVars,
             }
           : {
               left: `calc(${note.x} * (100% - var(--note-w)))`,
@@ -153,6 +156,7 @@ export function StickyNote(props: Props) {
               y,
               rotate: note.rotation,
               ["--paper" as string]: paper,
+              ...sizeVars,
             }
       }
       onPointerDown={
@@ -199,7 +203,7 @@ export function StickyNote(props: Props) {
       </div>
 
       {readOnly ? (
-        <div className={`relative flex h-full w-full flex-col text-left ${BODY[shape]}`}>
+        <div className={`relative flex h-full w-full flex-col ${BODY[shape]}`}>
           {stamp}
           <span className={`font-hand text-(length:--note-font) font-semibold leading-tight ${clamp} ${TITLE[shape]}`}>
             {note.title}
@@ -226,20 +230,16 @@ export function StickyNote(props: Props) {
               }
               props.onOpen(note.id);
             }}
-            className={`note-hit relative flex h-full w-full flex-col text-left ${BODY[shape]}`}
+            className={`note-hit relative flex h-full w-full flex-col ${BODY[shape]}`}
           >
             {stamp}
             <span className={`font-hand text-(length:--note-font) font-semibold leading-tight ${clamp} ${TITLE[shape]}`}>
               {note.title}
             </span>
-            <span className={`mt-auto flex items-center gap-1 pr-5 text-[10px] font-semibold text-ink-soft md:gap-1.5 md:text-[11px] ${CHIPS[shape]}`}>
-              {queued ? (
-                <TomorrowBadge />
-              ) : (
-                <span className="whitespace-nowrap px-1 py-0.5 rounded-full bg-black/10 tabular-nums md:px-1.5">{note.estMinutes} min</span>
-              )}
+            <span className={`flex items-center gap-1 text-[10px] font-semibold text-ink-soft md:gap-1.5 md:text-[11px] ${CHIPS[shape]}`}>
+              {queued && <TomorrowBadge />}
               <span className="whitespace-nowrap px-1 py-0.5 rounded-full bg-black/10 capitalize md:px-1.5">{note.priority}<span className="sr-only"> priority</span></span>
-              {queued && <span className="sr-only">{note.estMinutes} minutes, on for tomorrow</span>}
+              {queued && <span className="sr-only">on for tomorrow</span>}
             </span>
           </button>
 
