@@ -1,11 +1,24 @@
 "use client";
 
 import { motion, useMotionValue } from "framer-motion";
-import { useRef, type RefObject } from "react";
+import { useRef, useSyncExternalStore, type RefObject } from "react";
 import { paperVar, type Note, type NoteShape } from "@/lib/core/types";
 import { weekdayShort } from "@/lib/core/date";
 import { centreOf, type DropTarget } from "./useDropTargets";
 import { TomorrowBadge } from "./TomorrowMark";
+
+/** Real mouse hover only — touch/PWA "hover" sticky-states make notes feel laggy. */
+function useFineHover() {
+  return useSyncExternalStore(
+    (onStoreChange) => {
+      const mq = window.matchMedia("(hover: hover) and (pointer: fine)");
+      mq.addEventListener("change", onStoreChange);
+      return () => mq.removeEventListener("change", onStoreChange);
+    },
+    () => window.matchMedia("(hover: hover) and (pointer: fine)").matches,
+    () => false,
+  );
+}
 
 type InteractiveProps = {
   readOnly?: false;
@@ -33,43 +46,44 @@ const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
 // that; only count it as a drag (and swallow the click) past this distance.
 const DRAG_PX = 8;
 
-// Text box per shape from md up (below md every note is a square). Sized so a
-// three-line title and the chips stay inside the outline.
+// Text box per shape — sized so a three-line title and the chips stay inside
+// the outline. Mobile uses the same layout with tighter padding.
 const BODY: Record<NoteShape, string> = {
-  square: "md:p-4 md:pb-3",
-  rounded: "md:p-5 md:pb-5",
-  circle: "md:items-center md:justify-center md:gap-1 md:px-6 md:py-6 md:text-center",
+  square: "p-3 pb-2.5 md:p-4 md:pb-3",
+  rounded: "p-3.5 pb-3.5 md:p-5 md:pb-5",
+  circle: "items-center justify-center gap-0.5 px-4 py-4 text-center md:gap-1 md:px-6 md:py-6",
   // Padding is % of the width (= height): the content box spans the band from
   // just under the cleft to where the sides get too narrow for the chips.
-  heart: "md:items-center md:justify-center md:gap-1 md:px-6 md:pt-[17%] md:pb-[34%] md:text-center",
-  pill: "md:items-center md:justify-center md:gap-1 md:px-11 md:py-2 md:text-center",
+  heart: "items-center justify-center gap-0.5 px-4 pt-[17%] pb-[34%] text-center md:gap-1 md:px-6",
+  pill: "items-center justify-center gap-0.5 px-6 py-1.5 text-center md:gap-1 md:px-11 md:py-2",
 };
 const TITLE: Record<NoteShape, string> = {
-  square: "md:px-6",
-  rounded: "md:px-6",
+  square: "px-4 md:px-6",
+  rounded: "px-4 md:px-6",
   circle: "",
   heart: "",
   pill: "",
 };
 const CHIPS: Record<NoteShape, string> = {
-  square: "md:pr-8",
-  rounded: "md:pr-0",
-  circle: "md:mt-0 md:pr-0 md:justify-center",
-  heart: "md:mt-0 md:pr-0 md:justify-center",
-  pill: "md:mt-0 md:pr-0 md:justify-center",
+  square: "pr-6 md:pr-8",
+  rounded: "pr-0",
+  circle: "mt-0 pr-0 justify-center",
+  heart: "mt-0 pr-0 justify-center",
+  pill: "mt-0 pr-0 justify-center",
 };
 const STAMP: Record<NoteShape, string> = {
-  square: "absolute bottom-9 left-3 md:bottom-10 md:left-4",
-  rounded: "absolute bottom-9 left-3 md:bottom-11 md:left-5",
-  circle: "absolute bottom-9 left-3 md:static",
-  heart: "absolute bottom-9 left-3 md:bottom-[24%] md:left-1/2 md:-translate-x-1/2",
-  pill: "absolute bottom-9 left-3 md:static",
+  square: "absolute bottom-8 left-2.5 md:bottom-10 md:left-4",
+  rounded: "absolute bottom-8 left-2.5 md:bottom-11 md:left-5",
+  circle: "static",
+  heart: "absolute bottom-[24%] left-1/2 -translate-x-1/2",
+  pill: "static",
 };
 
 export function StickyNote(props: Props) {
   const { note } = props;
   const readOnly = props.readOnly === true;
   const faded = readOnly && !!props.faded;
+  const fineHover = useFineHover();
   const x = useMotionValue(0);
   const y = useMotionValue(0);
   const paper = paperVar(note.color);
@@ -85,11 +99,12 @@ export function StickyNote(props: Props) {
   const queued = note.againTomorrow;
   const stamped = carried || queued;
   const shape = note.shape;
-  // Below md the stamp sits where a third title line would go.
-  const clamp = `${stamped ? "line-clamp-2" : "line-clamp-3"} ${shape === "heart" ? "md:line-clamp-2" : "md:line-clamp-3"}`;
+  // Heart + stamps leave less room for a third title line.
+  const clamp = stamped || shape === "heart" ? "line-clamp-2" : "line-clamp-3";
 
   function handleDragEnd() {
     if (readOnly) return;
+    self.current?.removeAttribute("data-dragging");
     const dx = x.get();
     const dy = y.get();
     x.set(0);
@@ -155,6 +170,7 @@ export function StickyNote(props: Props) {
                 if (Math.hypot(x.get(), y.get()) <= DRAG_PX) return;
                 dragged.current = true;
                 boardSawDrag.current = true;
+                self.current?.setAttribute("data-dragging", "");
                 props.onDragStart();
               }
               if (self.current) {
@@ -169,7 +185,7 @@ export function StickyNote(props: Props) {
       initial={{ scale: 0.6, rotate: note.rotation + 12, opacity: 0 }}
       animate={{ scale: 1, rotate: note.rotation, opacity: faded ? 0.72 : 1 }}
       exit={{ scale: 0.15, rotate: note.rotation + 40, opacity: 0, transition: { duration: 0.35 } }}
-      whileHover={readOnly ? undefined : { scale: 1.04, rotate: 0, translateY: -4 }}
+      whileHover={readOnly || !fineHover ? undefined : { scale: 1.04, rotate: 0, translateY: -4 }}
       whileDrag={readOnly ? undefined : { scale: overTarget ? 0.5 : 1.05, rotate: overTarget ? -12 : 0, zIndex: 50 }}
       transition={{ type: "spring", stiffness: 380, damping: 22 }}
       className={
@@ -183,9 +199,9 @@ export function StickyNote(props: Props) {
       </div>
 
       {readOnly ? (
-        <div className={`relative flex h-full w-full flex-col p-3 text-left ${BODY[shape]}`}>
+        <div className={`relative flex h-full w-full flex-col text-left ${BODY[shape]}`}>
           {stamp}
-          <span className={`font-hand text-(length:--note-font) font-semibold leading-tight ${clamp}`}>
+          <span className={`font-hand text-(length:--note-font) font-semibold leading-tight ${clamp} ${TITLE[shape]}`}>
             {note.title}
           </span>
           {faded && (
@@ -210,7 +226,7 @@ export function StickyNote(props: Props) {
               }
               props.onOpen(note.id);
             }}
-            className={`note-hit relative flex h-full w-full flex-col p-3 text-left ${BODY[shape]}`}
+            className={`note-hit relative flex h-full w-full flex-col text-left ${BODY[shape]}`}
           >
             {stamp}
             <span className={`font-hand text-(length:--note-font) font-semibold leading-tight ${clamp} ${TITLE[shape]}`}>

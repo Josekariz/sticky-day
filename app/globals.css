@@ -206,10 +206,21 @@ summary:focus-visible {
   pointer-events: none;
 }
 
+/* Mobile open-note: drop grain/fold so the sheet stays light to paint. Desktop keeps .sticky-note. */
+@media (width < 48rem) {
+  .sticky-note.pickup-dialog {
+    box-shadow: 0 12px 28px -8px rgba(0, 0, 0, 0.35);
+  }
+  .sticky-note.pickup-dialog::before,
+  .sticky-note.pickup-dialog::after {
+    display: none;
+  }
+}
+
 /*
  * Board note. The root carries position, drag, the hover buttons and the
  * "from <day>" stamp; only .note-paper inside it is clipped to the shape, so
- * nothing interactive is ever cut off. Below md every note is a square.
+ * nothing interactive is ever cut off. Shapes apply at every width.
  */
 .note-root {
   --note-w: var(--note-size);
@@ -252,48 +263,67 @@ summary:focus-visible {
     0 16px 24px -10px rgba(0,0,0,0.4);
 }
 
-@media (width >= 48rem) {
-  .note-root[data-shape="rounded"] { --note-font: 1.375rem; }
-  .note-root[data-shape="circle"] { --note-font: 1.125rem; }
-  .note-root[data-shape="heart"] { --note-font: 1.125rem; }
-  .note-root[data-shape="pill"] {
-    --note-w: calc(var(--note-size) * 1.5);
-    --note-h: calc(var(--note-size) * 0.7);
-    --note-font: 1.125rem;
-  }
+/* Shape outlines + pill size (fonts stay tighter on the 120px mobile note). */
+.note-root[data-shape="rounded"] { --note-font: 1.05rem; }
+.note-root[data-shape="circle"],
+.note-root[data-shape="heart"] { --note-font: 0.9375rem; }
+.note-root[data-shape="pill"] {
+  --note-w: calc(var(--note-size) * 1.5);
+  --note-h: calc(var(--note-size) * 0.7);
+  --note-font: 0.9375rem;
+}
 
-  .note-root[data-shape="rounded"] .note-paper { clip-path: var(--clip-rounded); }
-  .note-root[data-shape="circle"] .note-paper { clip-path: var(--clip-circle); }
-  .note-root[data-shape="heart"] .note-paper { clip-path: var(--clip-heart); }
-  .note-root[data-shape="pill"] .note-paper { clip-path: var(--clip-pill); }
+.note-root[data-shape="rounded"] .note-paper { clip-path: var(--clip-rounded); }
+.note-root[data-shape="circle"] .note-paper { clip-path: var(--clip-circle); }
+.note-root[data-shape="heart"] .note-paper { clip-path: var(--clip-heart); }
+.note-root[data-shape="pill"] .note-paper { clip-path: var(--clip-pill); }
 
-  .note-root[data-shape="rounded"]:has(> .note-hit:focus-visible) .note-glow::before,
-  .note-root[data-shape="rounded"]:has(> .note-hit:focus-visible) .note-glow::after { clip-path: var(--clip-rounded); }
-  .note-root[data-shape="circle"]:has(> .note-hit:focus-visible) .note-glow::before,
-  .note-root[data-shape="circle"]:has(> .note-hit:focus-visible) .note-glow::after { clip-path: var(--clip-circle); }
-  .note-root[data-shape="heart"]:has(> .note-hit:focus-visible) .note-glow::before,
-  .note-root[data-shape="heart"]:has(> .note-hit:focus-visible) .note-glow::after { clip-path: var(--clip-heart); }
-  .note-root[data-shape="pill"]:has(> .note-hit:focus-visible) .note-glow::before,
-  .note-root[data-shape="pill"]:has(> .note-hit:focus-visible) .note-glow::after { clip-path: var(--clip-pill); }
+.note-root[data-shape="rounded"]:has(> .note-hit:focus-visible) .note-glow::before,
+.note-root[data-shape="rounded"]:has(> .note-hit:focus-visible) .note-glow::after { clip-path: var(--clip-rounded); }
+.note-root[data-shape="circle"]:has(> .note-hit:focus-visible) .note-glow::before,
+.note-root[data-shape="circle"]:has(> .note-hit:focus-visible) .note-glow::after { clip-path: var(--clip-circle); }
+.note-root[data-shape="heart"]:has(> .note-hit:focus-visible) .note-glow::before,
+.note-root[data-shape="heart"]:has(> .note-hit:focus-visible) .note-glow::after { clip-path: var(--clip-heart); }
+.note-root[data-shape="pill"]:has(> .note-hit:focus-visible) .note-glow::before,
+.note-root[data-shape="pill"]:has(> .note-hit:focus-visible) .note-glow::after { clip-path: var(--clip-pill); }
 
-  /* Only the square keeps the lifted corner; the rest glow along their outline. */
-  .note-root:not([data-shape="square"]) .note-paper,
-  .note-root:not([data-shape="square"]):hover .note-paper { box-shadow: none; }
-  .note-root:not([data-shape="square"]) .note-paper::after { display: none; }
-  .note-root:not([data-shape="square"]) .note-glow {
-    filter:
-      var(--note-tint)
-      drop-shadow(0 0 1px color-mix(in oklch, var(--paper) 50%, transparent))
-      drop-shadow(0 0 12px color-mix(in oklch, var(--paper) 55%, transparent))
-      drop-shadow(0 10px 8px var(--shape-shadow));
-  }
+/* Only the square keeps the lifted corner; the rest glow along their outline. */
+.note-root:not([data-shape="square"]) .note-paper,
+.note-root:not([data-shape="square"]):hover .note-paper { box-shadow: none; }
+.note-root:not([data-shape="square"]) .note-paper::after { display: none; }
+.note-root:not([data-shape="square"]) .note-glow {
+  filter:
+    var(--note-tint)
+    drop-shadow(0 0 1px color-mix(in oklch, var(--paper) 50%, transparent))
+    drop-shadow(0 0 12px color-mix(in oklch, var(--paper) 55%, transparent))
+    drop-shadow(0 10px 8px var(--shape-shadow));
+}
+.note-root:not([data-shape="square"]):hover .note-glow {
+  filter:
+    var(--note-tint)
+    drop-shadow(0 0 1px color-mix(in oklch, var(--paper) 60%, transparent))
+    drop-shadow(0 0 22px color-mix(in oklch, var(--paper) 85%, transparent))
+    drop-shadow(0 14px 10px var(--shape-shadow));
+}
+
+/* Touch/PWA: one cheap shadow. Multi-layer drop-shadows jank while dragging. */
+@media (hover: none) {
+  .note-root:not([data-shape="square"]) .note-glow,
   .note-root:not([data-shape="square"]):hover .note-glow {
     filter:
       var(--note-tint)
-      drop-shadow(0 0 1px color-mix(in oklch, var(--paper) 60%, transparent))
-      drop-shadow(0 0 22px color-mix(in oklch, var(--paper) 85%, transparent))
-      drop-shadow(0 14px 10px var(--shape-shadow));
+      drop-shadow(0 6px 6px var(--shape-shadow));
   }
+}
+.note-root[data-dragging] .note-glow {
+  filter: var(--note-tint) !important;
+}
+
+@media (width >= 48rem) {
+  .note-root[data-shape="rounded"] { --note-font: 1.375rem; }
+  .note-root[data-shape="circle"],
+  .note-root[data-shape="heart"],
+  .note-root[data-shape="pill"] { --note-font: 1.125rem; }
 }
 
 /* Small shape swatches and mini notes (pickup card, first visit, profile). */
