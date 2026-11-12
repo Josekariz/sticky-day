@@ -45,7 +45,6 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full flex flex-col bg-bg text-fg font-body">
         <div id="boot-splash" aria-hidden="true">
           <div className="boot-splash-note" />
-          <span className="boot-splash-title">Sticky Day</span>
         </div>
         <ThemeProvider>
           <BootSplash />

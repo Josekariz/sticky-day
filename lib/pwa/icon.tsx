@@ -45,6 +45,8 @@ export function pwaIcon(size: number, kind: "any" | "maskable") {
   // Keep the sticky large on the home screen; maskable still needs a little safe pad.
   const pad = kind === "maskable" ? 0.12 : 0.04;
   const inner = Math.round(size * (1 - pad * 2));
+  // Black S on the note — Chrome’s splash is icon-only, so this is the brand mark.
+  const mark = Math.round(inner * 0.44);
 
   return new ImageResponse(
     (
@@ -56,9 +58,26 @@ export function pwaIcon(size: number, kind: "any" | "maskable") {
           alignItems: "center",
           justifyContent: "center",
           background: TILE,
+          position: "relative",
         }}
       >
         <Note size={inner} />
+        <div
+          style={{
+            position: "absolute",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: mark,
+            fontWeight: 700,
+            color: "#1F1D1A",
+            lineHeight: 1,
+            // Sit on the note face (note is rotated ~-5deg).
+            transform: "translateY(-4%)",
+          }}
+        >
+          S
+        </div>
       </div>
     ),
     { width: size, height: size },
