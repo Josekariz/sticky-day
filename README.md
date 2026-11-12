@@ -2,7 +2,7 @@
 
 A whiteboard for your day. Type what you want to get done, and it becomes sticky notes. Work on up to three at a time, drop the finished ones in the tray, and at the end of the day the app writes you a short note about how it went.
 
-Live at **https://sticky-day.vercel.app** — sign in with Google and you're on the board.
+Live at **https://sticky-day.vercel.app** — sign in with Google or email and you're on the board.
 
 Built in Nairobi by [Joseph Macharia](https://github.com/Josekariz) as a way to learn how to build with AI models by making something worth using every day. The code is open.
 
@@ -41,70 +41,156 @@ Every model attempt is logged for debugging: the task, the model, how long it to
 ## Stack
 
 - **Next.js 16** (App Router), TypeScript, Tailwind v4, Framer Motion
-- **Supabase** — Google sign-in, Postgres, row-level security
+- **Supabase** — Google + email auth, Postgres, row-level security
 - **Vercel AI SDK** + Zod — `@ai-sdk/google`, `@ai-sdk/groq`
-- **Vercel** — hosting
+- **Resend** — optional (Say hi form + SMTP for Supabase auth mail)
+- **Vercel** — hosting and cron
 
 ## Running it yourself
 
-You need a Supabase project with Google auth turned on, and at least one AI key.
+You need a [Supabase](https://supabase.com) project, at least one AI provider key, and Node 22+ (the AI SDK needs it). Google sign-in and email/password both work; you can enable one or both.
 
 **Privacy.** What the hosted version keeps and who can see it is on the [privacy page](https://sticky-day.vercel.app/privacy). On Gemini's free tier, Google may use what's sent to improve its products, and human reviewers may read it, de-identified. Because of that, the hosted version is for people outside the EEA, UK and Switzerland for now; if you're there, run your own copy with your own keys.
+
+### Quick start
 
 ```bash
 git clone https://github.com/Josekariz/sticky-day
 cd sticky-day
 npm install
-cp .env.example .env        # fill it in — see below
+cp .env.example .env        # fill the Required block — see below
 npx supabase link --project-ref <your-project-ref>
 npx supabase db push        # creates the tables, policies and functions
 npm run dev
 ```
 
-`.env`:
+Open [http://localhost:3000](http://localhost:3000). Finish the Supabase auth steps below before sign-in will work.
 
+### Environment variables
+
+Copy [`.env.example`](.env.example). Only the **Required** block is needed to boot the app.
+
+#### Required
+
+| Variable | Where it comes from |
+| --- | --- |
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase → Project Settings → API → Project URL |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Same page → `anon` `public` key. Never the service role. |
+| `AI_ORDER` | Comma-separated `provider:model` list tried in order, e.g. `groq:…,google:…` |
+| `GOOGLE_API_KEY` and/or `GROQ_API_KEY` | At least one key matching a provider in `AI_ORDER` |
+
+#### Optional — Say hi contact form
+
+Without these, the form still saves the message in the database; email delivery is skipped.
+
+| Variable | Purpose |
+| --- | --- |
+| `RESEND_API_KEY` | [Resend API key](https://resend.com/api-keys) — used only by `/api/contact` |
+| `CONTACT_TO` | Inbox that receives Say hi messages |
+| `CONTACT_FROM` | Sender address. Default `onboarding@resend.dev` only reaches your own Resend account until you [verify a domain](https://resend.com/docs/dashboard/domains/introduction) |
+
+`RESEND_API_KEY` does **not** send password-reset or signup emails. Those go through Supabase Auth (see Auth emails below).
+
+#### Optional — nightly Your day cron (production)
+
+Used by `/api/cron/summaries` (schedule in `vercel.json`). Without them, summaries still run when a signed-in user opens the app after their summary time.
+
+| Variable | Purpose |
+| --- | --- |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase → API → `service_role`. Server-only. Never `NEXT_PUBLIC_`. |
+| `CRON_SECRET` | Random string; Vercel sends `Authorization: Bearer <CRON_SECRET>` |
+| `SUMMARY_CRON_SINCE` | Optional `YYYY-MM-DD` floor so cron never backfills older days |
+| `CRON_DRY_RUN` | Set to `1` to log planned actions without writing |
+
+### Supabase project
+
+1. Create a project at [supabase.com/dashboard](https://supabase.com/dashboard).
+2. Install the [Supabase CLI](https://supabase.com/docs/guides/cli) if you don't have it.
+3. From the repo: `npx supabase link --project-ref <ref>` then `npx supabase db push` so every file in `supabase/migrations/` is applied in order.
+
+### Auth setup
+
+All of this lives in the Supabase dashboard, not in `.env`.
+
+#### URL allow list
+
+**Authentication → URL Configuration**
+
+- **Site URL:** `http://localhost:3000` while developing; your production origin in prod.
+- **Redirect URLs** (add all you use):
+  - `http://localhost:3000/auth/callback`
+  - `http://localhost:3000/auth/confirm`
+  - `https://<your-domain>/auth/callback`
+  - `https://<your-domain>/auth/confirm`
+
+Google OAuth uses `/auth/callback`. Email confirm and password-reset links use `/auth/confirm`.
+
+#### Google sign-in
+
+Follow Supabase's guide: [Login with Google](https://supabase.com/docs/guides/auth/social-login/auth-google).
+
+Short version: create an OAuth client in [Google Cloud Console](https://console.cloud.google.com/apis/credentials), put the client ID and secret into **Authentication → Providers → Google**, and add Supabase's callback URL that the provider page shows. Redirects back into this app go to `/auth/callback` (already in the allow list above).
+
+#### Email / password and auth emails
+
+Email sign-up, sign-in, and “Forgot password” are built in. Supabase sends those messages — not the app's Resend API key.
+
+Supabase's built-in mailer is fine for a quick local try, but it rate-limits hard. For a real instance, set **Custom SMTP**:
+
+1. [Custom SMTP in Supabase](https://supabase.com/docs/guides/auth/auth-smtp)
+2. Easiest path with Resend: [Send with Supabase SMTP](https://resend.com/docs/send-with-supabase-smtp)
+
+Then point the Auth email templates at this app's confirm route so links work in any browser (not only the one that requested the mail). Docs: [Email templates](https://supabase.com/docs/guides/auth/auth-email-templates).
+
+In **Authentication → Email Templates**, use a `token_hash` link. Examples:
+
+**Confirm signup** (`type=signup`):
+
+```html
+<a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=signup">Confirm your email</a>
 ```
-NEXT_PUBLIC_SUPABASE_URL=       # from Supabase → Project settings → API
-NEXT_PUBLIC_SUPABASE_ANON_KEY=  # the anon key; never the service role key
-AI_ORDER=groq:qwen/qwen3.8-27b,google:gemini-3.8-flash
-GOOGLE_API_KEY=                 # aistudio.google.com/apikey
-GROQ_API_KEY=                   # console.groq.com/keys
-RESEND_API_KEY=                 # resend.com/api-keys — emails you Say hi messages
-CONTACT_TO=                     # the inbox Say hi messages go to
-CONTACT_FROM=onboarding@resend.dev  # sender; change once you verify a domain on Resend
+
+**Reset password** (`type=recovery`) — lands on the new-password screen:
+
+```html
+<a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery&next=/reset-password">Reset your password</a>
 ```
 
-Google's client ID and secret go into Supabase (Authentication → Providers → Google), not into `.env`. Add `http://localhost:3000/auth/callback` and your production URL to the redirect list there.
+The app verifies the hash in `app/auth/confirm/route.ts`. Default Supabase templates that only send `?code=` still work in the same browser that started the flow, but `token_hash` is what you want for phone/mail clients.
 
-### Getting the AI keys
+### AI keys
 
-Both are free. You only need one for the app to work; two gives you a fallback when one is busy.
+You only need one provider for the app to work; two gives you a fallback when one is busy. Both have free tiers.
 
 **Google Gemini**
-1. Go to [aistudio.google.com/apikey](https://aistudio.google.com/apikey) and sign in with any Google account.
-2. Click **Create API key**. It starts with `AIza`.
-3. Paste it as `GOOGLE_API_KEY`.
-
-The free tier has a daily request limit per model, which is why `AI_ORDER` lists more than one Gemini model — when `gemini-3.8-flash` says it's busy, the app falls through to the next one. Check [ai.google.dev/gemini-api/docs/models](https://ai.google.dev/gemini-api/docs/models) for the current model names; they get renamed and retired.
+1. [aistudio.google.com/apikey](https://aistudio.google.com/apikey) → **Create API key** (starts with `AIza`).
+2. Paste it as `GOOGLE_API_KEY`.
+3. Put one or more `google:…` models in `AI_ORDER`. Current names: [Gemini models](https://ai.google.dev/gemini-api/docs/models). They get renamed and retired; the free tier also has per-model daily limits, which is why the example lists more than one Flash model.
 
 **Groq**
-1. Go to [console.groq.com/keys](https://console.groq.com/keys) and sign up.
-2. Click **Create API Key**. It starts with `gsk_`.
-3. Paste it as `GROQ_API_KEY`.
-
-Not every model on Groq's docs is on every account. To see which ones yours can use:
+1. [console.groq.com/keys](https://console.groq.com/keys) → **Create API Key** (starts with `gsk_`).
+2. Paste it as `GROQ_API_KEY`.
+3. List models your account can actually call:
 
 ```bash
 curl -s https://api.groq.com/openai/v1/models -H "Authorization: Bearer $GROQ_API_KEY" | grep '"id"'
 ```
 
-Pick one from that list for `AI_ORDER`.
+Pick one (or more) for `AI_ORDER` as `groq:<id>`.
 
-**Rules for keys, in case you're new to this**
-- They live in `.env`, which is gitignored. Never commit them. `.env.example` is the only file with these names in the repo, and its values are empty.
-- Never prefix them with `NEXT_PUBLIC_` — that ships them to the browser.
-- If you paste one into a chat, a screenshot or a commit, treat it as leaked: delete it on the provider's page and make a new one. It takes thirty seconds.
-- On Vercel, add them under Project → Settings → Environment Variables, not in the code.
+**Rules for keys**
+- They live in `.env`, which is gitignored. Never commit them. `.env.example` keeps the names with empty values.
+- Never put AI keys, the service role, Resend, or `CRON_SECRET` behind `NEXT_PUBLIC_` — that ships them to the browser.
+- If a key leaks (chat, screenshot, commit), revoke it on the provider and make a new one.
+- On Vercel, set them under **Project → Settings → Environment Variables**. Guide: [Environment variables](https://vercel.com/docs/projects/environment-variables).
+
+### Deploy on Vercel
+
+1. Import the GitHub repo into [Vercel](https://vercel.com).
+2. Add the same env vars (Required at minimum; contact + cron if you want those).
+3. Set production **Site URL** and redirect allow list in Supabase to your Vercel domain.
+4. Add the production origin to the Google OAuth client’s authorized redirect URIs if you use Google.
+5. For the nightly summary job: set `SUPABASE_SERVICE_ROLE_KEY` and `CRON_SECRET`. The schedule is already in `vercel.json` (`0 21 * * *` UTC). See [Vercel Cron Jobs](https://vercel.com/docs/cron-jobs).
 
 ## How the code is laid out
 
@@ -112,9 +198,10 @@ Pick one from that list for `AI_ORDER`.
 app/(marketing)/   landing, about, privacy, no navbar
 app/(app)/         board, calendar, summary, profile — one layout, session-guarded
 app/api/ai/        the two AI routes (split, summarize), both check the session first
+app/auth/          OAuth callback + email confirm / recovery
 lib/core/          pure logic: types, placement, rollover, dates, themes. No React, no Next.
 lib/ai/            model.ts (the only file that knows providers) and the two tasks
-lib/supabase/      browser and server clients
+lib/supabase/      browser, server, and admin (cron) clients
 components/        board, calendar, summary, nav — props in, callbacks out; state lives in useBoard
 supabase/migrations/   the schema, in order. Run with `supabase db push`.
 ```
