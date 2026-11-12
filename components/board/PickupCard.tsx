@@ -14,7 +14,7 @@ import {
 import { SHAPE_LABELS, ShapeSwatch } from "./ShapeSwatch";
 import { TomorrowActionIcon } from "./TomorrowMark";
 
-type LookOpen = "estimate" | "priority" | "shape" | "color" | null;
+type LookOpen = "priority" | "shape" | "color" | null;
 
 type Props = {
   note: Note | null;
@@ -24,11 +24,10 @@ type Props = {
   onWorkOn: (id: string) => void;
   onDone: (id: string) => void;
   onTrash: (id: string) => void;
-  onEdit: (id: string, patch: Partial<Pick<Note, "title" | "detail" | "estMinutes" | "priority" | "shape" | "color" | "againTomorrow">>) => void;
+  onEdit: (id: string, patch: Partial<Pick<Note, "title" | "detail" | "priority" | "shape" | "color" | "againTomorrow">>) => void;
 };
 
 const PRIORITY: Priority[] = ["low", "medium", "high"];
-const ESTIMATES = [15, 30, 45, 60, 90, 120];
 
 function colorLabel(color: PaperColor) {
   return color.charAt(0).toUpperCase() + color.slice(1);
@@ -108,7 +107,6 @@ export function PickupCard({ note, canQueue, onClose, onWorkOn, onDone, onTrash,
   const desktop = useDesktop();
   const [confirmTrash, setConfirmTrash] = useState(false);
   const [lookOpen, setLookOpen] = useState<LookOpen>(null);
-  const estimatePanelId = useId();
   const priorityPanelId = useId();
   const shapePanelId = useId();
   const colorPanelId = useId();
@@ -118,6 +116,16 @@ export function PickupCard({ note, canQueue, onClose, onWorkOn, onDone, onTrash,
     setConfirmTrash(false);
   }, [note?.id]);
 
+  // Lock page scroll while the sheet/dialog is open (native modal behaviour).
+  useEffect(() => {
+    if (!note) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [note]);
+
   function close() {
     setConfirmTrash(false);
     setLookOpen(null);
@@ -126,15 +134,6 @@ export function PickupCard({ note, canQueue, onClose, onWorkOn, onDone, onTrash,
 
   function toggleLook(which: Exclude<LookOpen, null>) {
     setLookOpen((cur) => (cur === which ? null : which));
-  }
-
-  function pickEstimate(minutes: number) {
-    if (!note || note.estMinutes === minutes) {
-      setLookOpen(null);
-      return;
-    }
-    onEdit(note.id, { estMinutes: minutes });
-    setLookOpen(null);
   }
 
   function pickPriority(priority: Priority) {
@@ -164,11 +163,6 @@ export function PickupCard({ note, canQueue, onClose, onWorkOn, onDone, onTrash,
     setLookOpen(null);
   }
 
-  const estimateChoices =
-    note && !ESTIMATES.includes(note.estMinutes)
-      ? [...ESTIMATES, note.estMinutes].sort((a, b) => a - b)
-      : ESTIMATES;
-
   return (
     <AnimatePresence>
       {note && (
@@ -176,21 +170,14 @@ export function PickupCard({ note, canQueue, onClose, onWorkOn, onDone, onTrash,
           key={note.id}
           className={
             desktop
-              ? "fixed inset-0 z-50 grid place-items-center bg-black/35 p-4"
-              : "fixed inset-0 z-50 flex items-end justify-center bg-black/35 p-3 pt-[30vh]"
+              ? "pickup-scrim fixed inset-0 z-50 grid place-items-center p-4"
+              : "pickup-scrim fixed inset-0 z-50 flex items-end justify-center"
           }
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0, pointerEvents: "none" }}
-          transition={{ duration: desktop ? 0.2 : 0.15 }}
-          onClick={desktop ? close : undefined}
-          onPointerDown={
-            desktop
-              ? undefined
-              : (e) => {
-                  if (e.target === e.currentTarget) close();
-                }
-          }
+          transition={{ duration: desktop ? 0.2 : 0.18 }}
+          onClick={close}
           tabIndex={-1}
           onKeyDown={(e) => {
             if (e.key !== "Escape") return;
@@ -204,34 +191,34 @@ export function PickupCard({ note, canQueue, onClose, onWorkOn, onDone, onTrash,
         >
           <motion.div
             role="dialog"
+            aria-modal="true"
             aria-labelledby="pickup-title"
-            onClick={desktop ? (e) => e.stopPropagation() : undefined}
-            onPointerDown={desktop ? undefined : (e) => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
             className={
               desktop
-                ? "sticky-note relative flex max-h-[calc(100dvh-2rem)] w-full max-w-md flex-col gap-5 overflow-y-auto p-7 pb-6 text-ink"
-                : "sticky-note pickup-dialog relative flex max-h-[min(62dvh,30rem)] w-full max-w-md flex-col gap-3 overflow-y-auto overscroll-contain rounded-t-2xl p-4 pb-[max(1rem,env(safe-area-inset-bottom))] text-ink"
+                ? "sticky-note relative flex max-h-[calc(100dvh-2rem)] w-full max-w-md flex-col gap-5 overflow-y-auto p-6 pt-5 text-ink shadow-2xl md:p-7"
+                : "sticky-note pickup-dialog relative flex max-h-[min(78dvh,36rem)] w-full flex-col overflow-y-auto overscroll-contain rounded-t-3xl text-ink"
             }
             style={{ backgroundColor: paperVar(note.color), ["--paper" as string]: paperVar(note.color) }}
             initial={
               desktop
                 ? { scale: 0.5, rotate: note.rotation, opacity: 0 }
-                : { y: 18, opacity: 0 }
+                : { y: "100%" }
             }
             animate={
               desktop
                 ? { scale: 1, rotate: 0.6, opacity: 1 }
-                : { y: 0, opacity: 1 }
+                : { y: 0 }
             }
             exit={
               desktop
                 ? { scale: 0.5, rotate: note.rotation, opacity: 0 }
-                : { y: 10, opacity: 0 }
+                : { y: "100%" }
             }
             transition={
               desktop
                 ? { type: "spring", stiffness: 320, damping: 24 }
-                : { duration: 0.18, ease: [0.2, 0.8, 0.2, 1] }
+                : { type: "spring", stiffness: 380, damping: 32 }
             }
           >
             {desktop ? (
@@ -239,25 +226,38 @@ export function PickupCard({ note, canQueue, onClose, onWorkOn, onDone, onTrash,
                 type="button"
                 onClick={close}
                 aria-label="Close"
-                className="absolute right-3 top-3 grid h-10 w-10 place-items-center rounded-full text-ink-soft hover:bg-black/10 hover:text-ink"
+                className="absolute right-3 top-3 grid h-11 w-11 place-items-center rounded-full text-ink-soft hover:bg-black/10 hover:text-ink"
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
               </button>
             ) : (
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-ink-soft">Task</span>
-                <button
-                  type="button"
-                  onClick={close}
-                  aria-label="Close"
-                  className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-black/5 text-ink-soft hover:bg-black/10 hover:text-ink"
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
-                </button>
+              <div className="sticky top-0 z-10 flex flex-col bg-[color:var(--paper)] pt-2">
+                {/* Grabber — Material/RN cue that the sheet is dismissible. */}
+                <div className="flex justify-center pb-1" aria-hidden>
+                  <span className="block h-1 w-10 rounded-full bg-black/25" />
+                </div>
+                <div className="flex items-center justify-between gap-3 px-4 pb-2">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-ink-soft">Task</span>
+                  <button
+                    type="button"
+                    onClick={close}
+                    aria-label="Close"
+                    className="-mr-1 grid h-11 w-11 shrink-0 place-items-center rounded-full bg-black/10 text-ink hover:bg-black/15"
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
+                  </button>
+                </div>
               </div>
             )}
 
-            <label className={`relative flex flex-col gap-1 ${desktop ? "pr-10" : ""}`}>
+            <div
+              className={
+                desktop
+                  ? "contents"
+                  : "flex flex-col gap-3.5 px-4 pb-[max(1.25rem,env(safe-area-inset-bottom,0px))]"
+              }
+            >
+            <label className={`relative flex flex-col gap-1 ${desktop ? "pr-11" : ""}`}>
               {desktop && (
                 <span className="text-[11px] font-bold uppercase tracking-widest text-ink-soft">Task</span>
               )}
@@ -268,7 +268,7 @@ export function PickupCard({ note, canQueue, onClose, onWorkOn, onDone, onTrash,
                 rows={2}
                 onBlur={(e) => e.target.value.trim() && e.target.value !== note.title && onEdit(note.id, { title: e.target.value.trim() })}
                 className={`w-full resize-none bg-transparent font-hand font-bold leading-tight outline-none border-b-2 border-transparent focus:border-black/30 ${
-                  desktop ? "text-4xl" : "text-2xl"
+                  desktop ? "text-4xl" : "text-[1.65rem]"
                 }`}
               />
             </label>
@@ -290,13 +290,6 @@ export function PickupCard({ note, canQueue, onClose, onWorkOn, onDone, onTrash,
               <div className="flex flex-col gap-2">
                 <div className="flex gap-2">
                   <LookTrigger
-                    open={lookOpen === "estimate"}
-                    label="Estimate"
-                    controls={estimatePanelId}
-                    onClick={() => toggleLook("estimate")}
-                    value={`${note.estMinutes} min`}
-                  />
-                  <LookTrigger
                     open={lookOpen === "priority"}
                     label="Priority"
                     controls={priorityPanelId}
@@ -305,36 +298,6 @@ export function PickupCard({ note, canQueue, onClose, onWorkOn, onDone, onTrash,
                   />
                 </div>
                 <AnimatePresence initial={false}>
-                  {lookOpen === "estimate" && (
-                    <motion.div
-                      key="estimate"
-                      id={estimatePanelId}
-                      role="radiogroup"
-                      aria-label="Estimate"
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.18 }}
-                      className="overflow-hidden"
-                    >
-                      <div className="flex flex-wrap gap-1 rounded-lg bg-black/5 p-1.5">
-                        {estimateChoices.map((m) => (
-                          <button
-                            key={m}
-                            type="button"
-                            role="radio"
-                            aria-checked={note.estMinutes === m}
-                            onClick={() => pickEstimate(m)}
-                            className={`h-10 min-w-14 flex-1 rounded-md px-2 text-xs font-bold tabular-nums md:h-9 ${
-                              note.estMinutes === m ? "bg-ink text-on-ink" : "text-ink-soft hover:bg-black/5"
-                            }`}
-                          >
-                            {m} min
-                          </button>
-                        ))}
-                      </div>
-                    </motion.div>
-                  )}
                   {lookOpen === "priority" && (
                     <motion.div
                       key="priority"
@@ -480,15 +443,15 @@ export function PickupCard({ note, canQueue, onClose, onWorkOn, onDone, onTrash,
               </button>
             </div>
 
-            <div className="relative flex min-h-6 items-center justify-between gap-3 text-xs font-semibold text-ink-soft">
+            <div className="relative flex min-h-11 items-center justify-between gap-3 text-xs font-semibold text-ink-soft">
               {confirmTrash ? (
-                <span className="flex items-center gap-3">
+                <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
                   Trash it?
                   <button onClick={() => onTrash(note.id)} className="underline underline-offset-2 text-ink">Yes, trash it</button>
                   <button onClick={() => setConfirmTrash(false)} className="underline underline-offset-2">Keep it</button>
                 </span>
               ) : (
-                <button onClick={() => setConfirmTrash(true)} className="underline underline-offset-2 hover:text-ink">
+                <button onClick={() => setConfirmTrash(true)} className="min-h-11 underline underline-offset-2 hover:text-ink">
                   Trash it
                 </button>
               )}
@@ -497,12 +460,13 @@ export function PickupCard({ note, canQueue, onClose, onWorkOn, onDone, onTrash,
                   type="button"
                   aria-pressed={note.againTomorrow}
                   onClick={() => onEdit(note.id, { againTomorrow: !note.againTomorrow })}
-                  className={`inline-flex items-center gap-1 underline underline-offset-2 ${note.againTomorrow ? "text-ink" : "hover:text-ink"}`}
+                  className={`inline-flex min-h-11 items-center gap-1 underline underline-offset-2 ${note.againTomorrow ? "text-ink" : "hover:text-ink"}`}
                 >
                   <TomorrowActionIcon on={note.againTomorrow} />
                   {note.againTomorrow ? "On for tomorrow" : "Do this tomorrow"}
                 </button>
               )}
+            </div>
             </div>
           </motion.div>
         </motion.div>

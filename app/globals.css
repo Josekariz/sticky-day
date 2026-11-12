@@ -206,10 +206,24 @@ summary:focus-visible {
   pointer-events: none;
 }
 
-/* Mobile open-note: drop grain/fold so the sheet stays light to paint. Desktop keeps .sticky-note. */
+/* Open-note scrim: dim + blur (RN/Material modal sheet). Skip blur when reduced. */
+.pickup-scrim {
+  background: color-mix(in oklab, black 42%, transparent);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+@media (prefers-reduced-transparency: reduce) {
+  .pickup-scrim {
+    background: color-mix(in oklab, black 55%, transparent);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+/* Mobile open-note: edge-flush sheet; drop grain/fold for cheaper paint. */
 @media (width < 48rem) {
   .sticky-note.pickup-dialog {
-    box-shadow: 0 12px 28px -8px rgba(0, 0, 0, 0.35);
+    box-shadow: 0 -8px 40px -6px rgba(0, 0, 0, 0.4);
   }
   .sticky-note.pickup-dialog::before,
   .sticky-note.pickup-dialog::after {
