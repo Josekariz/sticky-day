@@ -15,10 +15,9 @@ export default async function BoardPage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("capacity_minutes, timezone, default_shape, onboarded_at")
+    .select("timezone, default_shape, onboarded_at")
     .eq("id", userId)
     .maybeSingle();
-  const capacityMinutes: number = (profile?.capacity_minutes as number | null | undefined) ?? 360;
   const timezone = (profile?.timezone as string | null | undefined) ?? "UTC";
   const defaultShape = parseShape(profile?.default_shape);
   const onboarded = profile?.onboarded_at != null;
@@ -48,7 +47,6 @@ export default async function BoardPage() {
       <DayView
         account={{ userId, dayId: day.id }}
         initialNotes={(rows as NoteRow[] ?? []).map(rowToNote)}
-        capacityMinutes={capacityMinutes}
         initialSummary={parseStoredSummary(day.summary)}
         defaultShape={defaultShape}
         onboarded={onboarded}

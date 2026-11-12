@@ -22,7 +22,6 @@ import { FirstVisit } from "./FirstVisit";
 export function DayView({
   account,
   initialNotes,
-  capacityMinutes,
   initialSummary,
   defaultShape,
   onboarded,
@@ -31,7 +30,6 @@ export function DayView({
 }: {
   account: { userId: string; dayId: string } | null; // null: the guest board on the landing page
   initialNotes: Note[];
-  capacityMinutes: number;
   initialSummary: StoredSummary | null;
   defaultShape: NoteShape | null;
   onboarded: boolean;
@@ -42,10 +40,10 @@ export function DayView({
   const dayId = account?.dayId ?? null;
   const guest = userId === null || dayId === null;
   const store = useMemo(
-    () => (userId && dayId ? supabaseStore(userId, dayId, capacityMinutes) : guestStore()),
-    [userId, dayId, capacityMinutes],
+    () => (userId && dayId ? supabaseStore(userId, dayId) : guestStore()),
+    [userId, dayId],
   );
-  const b = useBoard(initialNotes, store, guest ? null : capacityMinutes, guest || onboarded);
+  const b = useBoard(initialNotes, store, guest || onboarded);
   const drop = useDropTargets();
 
   function addExample(example: ExampleDay) {

@@ -21,7 +21,7 @@ export type BoardStore = {
   importGuest?(): Promise<Note[]>;
 };
 
-export function supabaseStore(userId: string, dayId: string, capacityMinutes: number): BoardStore {
+export function supabaseStore(userId: string, dayId: string): BoardStore {
   const supabase = createClient();
 
   // Optimistic UI; track in-flight writes so nav can flush briefly.
@@ -72,7 +72,7 @@ export function supabaseStore(userId: string, dayId: string, capacityMinutes: nu
       const res = await fetch("/api/ai/split", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ dump: text, capacityMinutes }),
+        body: JSON.stringify({ dump: text }),
       });
       if (!res.ok) {
         const err = ((await res.json().catch(() => ({}))) as { error?: string }).error ?? "Something went wrong";

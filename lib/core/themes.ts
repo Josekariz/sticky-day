@@ -6,7 +6,7 @@ export const THEMES = [
   "carrying something over is deciding, not failing",
   "small notes beat big intentions",
   "the clear board, and why it feels quiet",
-  "estimates are guesses, and guessing is fine",
+  "showing up counts even when the list doesn't shrink",
   "what to do with a day that went sideways",
   "rest counts as a note",
 ] as const;

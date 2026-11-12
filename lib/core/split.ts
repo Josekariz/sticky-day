@@ -5,7 +5,6 @@ import type { Note, NoteShape } from "./types";
 export const SplitNoteSchema = z.object({
   title: z.string().min(1).max(60).describe("Short, imperative, the way you'd write it on a sticky. No trailing period."),
   detail: z.string().max(240).describe("One or two sentences of context, or empty if the title says it all."),
-  estMinutes: z.number().int().min(5).max(240).describe("Honest estimate. Round to 5. If unsure, lean high."),
   priority: z.enum(["low", "medium", "high"]).describe("high = must happen today; low = fine to slip to tomorrow."),
 });
 
@@ -24,7 +23,6 @@ export function asOneNote(text: string): SplitNote | null {
   return {
     title: raw.slice(0, 60),
     detail: raw.length > 60 ? raw.slice(60, 300).trim() : "",
-    estMinutes: 30,
     priority: "medium",
   };
 }

@@ -27,8 +27,7 @@ export type Note = {
   id: string;
   title: string;
   detail: string;
-  estMinutes: number;
-  actualMinutes: number | null;
+  actualMinutes: number | null; // set from the focus timer when marked done
   priority: Priority;
   status: NoteStatus;
   color: PaperColor;
@@ -46,7 +45,6 @@ export const NoteSchema = z.object({
   id: z.string(),
   title: z.string(),
   detail: z.string(),
-  estMinutes: z.number(),
   actualMinutes: z.number().nullable(),
   priority: z.enum(["low", "medium", "high"]),
   status: z.enum(["board", "focus", "done", "trashed"]),

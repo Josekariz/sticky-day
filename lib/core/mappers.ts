@@ -3,7 +3,7 @@ import { parseShape, type Note, type NoteStatus, type Priority, type PaperColor,
 // The priority column is still named `energy` in the database.
 export type NoteRow = {
   id: string; day_id: string; user_id: string;
-  title: string; detail: string; est_minutes: number; actual_minutes: number | null;
+  title: string; detail: string; actual_minutes: number | null;
   spent_ms: number; energy: Priority; status: NoteStatus; color: PaperColor; shape: NoteShape;
   x: number; y: number; rotation: number; started_at: string | null;
   completed_at?: string | null;
@@ -14,7 +14,7 @@ export type NoteRow = {
 export function rowToNote(r: NoteRow): Note {
   return {
     id: r.id, title: r.title, detail: r.detail,
-    estMinutes: r.est_minutes, actualMinutes: r.actual_minutes, spentMs: Number(r.spent_ms),
+    actualMinutes: r.actual_minutes, spentMs: Number(r.spent_ms),
     priority: r.energy, status: r.status, color: r.color, shape: parseShape(r.shape) ?? "square",
     x: r.x, y: r.y, rotation: r.rotation,
     startedAt: r.started_at ? new Date(r.started_at).getTime() : null,
@@ -26,7 +26,7 @@ export function rowToNote(r: NoteRow): Note {
 export function noteToRow(n: Note, dayId: string, userId: string): NoteRow {
   return {
     id: n.id, day_id: dayId, user_id: userId,
-    title: n.title, detail: n.detail, est_minutes: n.estMinutes, actual_minutes: n.actualMinutes,
+    title: n.title, detail: n.detail, actual_minutes: n.actualMinutes,
     spent_ms: n.spentMs, energy: n.priority, status: n.status, color: n.color, shape: n.shape,
     x: n.x, y: n.y, rotation: n.rotation,
     started_at: n.startedAt ? new Date(n.startedAt).toISOString() : null,
@@ -40,7 +40,6 @@ export function patchToRow(p: Partial<Note>): Partial<NoteRow> {
   const r: Partial<NoteRow> = {};
   if (p.title !== undefined) r.title = p.title;
   if (p.detail !== undefined) r.detail = p.detail;
-  if (p.estMinutes !== undefined) r.est_minutes = p.estMinutes;
   if (p.actualMinutes !== undefined) r.actual_minutes = p.actualMinutes;
   if (p.spentMs !== undefined) r.spent_ms = p.spentMs;
   if (p.priority !== undefined) r.energy = p.priority;

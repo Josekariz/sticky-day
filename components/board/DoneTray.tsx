@@ -116,34 +116,28 @@ export function DoneTray({ notes, armed, initialSummary, onPutBack }: Props) {
               </header>
 
               <ul className="flex flex-col gap-2">
-                {notes.map((n) => {
-                  const diff = (n.actualMinutes ?? 0) - n.estMinutes;
-                  return (
-                    <li key={n.id} className="flex items-center gap-3 rounded-xl bg-bg p-3">
-                      <span
-                        className="h-9 w-9 shrink-0 rotate-[-6deg] rounded-sm shadow"
-                        style={{ backgroundColor: `var(--paper-${n.color})` }}
-                      />
-                      <span className="flex-1 min-w-0">
-                        <span className="block truncate text-sm font-semibold line-through text-fg-soft">{n.title}</span>
-                        <span className="block text-xs text-fg-soft">
-                          est. {n.estMinutes} min · took {n.actualMinutes} min
-                          {diff !== 0 && (
-                            <span className={`ml-1 font-bold tabular-nums ${diff > 0 ? "text-danger" : "text-done"}`}>
-                              ({diff > 0 ? `+${diff}` : diff} min)
-                            </span>
-                          )}
+                {notes.map((n) => (
+                  <li key={n.id} className="flex items-center gap-3 rounded-xl bg-bg p-3">
+                    <span
+                      className="h-9 w-9 shrink-0 rotate-[-6deg] rounded-sm shadow"
+                      style={{ backgroundColor: `var(--paper-${n.color})` }}
+                    />
+                    <span className="flex-1 min-w-0">
+                      <span className="block truncate text-sm font-semibold line-through text-fg-soft">{n.title}</span>
+                      {n.actualMinutes != null && (
+                        <span className="block text-xs text-fg-soft tabular-nums">
+                          took {n.actualMinutes} min
                         </span>
-                      </span>
-                      <button
-                        onClick={() => onPutBack(n.id)}
-                        className="h-9 shrink-0 rounded-lg border border-frame px-3 text-xs font-bold"
-                      >
-                        Put back
-                      </button>
-                    </li>
-                  );
-                })}
+                      )}
+                    </span>
+                    <button
+                      onClick={() => onPutBack(n.id)}
+                      className="h-9 shrink-0 rounded-lg border border-frame px-3 text-xs font-bold"
+                    >
+                      Put back
+                    </button>
+                  </li>
+                ))}
                 {notes.length === 0 && (
                   <li className="py-8 text-center font-hand text-2xl text-fg-soft">Nothing finished yet.</li>
                 )}

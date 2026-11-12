@@ -12,7 +12,6 @@ import { NavTopProgress, PendingLabel } from "@/components/nav/PendingNav";
 
 export type DayDrawerNote = {
   title: string;
-  est_minutes: number;
   actual_minutes: number | null;
   status: NoteStatus;
 };
@@ -302,9 +301,9 @@ function NoteGroup({
             className="flex items-baseline justify-between gap-3 rounded-lg bg-bg px-3 py-2 text-sm"
           >
             <span className="font-semibold">{n.title}</span>
-            {mode === "done" && (
+            {mode === "done" && n.actual_minutes != null && (
               <span className="shrink-0 tabular-nums text-fg-soft">
-                est. {n.est_minutes} min · took {n.actual_minutes ?? n.est_minutes} min
+                took {n.actual_minutes} min
               </span>
             )}
           </li>

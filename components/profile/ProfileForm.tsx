@@ -10,7 +10,6 @@ import { AppearanceSelect } from "@/components/theme/AppearanceSelect";
 type Props = {
   userId: string;
   displayName: string;
-  capacityMinutes: number;
   summaryTime: string;
   defaultShape: ShapeChoice;
 };
@@ -18,13 +17,11 @@ type Props = {
 export function ProfileForm({
   userId,
   displayName,
-  capacityMinutes,
   summaryTime,
   defaultShape,
 }: Props) {
   const router = useRouter();
   const [name, setName] = useState(displayName);
-  const [hours, setHours] = useState(String(capacityMinutes / 60));
   const [time, setTime] = useState(formatSummaryTime(summaryTime));
   const [shape, setShape] = useState<ShapeChoice>(defaultShape);
   const [saving, setSaving] = useState(false);
@@ -32,9 +29,8 @@ export function ProfileForm({
 
   async function save(e: FormEvent) {
     e.preventDefault();
-    const h = Number(hours);
-    if (!name.trim() || !Number.isFinite(h) || h < 1 || h > 16) {
-      setMessage("Check the name and hours (1–16).");
+    if (!name.trim()) {
+      setMessage("Check the name.");
       return;
     }
     if (!/^\d{2}:\d{2}$/.test(time)) {
@@ -47,7 +43,6 @@ export function ProfileForm({
       .from("profiles")
       .update({
         display_name: name.trim(),
-        capacity_minutes: Math.round(h * 60),
         summary_time: time,
         default_shape: shape,
         // Choosing a shape here answers the board's first-visit card too.
@@ -72,20 +67,6 @@ export function ProfileForm({
           onChange={(e) => setName(e.target.value)}
           className="h-11 rounded-xl border border-frame bg-bg px-3 outline-none focus:border-fg"
         />
-      </label>
-
-      <label className="flex flex-col gap-1.5">
-        <span className="text-sm font-semibold">Hours available per day</span>
-        <input
-          type="number"
-          value={hours}
-          onChange={(e) => setHours(e.target.value)}
-          min={1}
-          max={16}
-          step={0.5}
-          className="h-11 w-28 rounded-xl border border-frame bg-bg px-3 outline-none focus:border-fg"
-        />
-        <span className="text-xs text-fg-soft">Used when a brain dump looks overbooked for the day.</span>
       </label>
 
       <label className="flex flex-col gap-1.5">
@@ -118,7 +99,7 @@ export function ProfileForm({
         <button
           type="submit"
           disabled={saving}
-          className="h-11 self-start rounded-xl bg-fg px-5 text-sm font-semibold text-bg disabled:opacity-40"
+          className="h-11 rounded-xl bg-fg px-5 text-sm font-bold text-bg disabled:opacity-60"
         >
           {saving ? "Saving…" : "Save"}
         </button>

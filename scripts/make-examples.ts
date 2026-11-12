@@ -16,10 +16,10 @@ async function main() {
     let usedModelId = "";
     let result = await withFallback(async (model, modelId) => {
       usedModelId = modelId;
-      return splitDay(model, e.dump, 360);
+      return splitDay(model, e.dump);
     });
     if (result.notes.length === 0) {
-      result = await withFallback((model) => splitDay(model, e.dump, 360, { hint: EMPTY_RETRY_HINT }), undefined, {
+      result = await withFallback((model) => splitDay(model, e.dump, { hint: EMPTY_RETRY_HINT }), undefined, {
         skipModelId: usedModelId,
       });
     }

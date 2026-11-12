@@ -12,7 +12,6 @@ import { parseShape, type Note } from "@/lib/core/types";
 
 const Body = z.object({
   dump: z.string().min(3).max(4000),
-  capacityMinutes: z.number().int().min(30).max(960).default(360),
 });
 
 const Claim = z.discriminatedUnion("outcome", [
@@ -43,7 +42,7 @@ export async function POST(req: Request) {
   const parsed = Body.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return Response.json({ error: "Bad request" }, { status: 400 });
 
-  const { dump, capacityMinutes } = parsed.data;
+  const { dump } = parsed.data;
   const log = { supabase, task: "split", input: dump };
   const failed = () => Response.json({ error: "Couldn't break that down. Try again." }, { status: 502 });
 
@@ -104,14 +103,14 @@ export async function POST(req: Request) {
     let usedModelId = "";
     let result: SplitResult = await withFallback(async (model, modelId, abortSignal) => {
       usedModelId = modelId;
-      return splitDay(model, dump, capacityMinutes, { abortSignal });
+      return splitDay(model, dump, { abortSignal });
     }, log, { timeoutMs: SPLIT_TIMEOUT_MS });
 
     if (result.notes.length === 0 && wordCount(dump) >= 3 && getModelChain().length > 1) {
       await spendAiCall(supabase);
       result = await withFallback(
         (model, _modelId, abortSignal) =>
-          splitDay(model, dump, capacityMinutes, { hint: EMPTY_RETRY_HINT, abortSignal }),
+          splitDay(model, dump, { hint: EMPTY_RETRY_HINT, abortSignal }),
         { ...log, task: "split-retry" },
         { skipModelId: usedModelId, timeoutMs: SPLIT_TIMEOUT_MS },
       );

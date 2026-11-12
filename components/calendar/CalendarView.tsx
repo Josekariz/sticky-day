@@ -79,7 +79,7 @@ export function CalendarView({
 
       const { data: rows } = await supabase
         .from("notes")
-        .select("title, est_minutes, actual_minutes, status")
+        .select("title, actual_minutes, status")
         .eq("day_id", day.id)
         .eq("user_id", userId)
         .order("created_at");

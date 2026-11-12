@@ -144,7 +144,7 @@ export async function writeDaySummary(
 
   const { data: day, error: dayErr } = await supabase
     .from("days")
-    .select("id, date, summary, capacity_minutes")
+    .select("id, date, summary")
     .eq("id", dayId)
     .eq("user_id", userId)
     .maybeSingle();
@@ -169,12 +169,6 @@ export async function writeDaySummary(
     if (claim === "busy") throw new Error("Summary is already being written");
   }
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("capacity_minutes")
-    .eq("id", userId)
-    .maybeSingle();
-
   const { data: noteRows } = await supabase
     .from("notes")
     .select("*, carried_from")
@@ -184,37 +178,25 @@ export async function writeDaySummary(
 
   const notes = ((noteRows as NoteRow[] | null) ?? []).map(rowToNote);
 
-  const capacityMinutes =
-    (profile?.capacity_minutes as number | null | undefined) ??
-    (day.capacity_minutes as number | null | undefined) ??
-    360;
-
   const input: SummarizeInput = {
     date: day.date as string,
     theme: themeFor(day.date as string),
-    capacityMinutes,
     done: notes
       .filter((n) => n.status === "done")
       .map((n) => ({
         title: n.title,
-        estMinutes: n.estMinutes,
-        actualMinutes: n.actualMinutes ?? n.estMinutes,
         carriedFrom: n.carriedFrom,
       })),
     stillGoing: notes
       .filter((n) => n.status === "focus")
       .map((n) => ({
         title: n.title,
-        estMinutes: n.estMinutes,
-        spentMs: n.spentMs,
         carriedFrom: n.carriedFrom,
       })),
     unfinished: notes
       .filter((n) => n.status === "board")
       .map((n) => ({
         title: n.title,
-        estMinutes: n.estMinutes,
-        spentMs: n.spentMs,
         carriedFrom: n.carriedFrom,
       })),
   };

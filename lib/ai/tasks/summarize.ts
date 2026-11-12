@@ -3,22 +3,17 @@ import { z } from "zod";
 
 const DoneNoteSchema = z.object({
   title: z.string(),
-  estMinutes: z.number().int(),
-  actualMinutes: z.number().int(),
   carriedFrom: z.string().nullable(),
 });
 
 const UnfinishedNoteSchema = z.object({
   title: z.string(),
-  estMinutes: z.number().int(),
-  spentMs: z.number().int(),
   carriedFrom: z.string().nullable(),
 });
 
 export const SummarizeInputSchema = z.object({
   date: z.string(),
   theme: z.string(),
-  capacityMinutes: z.number().int(),
   done: z.array(DoneNoteSchema),
   /** On the clipboard right now — still today. */
   stillGoing: z.array(UnfinishedNoteSchema),

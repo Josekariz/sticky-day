@@ -16,7 +16,7 @@ export default async function ProfilePage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("display_name, capacity_minutes, summary_time, default_shape")
+    .select("display_name, summary_time, default_shape")
     .eq("id", userId)
     .maybeSingle();
 
@@ -25,7 +25,6 @@ export default async function ProfilePage() {
     user?.user_metadata ?? {},
     user?.email,
   );
-  const capacityMinutes: number = (profile?.capacity_minutes as number | null | undefined) ?? 360;
   const summaryTime: string = String(profile?.summary_time ?? "18:00");
   const defaultShape = parseShape(profile?.default_shape);
   const avatar: string | null = user?.user_metadata.avatar_url ?? null;
@@ -52,7 +51,6 @@ export default async function ProfilePage() {
         <ProfileForm
           userId={userId}
           displayName={displayName}
-          capacityMinutes={capacityMinutes}
           summaryTime={summaryTime}
           defaultShape={defaultShape}
         />

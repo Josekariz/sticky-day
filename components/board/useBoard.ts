@@ -6,11 +6,6 @@ import { placeNote } from "@/lib/core/placement";
 import { asOneNote, toBoardNotes } from "@/lib/core/split";
 import type { BoardStore } from "@/components/board/store";
 
-function fmtHours(minutes: number) {
-  const h = minutes / 60;
-  return Number.isInteger(h) ? String(h) : h.toFixed(1);
-}
-
 /** Fold running time into spentMs and stop the clock. */
 function pause(n: Note): Note {
   if (!n.startedAt) return n;
@@ -34,11 +29,9 @@ function mergeNew(ns: Note[], created: Note[]): Note[] {
   return [...ns, ...created.filter((n) => !shown.has(n.id))];
 }
 
-/** capacityMinutes is null when estimates are guesses (the guest board), so no overbooking line. */
 export function useBoard(
   initial: Note[],
   store: BoardStore,
-  capacityMinutes: number | null,
   initialOnboarded: boolean,
 ) {
   const [notes, setNotes] = useState(initial);
@@ -73,12 +66,12 @@ export function useBoard(
   function finishDone(n: Note, keepTomorrow: boolean) {
     const paused = pause(n);
     const tracked = paused.spentMs > 0;
-    const mins = tracked ? Math.max(1, Math.round(paused.spentMs / 60000)) : n.estMinutes;
     const patch: Partial<Note> = {
       status: "done",
       startedAt: paused.startedAt,
       spentMs: paused.spentMs,
-      actualMinutes: mins,
+      // Only store time spent when the focus timer actually ran.
+      actualMinutes: tracked ? Math.max(1, Math.round(paused.spentMs / 60000)) : null,
     };
     if (!keepTomorrow) patch.againTomorrow = false;
     update(n.id, patch);
@@ -232,7 +225,7 @@ export function useBoard(
       return null;
     },
 
-    /** Splits a brain dump into notes. Returns a capacity/ambiguity warning, or null. Throws on failure. */
+    /** Splits a brain dump into notes. Returns an ambiguity warning, or null. Throws on failure. */
     async addFromDump(text: string): Promise<string | null> {
       const { notes: created, warning, replayed } = await store.split(text, notes);
       if (created.length === 0) {
@@ -242,14 +235,8 @@ export function useBoard(
         return "Those are already on your board (check the bin).";
       }
 
-      const total = created.reduce((s, n) => s + n.estMinutes, 0);
-      const overbooked =
-        capacityMinutes !== null && total > capacityMinutes
-          ? `That's about ${fmtHours(total)}h of work for a ${fmtHours(capacityMinutes)}h day.`
-          : null;
-
       setNotes((ns) => mergeNew(ns, created));
-      return [warning, overbooked].filter(Boolean).join(" ") || null;
+      return warning;
     },
 
     /** Puts ready-made notes on the board, e.g. an example day on the guest board. */

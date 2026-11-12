@@ -112,7 +112,6 @@ function FocusSlip({
   const self = useRef<HTMLDivElement>(null);
   const live = !!note.startedAt;
   const elapsed = note.spentMs + (live ? now - note.startedAt! : 0);
-  const left = note.estMinutes * 60_000 - elapsed;
   const carried = !!note.carriedFrom;
   const queued = note.againTomorrow;
 
@@ -158,8 +157,8 @@ function FocusSlip({
         <span className="text-2xl font-bold tabular-nums leading-none" suppressHydrationWarning>
           {fmt(elapsed)}
         </span>
-        <span className={`text-[11px] ${left < 0 ? "font-bold text-ink" : "text-ink-soft"}`} suppressHydrationWarning>
-          {live ? (left >= 0 ? `${fmt(left)} left` : `${fmt(-left)} over`) : "paused"}
+        <span className="text-[11px] text-ink-soft" suppressHydrationWarning>
+          {live ? "spent" : "paused"}
         </span>
       </div>
       <div className="relative mt-2 mr-6 flex gap-3">

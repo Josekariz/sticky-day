@@ -18,7 +18,6 @@ export function GuestBoard({ signIn }: { signIn: ReactNode }) {
     <DayView
       account={null}
       initialNotes={readGuestBoard()}
-      capacityMinutes={360}
       initialSummary={null}
       defaultShape={null}
       onboarded
