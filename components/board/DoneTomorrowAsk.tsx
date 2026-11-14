@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { paperVar, type Note } from "@/lib/core/types";
-import { useModalHistory } from "./useModalHistory";
+import { useModalHistory } from "@/components/useModalHistory";
 
 type Props = {
   note: Note | null;

@@ -13,7 +13,7 @@ import {
 } from "@/lib/core/types";
 import { SHAPE_LABELS, ShapeSwatch } from "./ShapeSwatch";
 import { TomorrowActionIcon } from "./TomorrowMark";
-import { useModalHistory } from "./useModalHistory";
+import { useModalHistory } from "@/components/useModalHistory";
 
 type LookOpen = "priority" | "shape" | "color" | null;
 

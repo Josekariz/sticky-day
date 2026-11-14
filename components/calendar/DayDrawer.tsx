@@ -9,6 +9,7 @@ import type { NoteStatus } from "@/lib/core/types";
 import type { StoredSummary } from "@/lib/ai/tasks/summarize";
 import { summaryStory } from "@/lib/ai/tasks/summarize";
 import { NavTopProgress, PendingLabel } from "@/components/nav/PendingNav";
+import { useModalHistory } from "@/components/useModalHistory";
 
 export type DayDrawerNote = {
   title: string;
@@ -67,6 +68,10 @@ export function DayDrawer({
   const unfinishedNotes = notes?.filter((n) => n.status === "board" || n.status === "focus") ?? [];
   const trashedNotes = notes?.filter((n) => n.status === "trashed") ?? [];
   const hasLetter = !!summary && (!!summaryStory(summary) || !!summary.read);
+
+  useModalHistory(open, onClose);
+  // Reading the letter is a second layer — back returns to glance first.
+  useModalHistory(open && face === "read", () => setFace("glance"));
 
   return (
     <AnimatePresence>

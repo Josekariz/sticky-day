@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import type { NoteShape, PaperColor } from "@/lib/core/types";
+import { useModalHistory } from "@/components/useModalHistory";
 import { ShapeSwatch } from "./ShapeSwatch";
 import { ShapePicker, type ShapeChoice } from "./ShapePicker";
 
@@ -38,6 +39,7 @@ export function FirstVisit({ isNewAccount, defaultShape, onFinish, onSkip }: Pro
   const shown = hovered === undefined ? choice : hovered;
 
   async function answer(write: () => Promise<void>) {
+    if (saving) return;
     setSaving(true);
     setError(null);
     try {
@@ -47,6 +49,12 @@ export function FirstVisit({ isNewAccount, defaultShape, onFinish, onSkip }: Pro
       setSaving(false);
     }
   }
+
+  useModalHistory(true, () => {
+    void answer(onSkip);
+  });
+  // How → paper is a second layer for new accounts; back returns to how first.
+  useModalHistory(step === "paper" && isNewAccount, () => setStep("how"));
 
   return (
     <motion.div

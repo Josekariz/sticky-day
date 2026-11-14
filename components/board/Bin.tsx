@@ -3,6 +3,7 @@
 import { useId, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import type { Note } from "@/lib/core/types";
+import { useModalHistory } from "@/components/useModalHistory";
 
 export function BinShape({ notes = [] }: { notes?: Note[] }) {
   // SVG url(#…) breaks on the colons React puts in useId(); strip them.
@@ -47,6 +48,7 @@ type Props = {
 
 export function Bin({ notes, armed, onRestore, onEmpty }: Props) {
   const [open, setOpen] = useState(false);
+  useModalHistory(open, () => setOpen(false));
 
   return (
     <>

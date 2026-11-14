@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { sendPasswordReset } from "@/components/auth/sendPasswordReset";
+import { useModalHistory } from "@/components/useModalHistory";
 
 const fieldClass = "h-11 rounded-xl border border-frame bg-bg px-3 outline-none focus:border-fg";
 
@@ -17,6 +18,8 @@ export function PasswordCard({ email }: { email: string }) {
     setError(null);
     setMessage(note);
   }
+
+  useModalHistory(open, () => close(null));
 
   async function save(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();

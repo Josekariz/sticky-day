@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useModalHistory } from "@/components/useModalHistory";
 
 export function DeleteAccountCard({ email }: { email: string }) {
   const router = useRouter();
@@ -22,6 +23,8 @@ export function DeleteAccountCard({ email }: { email: string }) {
     setTyped("");
     setError(null);
   }
+
+  useModalHistory(open && !busy, cancel);
 
   useEffect(() => {
     if (!open) {
