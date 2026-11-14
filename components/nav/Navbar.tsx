@@ -7,7 +7,6 @@ import { SignOutButton } from "@/components/auth/SignOutButton";
 import { AppearanceSelect } from "@/components/theme/AppearanceSelect";
 import { flushPendingSaves, hasPendingSaves } from "@/components/board/pendingSaves";
 import { ManualTopProgress, NavTopProgress, PendingLabel } from "@/components/nav/PendingNav";
-import { useModalHistory } from "@/components/useModalHistory";
 
 const LINKS = [
   { href: "/board", label: "Board" },
@@ -55,8 +54,6 @@ export function Navbar({
       document.removeEventListener("keydown", onKeyDown);
     };
   }, [menuOpen]);
-
-  useModalHistory(menuOpen, () => setMenuOpen(false));
 
   /** Let Link navigate (useLinkStatus works) unless in-flight saves need a brief flush. */
   async function onNavClick(e: MouseEvent<HTMLAnchorElement>, href: string) {
