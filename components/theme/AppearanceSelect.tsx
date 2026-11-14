@@ -25,19 +25,11 @@ function MoonIcon() {
   );
 }
 
-type Tone = "compact" | "full";
-
 /**
- * One icon for the opposite of what’s on screen (sun in dark, moon in light).
- * Starts as Auto (device); first tap locks Light or Dark. Signed-in saves to profile.
+ * Header toggle: one icon for the opposite of what’s on screen.
+ * Full Light / Dark / Auto choices live in Settings (`AppearanceChoices`).
  */
-export function AppearanceSelect({
-  className = "",
-  tone = "full",
-}: {
-  className?: string;
-  tone?: Tone;
-}) {
+export function AppearanceSelect({ className = "" }: { className?: string }) {
   const { resolvedTheme, setTheme } = useTheme();
   const account = useAppearanceAccount();
   const mounted = useMounted();
@@ -59,26 +51,18 @@ export function AppearanceSelect({
   }
 
   return (
-    <div className={`flex flex-col gap-1.5 ${className}`}>
-      <button
-        type="button"
-        onClick={() => void toggle()}
-        disabled={!mounted}
-        aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
-        title={dark ? "Light" : "Dark"}
-        className="flex h-11 w-11 items-center justify-center rounded-full border border-frame bg-surface text-fg md:h-10 md:w-10"
-      >
-        {/* Same shell on server + client; icon waits for theme so hydration stays quiet. */}
-        <span className="grid h-[18px] w-[18px] place-items-center" suppressHydrationWarning>
-          {mounted ? dark ? <SunIcon /> : <MoonIcon /> : null}
-        </span>
-      </button>
-      {tone === "full" && mounted && (
-        <p className="text-xs text-fg-soft">
-          {dark ? "Dark on — tap for paper." : "Light on — tap for neon."}
-          {account ? " Saved to your account." : ""}
-        </p>
-      )}
-    </div>
+    <button
+      type="button"
+      onClick={() => void toggle()}
+      disabled={!mounted}
+      aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
+      title={dark ? "Light" : "Dark"}
+      className={`flex h-11 w-11 items-center justify-center rounded-full border border-frame bg-surface text-fg md:h-10 md:w-10 ${className}`}
+    >
+      {/* Same shell on server + client; icon waits for theme so hydration stays quiet. */}
+      <span className="grid h-[18px] w-[18px] place-items-center" suppressHydrationWarning>
+        {mounted ? dark ? <SunIcon /> : <MoonIcon /> : null}
+      </span>
+    </button>
   );
 }

@@ -14,6 +14,11 @@ const LINKS = [
   { href: "/summary", label: "Your day" },
 ];
 
+function pathMatches(path: string, href: string) {
+  const base = href.split("?")[0] || href;
+  return path === base || path.startsWith(`${base}/`);
+}
+
 export function Navbar({
   initials,
   avatar,
@@ -30,12 +35,30 @@ export function Navbar({
   const path = usePathname();
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [accountOpen, setAccountOpen] = useState(false);
   const [flushHref, setFlushHref] = useState<string | null>(null);
+  const [navPending, setNavPending] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const sheet = useRef<HTMLDivElement>(null);
   const toggle = useRef<HTMLButtonElement>(null);
-  const flushNav = flushHref !== null && path !== flushHref && !path.startsWith(flushHref);
+  const accountMenu = useRef<HTMLDivElement>(null);
+  const accountToggle = useRef<HTMLButtonElement>(null);
+  const flushNav = flushHref !== null && !pathMatches(path, flushHref);
   const unread = unreadLetter;
+
+  // Clear pending indicators once we land — flushHref used to stick forever and
+  // re-spin the bar on the next navigation away from that target.
+  useEffect(() => {
+    if (navPending && pathMatches(path, navPending)) setNavPending(null);
+    if (flushHref && pathMatches(path, flushHref)) setFlushHref(null);
+  }, [path, navPending, flushHref]);
+
+  // Drop a stuck pending bar if navigation never lands (back, cancelled, etc.).
+  useEffect(() => {
+    if (!navPending) return;
+    const t = window.setTimeout(() => setNavPending(null), 8000);
+    return () => window.clearTimeout(t);
+  }, [navPending]);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -55,10 +78,30 @@ export function Navbar({
     };
   }, [menuOpen]);
 
+  useEffect(() => {
+    if (!accountOpen) return;
+    function onPointerDown(e: PointerEvent) {
+      if (!(e.target instanceof Node)) return;
+      if (accountMenu.current?.contains(e.target) || accountToggle.current?.contains(e.target)) return;
+      setAccountOpen(false);
+    }
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") setAccountOpen(false);
+    }
+    document.addEventListener("pointerdown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [accountOpen]);
+
   /** Let Link navigate (useLinkStatus works) unless in-flight saves need a brief flush. */
   async function onNavClick(e: MouseEvent<HTMLAnchorElement>, href: string) {
     if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
     setMenuOpen(false);
+    setAccountOpen(false);
+    setNavPending(href);
     if (!hasPendingSaves()) return;
     e.preventDefault();
     setFlushHref(href);
@@ -68,15 +111,19 @@ export function Navbar({
 
   async function onRefresh() {
     if (isPending) return;
+    setMenuOpen(false);
+    setAccountOpen(false);
     await flushPendingSaves(1000);
     startTransition(() => {
       router.refresh();
     });
   }
 
+  const showProgress = flushNav || isPending || !!navPending;
+
   return (
     <>
-      <ManualTopProgress active={flushNav || isPending} />
+      <ManualTopProgress active={showProgress} />
       <header className="relative flex h-16 items-center justify-between border-b border-frame px-4 md:grid md:grid-cols-[1fr_auto_1fr] md:px-8">
         <Link
           href="/board"
@@ -118,15 +165,18 @@ export function Navbar({
         </nav>
 
         <div className="flex items-center gap-1.5 justify-self-end md:gap-3">
-          {/* Always visible — on phones this was buried in the menu and felt broken. */}
-          <AppearanceSelect tone="compact" />
+          {/* Theme stays on desktop only — phones use Settings. */}
+          <div className="hidden md:block">
+            <AppearanceSelect />
+          </div>
+
           <button
             type="button"
             aria-label="Refresh"
             disabled={isPending}
             aria-busy={isPending}
             onClick={() => void onRefresh()}
-            className="hidden place-items-center rounded-full text-fg-soft hover:bg-frame/40 hover:text-fg disabled:opacity-60 md:grid md:h-10 md:w-10"
+            className="grid h-11 w-11 place-items-center rounded-full text-fg-soft hover:bg-frame/40 hover:text-fg disabled:opacity-60 md:h-10 md:w-10"
           >
             <svg
               width="20"
@@ -139,26 +189,69 @@ export function Navbar({
               <path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46A7.93 7.93 0 0 0 20 12c0-4.42-3.58-8-8-8m0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74A7.93 7.93 0 0 0 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4z" />
             </svg>
           </button>
+
+          {/* Mobile: avatar goes straight to Profile. Desktop: account menu. */}
           <Link
             href="/profile"
             onClick={(e) => void onNavClick(e, "/profile")}
             aria-label="Profile"
-            className="grid h-11 w-11 place-items-center overflow-hidden rounded-full bg-fg text-sm font-semibold text-bg md:h-10 md:w-10"
+            className="grid h-11 w-11 place-items-center overflow-hidden rounded-full bg-fg text-sm font-semibold text-bg md:hidden"
           >
             <NavTopProgress />
             <PendingLabel className="grid h-full w-full place-items-center">
-              {avatar ? (
-                // eslint-disable-next-line @next/next/no-img-element -- external Google URL, no need for next/image
-                <img src={avatar} alt="" className="h-full w-full object-cover" referrerPolicy="no-referrer" />
-              ) : (
-                initials
-              )}
+              <AvatarFace avatar={avatar} initials={initials} />
             </PendingLabel>
           </Link>
+
+          <div className="relative hidden md:block">
+            <button
+              ref={accountToggle}
+              type="button"
+              aria-label="Account menu"
+              aria-expanded={accountOpen}
+              aria-controls="account-menu"
+              onClick={() => setAccountOpen((o) => !o)}
+              className="grid h-10 w-10 place-items-center overflow-hidden rounded-full bg-fg text-sm font-semibold text-bg"
+            >
+              <AvatarFace avatar={avatar} initials={initials} />
+            </button>
+            {accountOpen && (
+              <div
+                ref={accountMenu}
+                id="account-menu"
+                role="menu"
+                className="absolute right-0 top-full z-40 mt-2 w-44 overflow-hidden rounded-xl border border-frame bg-surface py-1 shadow-lg"
+              >
+                <Link
+                  href="/profile"
+                  role="menuitem"
+                  onClick={(e) => void onNavClick(e, "/profile")}
+                  className="relative flex h-11 items-center px-4 text-sm font-semibold hover:bg-frame/40"
+                >
+                  <NavTopProgress />
+                  <PendingLabel>Profile</PendingLabel>
+                </Link>
+                <Link
+                  href="/settings"
+                  role="menuitem"
+                  onClick={(e) => void onNavClick(e, "/settings")}
+                  className="relative flex h-11 items-center px-4 text-sm font-semibold hover:bg-frame/40"
+                >
+                  <NavTopProgress />
+                  <PendingLabel>Settings</PendingLabel>
+                </Link>
+                <SignOutButton className="flex h-11 w-full items-center px-4 text-left text-sm font-semibold text-danger hover:bg-frame/40" />
+              </div>
+            )}
+          </div>
+
           <button
             ref={toggle}
             type="button"
-            onClick={() => setMenuOpen((o) => !o)}
+            onClick={() => {
+              setAccountOpen(false);
+              setMenuOpen((o) => !o);
+            }}
             aria-label={menuOpen ? "Close menu" : "Open menu"}
             aria-expanded={menuOpen}
             aria-controls="mobile-menu"
@@ -207,22 +300,30 @@ export function Navbar({
                 </Link>
               );
             })}
-            <button
-              type="button"
-              disabled={isPending}
-              aria-busy={isPending}
-              onClick={() => {
-                setMenuOpen(false);
-                void onRefresh();
-              }}
-              className="flex h-12 items-center justify-center rounded-xl px-4 font-semibold text-fg"
+            <Link
+              href="/settings"
+              onClick={(e) => void onNavClick(e, "/settings")}
+              aria-current={path.startsWith("/settings") ? "page" : undefined}
+              className={`relative flex h-12 items-center justify-center rounded-xl px-4 font-semibold ${
+                path.startsWith("/settings") ? "bg-fg text-bg" : "text-fg"
+              }`}
             >
-              {isPending ? "Refreshing…" : "Refresh"}
-            </button>
-            <SignOutButton className="flex h-12 items-center justify-center rounded-xl px-4 font-semibold text-danger" />
+              <NavTopProgress />
+              <PendingLabel>Settings</PendingLabel>
+            </Link>
           </div>
         )}
       </header>
     </>
   );
+}
+
+function AvatarFace({ avatar, initials }: { avatar: string | null; initials: string }) {
+  if (avatar) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element -- external Google URL, no need for next/image
+      <img src={avatar} alt="" className="h-full w-full object-cover" referrerPolicy="no-referrer" />
+    );
+  }
+  return <>{initials}</>;
 }

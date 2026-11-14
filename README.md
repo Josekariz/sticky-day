@@ -196,7 +196,7 @@ Pick one (or more) for `AI_ORDER` as `groq:<id>`.
 
 ```
 app/(marketing)/   landing, about, privacy, no navbar
-app/(app)/         board, calendar, summary, profile — one layout, session-guarded
+app/(app)/         board, calendar, summary, profile, settings — one layout, session-guarded
 app/api/ai/        the two AI routes (split, summarize), both check the session first
 app/auth/          OAuth callback + email confirm / recovery
 lib/core/          pure logic: types, placement, rollover, dates, themes. No React, no Next.

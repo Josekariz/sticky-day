@@ -354,13 +354,13 @@ summary:focus-visible {
     drop-shadow(0 3px 3px var(--shape-shadow));
 }
 
-/* Top nav progress — delayed so sub-150ms navigations never flash */
+/* Top nav progress — short delay so instant hops don’t flash; thick enough for PWA */
 .nav-top-progress {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
-  height: 2px;
+  height: 3px;
   z-index: 100;
   pointer-events: none;
   opacity: 0;
@@ -369,7 +369,7 @@ summary:focus-visible {
 }
 
 .nav-top-progress.is-pending {
-  animation: nav-progress-show 0s 150ms forwards;
+  animation: nav-progress-show 0s 80ms forwards;
 }
 
 .nav-top-progress.is-pending::after {
@@ -377,9 +377,9 @@ summary:focus-visible {
   position: absolute;
   top: 0;
   height: 100%;
-  width: 35%;
-  background: var(--ink);
-  animation: nav-progress-sweep 0.85s 150ms linear infinite;
+  width: 40%;
+  background: var(--fg);
+  animation: nav-progress-sweep 0.75s 80ms linear infinite;
 }
 
 @keyframes nav-progress-show {

@@ -212,7 +212,8 @@ export function PickupCard({ note, canQueue, onClose, onWorkOn, onDone, onTrash,
             }
             animate={
               desktop
-                ? { scale: 1, rotate: 0.6, opacity: 1 }
+                ? // No tilt — a rotated dialog misaligns the X hit box with the title field.
+                  { scale: 1, rotate: 0, opacity: 1 }
                 : { y: 0 }
             }
             exit={
@@ -239,14 +240,18 @@ export function PickupCard({ note, canQueue, onClose, onWorkOn, onDone, onTrash,
               : {})}
           >
             {desktop ? (
-              <button
-                type="button"
-                onClick={close}
-                aria-label="Close"
-                className="absolute right-3 top-3 grid h-11 w-11 place-items-center rounded-full text-ink-soft hover:bg-black/10 hover:text-ink"
-              >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
-              </button>
+              // Own row — absolute X over the title was too easy to miss into the textarea.
+              <div className="relative z-20 flex shrink-0 items-center justify-between gap-3">
+                <span className="text-[11px] font-bold uppercase tracking-widest text-ink-soft">Task</span>
+                <button
+                  type="button"
+                  onClick={close}
+                  aria-label="Close"
+                  className="relative z-20 grid h-11 w-11 shrink-0 place-items-center rounded-full bg-black/10 text-ink hover:bg-black/15"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
+                </button>
+              </div>
             ) : (
               <div
                 className="sticky top-0 z-10 flex touch-none flex-col bg-[color:var(--paper)] pt-1"
@@ -276,15 +281,12 @@ export function PickupCard({ note, canQueue, onClose, onWorkOn, onDone, onTrash,
             <div
               className={
                 desktop
-                  ? "contents"
+                  ? "flex flex-col gap-5"
                   : "flex flex-col gap-3.5 px-4 pb-[max(1.25rem,env(safe-area-inset-bottom,0px))]"
               }
             >
-            <label className={`relative flex flex-col gap-1 ${desktop ? "pr-11" : ""}`}>
-              {desktop && (
-                <span className="text-[11px] font-bold uppercase tracking-widest text-ink-soft">Task</span>
-              )}
-              {!desktop && <span className="sr-only">Task title</span>}
+            <label className="relative flex flex-col gap-1">
+              <span className="sr-only">Task title</span>
               <textarea
                 id="pickup-title"
                 defaultValue={note.title}

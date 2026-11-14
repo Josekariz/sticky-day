@@ -2,22 +2,22 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { resolveDisplayName } from "@/lib/core/name";
-import { parseShape } from "@/lib/core/types";
 import { SignOutButton } from "@/components/auth/SignOutButton";
-import { ProfileForm } from "@/components/profile/ProfileForm";
-import { DeleteAccountCard } from "@/components/profile/DeleteAccountCard";
+import { ProfileIdentity } from "@/components/profile/ProfileIdentity";
 import { PasswordCard } from "@/components/profile/PasswordCard";
+import { DeleteAccountCard } from "@/components/profile/DeleteAccountCard";
 
 export default async function ProfilePage() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) redirect("/");
-  const userId = user.id;
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("display_name, summary_time, default_shape")
-    .eq("id", userId)
+    .select("display_name")
+    .eq("id", user.id)
     .maybeSingle();
 
   const displayName = resolveDisplayName(
@@ -25,36 +25,25 @@ export default async function ProfilePage() {
     user?.user_metadata ?? {},
     user?.email,
   );
-  const summaryTime: string = String(profile?.summary_time ?? "18:00");
-  const defaultShape = parseShape(profile?.default_shape);
   const avatar: string | null = user?.user_metadata.avatar_url ?? null;
-  const initials = displayName.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
+  const initials = displayName
+    .split(" ")
+    .map((w: string) => w[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
 
   return (
     <main className="mx-auto flex w-full max-w-lg flex-col gap-6">
       <h1 className="font-hand text-5xl font-bold">Profile</h1>
 
-      <section className="flex flex-col gap-4 rounded-2xl border border-frame bg-surface p-6">
-        <div className="flex items-center gap-4">
-          <div className="grid h-14 w-14 place-items-center overflow-hidden rounded-full bg-fg text-lg font-semibold text-bg">
-            {avatar ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={avatar} alt="" className="h-full w-full object-cover" referrerPolicy="no-referrer" />
-            ) : initials}
-          </div>
-          <div>
-            <div className="font-semibold">{displayName}</div>
-            <div className="text-sm text-fg-soft">{user?.email}</div>
-          </div>
-        </div>
-
-        <ProfileForm
-          userId={userId}
-          displayName={displayName}
-          summaryTime={summaryTime}
-          defaultShape={defaultShape}
-        />
-      </section>
+      <ProfileIdentity
+        userId={user.id}
+        displayName={displayName}
+        email={user?.email ?? ""}
+        avatar={avatar}
+        initials={initials}
+      />
 
       <PasswordCard email={user?.email ?? ""} />
 
@@ -70,7 +59,9 @@ export default async function ProfilePage() {
 
       <p className="text-sm text-fg-soft">
         What Sticky Day keeps and who can see it:{" "}
-        <Link href="/privacy" className="underline underline-offset-4">Privacy</Link>
+        <Link href="/privacy" className="underline underline-offset-4">
+          Privacy
+        </Link>
       </p>
     </main>
   );
