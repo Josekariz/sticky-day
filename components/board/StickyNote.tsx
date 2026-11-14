@@ -72,12 +72,13 @@ const CHIPS: Record<NoteShape, string> = {
   heart: "justify-center",
   pill: "justify-center",
 };
+// Top of the face — bottom-left used to sit on the priority / tomorrow chips.
 const STAMP: Record<NoteShape, string> = {
-  square: "absolute bottom-8 left-2.5 md:bottom-10 md:left-4",
-  rounded: "absolute bottom-8 left-2.5 md:bottom-11 md:left-5",
-  circle: "static",
-  heart: "absolute bottom-[24%] left-1/2 -translate-x-1/2",
-  pill: "static",
+  square: "absolute left-2 top-1.5 md:left-3 md:top-2",
+  rounded: "absolute left-2.5 top-1.5 md:left-3.5 md:top-2",
+  circle: "absolute left-1/2 top-[14%] -translate-x-1/2",
+  heart: "absolute left-1/2 top-[20%] -translate-x-1/2",
+  pill: "absolute left-3 top-1",
 };
 
 export function StickyNote(props: Props) {
@@ -206,7 +207,11 @@ export function StickyNote(props: Props) {
       {readOnly ? (
         <div className={`relative flex h-full w-full flex-col ${BODY[shape]}`}>
           {stamp}
-          <span className={`font-hand text-(length:--note-font) font-semibold leading-tight ${clamp} ${TITLE[shape]}`}>
+          <span
+            className={`font-hand text-(length:--note-font) font-semibold leading-tight ${clamp} ${TITLE[shape]} ${
+              stamped ? "mt-3" : ""
+            }`}
+          >
             {note.title}
           </span>
           {faded && (
@@ -234,7 +239,11 @@ export function StickyNote(props: Props) {
             className={`note-hit relative flex h-full w-full flex-col ${BODY[shape]}`}
           >
             {stamp}
-            <span className={`font-hand text-(length:--note-font) font-semibold leading-tight ${clamp} ${TITLE[shape]}`}>
+            <span
+              className={`font-hand text-(length:--note-font) font-semibold leading-tight ${clamp} ${TITLE[shape]} ${
+                stamped ? "mt-3" : ""
+              }`}
+            >
               {note.title}
             </span>
             <span className={`flex items-center gap-1 text-[10px] font-semibold text-ink-soft md:gap-1.5 md:text-[11px] ${CHIPS[shape]}`}>

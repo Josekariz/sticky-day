@@ -13,6 +13,7 @@ import {
 } from "@/lib/core/types";
 import { SHAPE_LABELS, ShapeSwatch } from "./ShapeSwatch";
 import { TomorrowActionIcon } from "./TomorrowMark";
+import { useModalHistory } from "./useModalHistory";
 
 type LookOpen = "priority" | "shape" | "color" | null;
 
@@ -132,6 +133,9 @@ export function PickupCard({ note, canQueue, onClose, onWorkOn, onDone, onTrash,
     setLookOpen(null);
     onClose();
   }
+
+  // Android / browser back should dismiss the sheet, not reload the board.
+  useModalHistory(!!note, close);
 
   function toggleLook(which: Exclude<LookOpen, null>) {
     setLookOpen((cur) => (cur === which ? null : which));

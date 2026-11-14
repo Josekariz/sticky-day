@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { paperVar, type Note } from "@/lib/core/types";
+import { useModalHistory } from "./useModalHistory";
 
 type Props = {
   note: Note | null;
@@ -26,6 +27,8 @@ export function DoneTomorrowAsk({ note, onKeep, onClear, onLeave }: Props) {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [note]);
+
+  useModalHistory(!!note, () => leave.current());
 
   return (
     <AnimatePresence>
