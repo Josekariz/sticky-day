@@ -46,13 +46,13 @@ export function Clipboard({
   return (
     <section
       data-drop="clipboard"
-      className={`relative overflow-visible rounded-xl bg-clipboard p-4 pt-8 shadow-lg transition-shadow ${armed ? "shadow-[0_0_0_4px_var(--paper-yellow)]" : ""}`}
+      className={`relative overflow-visible rounded-xl bg-clipboard p-3 pt-7 shadow-lg transition-shadow md:p-4 md:pt-8 ${armed ? "shadow-[0_0_0_4px_var(--paper-yellow)]" : ""}`}
     >
       <span
         className="absolute left-1/2 top-[-12px] h-7 w-28 -translate-x-1/2 rounded-lg bg-clipboard-clip shadow-[inset_0_2px_0_rgba(255,255,255,0.25),0_3px_4px_rgba(0,0,0,0.3)]"
         aria-hidden
       />
-      <div className="flex flex-col gap-3 overflow-visible rounded bg-clipboard-paper p-4 text-ink">
+      <div className="flex flex-col gap-2.5 overflow-visible rounded bg-clipboard-paper p-3 text-ink md:gap-3 md:p-4">
         <h2 className="flex justify-between text-[11px] font-bold uppercase tracking-widest text-ink-soft">
           Working on <span>{notes.length}/{MAX_FOCUS}</span>
         </h2>
@@ -149,7 +149,7 @@ function FocusSlip({
           {queued ? "for tomorrow" : `from ${weekdayShort(note.carriedFrom!)}`}
         </span>
       )}
-      <div className={`relative font-hand text-xl font-semibold leading-tight ${carried || queued ? "mt-3" : ""}`}>
+      <div className={`relative font-hand text-lg font-semibold leading-tight md:text-xl ${carried || queued ? "mt-3" : ""}`}>
         {note.title}
       </div>
       <div className="relative mt-2 flex items-baseline justify-between">
@@ -161,13 +161,13 @@ function FocusSlip({
           {live ? "spent" : "paused"}
         </span>
       </div>
-      <div className="relative mt-2 mr-6 flex gap-3">
+      <div className="relative mt-2 flex flex-wrap gap-2 md:mr-6 md:gap-3">
         {!live && (
           <button
             type="button"
             onPointerDown={stopDrag}
             onClick={() => onResume(note.id)}
-            className="h-11 flex-1 rounded-lg border border-ink text-xs font-bold md:h-9"
+            className="h-11 min-w-[4.5rem] flex-1 rounded-lg border border-ink text-xs font-bold md:h-9"
           >
             Resume
           </button>
@@ -176,29 +176,27 @@ function FocusSlip({
           type="button"
           onPointerDown={stopDrag}
           onClick={() => onDone(note.id)}
-          className="h-11 flex-1 rounded-lg bg-ink text-xs font-bold text-on-ink md:h-9"
+          className="h-11 min-w-[4.5rem] flex-1 rounded-lg bg-ink text-xs font-bold text-on-ink md:h-9"
         >
           Done
         </button>
-        <div className="flex gap-1.5">
-          <button
-            type="button"
-            onPointerDown={stopDrag}
-            onClick={() => onOpen(note.id)}
-            className="h-11 rounded-lg border border-clipboard-line px-2.5 text-xs font-bold md:h-9"
-          >
-            Edit
-          </button>
-          <button
-            type="button"
-            onPointerDown={stopDrag}
-            onClick={() => onPutBack(note.id)}
-            aria-label="Put back on the board"
-            className="h-11 w-11 rounded-lg border border-clipboard-line text-xs font-bold md:h-9 md:w-9"
-          >
-            ↩
-          </button>
-        </div>
+        <button
+          type="button"
+          onPointerDown={stopDrag}
+          onClick={() => onOpen(note.id)}
+          className="h-11 flex-1 rounded-lg border border-clipboard-line px-2.5 text-xs font-bold md:h-9 md:flex-none"
+        >
+          Edit
+        </button>
+        <button
+          type="button"
+          onPointerDown={stopDrag}
+          onClick={() => onPutBack(note.id)}
+          aria-label="Put back on the board"
+          className="h-11 w-11 shrink-0 rounded-lg border border-clipboard-line text-xs font-bold md:h-9 md:w-9"
+        >
+          ↩
+        </button>
       </div>
     </motion.div>
   );

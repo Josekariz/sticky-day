@@ -98,11 +98,12 @@ export function StickyNote(props: Props) {
   const self = useRef<HTMLDivElement>(null);
   const carried = !!note.carriedFrom;
   const queued = note.againTomorrow;
-  const stamped = carried || queued;
+  // Carried needs the "from …" stamp; queued already has the moon chip — don't stack both.
+  const stamped = carried;
   const shape = note.shape;
   const sizeVars = noteSizeVars(note.title, shape);
   // Heart + stamps leave less room for a third title line.
-  const clamp = stamped || shape === "heart" ? "line-clamp-2" : "line-clamp-3";
+  const clamp = stamped || queued || shape === "heart" ? "line-clamp-2" : "line-clamp-3";
 
   function handleDragEnd() {
     if (readOnly) return;
@@ -130,7 +131,7 @@ export function StickyNote(props: Props) {
       className={`pointer-events-none text-[9px] font-semibold tracking-wide text-ink-soft/80 md:text-[10px] ${STAMP[shape]}`}
       aria-hidden
     >
-      {queued ? "for tomorrow" : `from ${weekdayShort(note.carriedFrom!)}`}
+      {`from ${weekdayShort(note.carriedFrom!)}`}
     </span>
   );
 

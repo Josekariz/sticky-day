@@ -117,14 +117,16 @@ export function Navbar({
           })}
         </nav>
 
-        <div className="flex items-center gap-2 justify-self-end md:gap-3">
+        <div className="flex items-center gap-1.5 justify-self-end md:gap-3">
+          {/* Always visible — on phones this was buried in the menu and felt broken. */}
+          <AppearanceSelect tone="compact" />
           <button
             type="button"
             aria-label="Refresh"
             disabled={isPending}
             aria-busy={isPending}
             onClick={() => void onRefresh()}
-            className="grid h-11 w-11 place-items-center rounded-full text-fg-soft hover:bg-frame/40 hover:text-fg disabled:opacity-60 md:h-10 md:w-10"
+            className="hidden place-items-center rounded-full text-fg-soft hover:bg-frame/40 hover:text-fg disabled:opacity-60 md:grid md:h-10 md:w-10"
           >
             <svg
               width="20"
@@ -205,10 +207,18 @@ export function Navbar({
                 </Link>
               );
             })}
-            <div className="flex flex-col gap-2 rounded-xl px-4 py-3">
-              <span className="text-sm font-semibold text-fg">Appearance</span>
-              <AppearanceSelect tone="full" />
-            </div>
+            <button
+              type="button"
+              disabled={isPending}
+              aria-busy={isPending}
+              onClick={() => {
+                setMenuOpen(false);
+                void onRefresh();
+              }}
+              className="flex h-12 items-center justify-center rounded-xl px-4 font-semibold text-fg"
+            >
+              {isPending ? "Refreshing…" : "Refresh"}
+            </button>
             <SignOutButton className="flex h-12 items-center justify-center rounded-xl px-4 font-semibold text-danger" />
           </div>
         )}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useId, useState, useSyncExternalStore, type ReactNode } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, useDragControls } from "framer-motion";
 import {
   NOTE_SHAPES,
   PAPER_COLORS,
@@ -105,6 +105,7 @@ function LookTrigger({
 
 export function PickupCard({ note, canQueue, onClose, onWorkOn, onDone, onTrash, onEdit }: Props) {
   const desktop = useDesktop();
+  const sheetDrag = useDragControls();
   const [confirmTrash, setConfirmTrash] = useState(false);
   const [lookOpen, setLookOpen] = useState<LookOpen>(null);
   const priorityPanelId = useId();
@@ -220,6 +221,18 @@ export function PickupCard({ note, canQueue, onClose, onWorkOn, onDone, onTrash,
                 ? { type: "spring", stiffness: 320, damping: 24 }
                 : { type: "spring", stiffness: 380, damping: 32 }
             }
+            {...(!desktop
+              ? {
+                  drag: "y" as const,
+                  dragListener: false,
+                  dragControls: sheetDrag,
+                  dragConstraints: { top: 0, bottom: 0 },
+                  dragElastic: { top: 0, bottom: 0.55 },
+                  onDragEnd: (_: unknown, info: { offset: { y: number }; velocity: { y: number } }) => {
+                    if (info.offset.y > 100 || info.velocity.y > 600) close();
+                  },
+                }
+              : {})}
           >
             {desktop ? (
               <button
@@ -231,9 +244,15 @@ export function PickupCard({ note, canQueue, onClose, onWorkOn, onDone, onTrash,
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
               </button>
             ) : (
-              <div className="sticky top-0 z-10 flex flex-col bg-[color:var(--paper)] pt-2">
-                {/* Grabber — Material/RN cue that the sheet is dismissible. */}
-                <div className="flex justify-center pb-1" aria-hidden>
+              <div
+                className="sticky top-0 z-10 flex touch-none flex-col bg-[color:var(--paper)] pt-1"
+                onPointerDown={(e) => {
+                  // Whole header strip dismisses — the 4px grabber alone was too easy to miss.
+                  if ((e.target as HTMLElement).closest("button")) return;
+                  sheetDrag.start(e);
+                }}
+              >
+                <div className="flex justify-center pb-1 pt-2" aria-hidden>
                   <span className="block h-1 w-10 rounded-full bg-black/25" />
                 </div>
                 <div className="flex items-center justify-between gap-3 px-4 pb-2">
@@ -432,6 +451,33 @@ export function PickupCard({ note, canQueue, onClose, onWorkOn, onDone, onTrash,
               </div>
             </div>
 
+            {canQueue && (
+              <button
+                type="button"
+                aria-pressed={note.againTomorrow}
+                aria-label={
+                  note.againTomorrow
+                    ? "Queued for tomorrow — tap to clear"
+                    : "Also do this tomorrow — puts a fresh copy on tomorrow after you mark it done"
+                }
+                title={
+                  note.againTomorrow
+                    ? "A fresh copy will land on tomorrow after Done"
+                    : "After Done, put a fresh copy on tomorrow"
+                }
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={() => onEdit(note.id, { againTomorrow: !note.againTomorrow })}
+                className={`relative flex min-h-11 w-full items-center justify-center gap-1.5 rounded-xl border text-sm font-semibold ${
+                  note.againTomorrow
+                    ? "border-ink bg-black/10 text-ink"
+                    : "border-ink/25 text-ink-soft hover:border-ink/50 hover:text-ink"
+                }`}
+              >
+                <TomorrowActionIcon on={note.againTomorrow} />
+                {note.againTomorrow ? "On for tomorrow" : "Do this tomorrow"}
+              </button>
+            )}
+
             <div className="relative mt-1 flex gap-2">
               {note.status !== "focus" && (
                 <button onClick={() => onWorkOn(note.id)} className="h-12 flex-1 rounded-xl border-2 border-ink text-sm font-bold">
@@ -443,7 +489,7 @@ export function PickupCard({ note, canQueue, onClose, onWorkOn, onDone, onTrash,
               </button>
             </div>
 
-            <div className="relative flex min-h-11 items-center justify-between gap-3 text-xs font-semibold text-ink-soft">
+            <div className="relative flex min-h-11 items-center gap-3 text-xs font-semibold text-ink-soft">
               {confirmTrash ? (
                 <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
                   Trash it?
@@ -453,17 +499,6 @@ export function PickupCard({ note, canQueue, onClose, onWorkOn, onDone, onTrash,
               ) : (
                 <button onClick={() => setConfirmTrash(true)} className="min-h-11 underline underline-offset-2 hover:text-ink">
                   Trash it
-                </button>
-              )}
-              {canQueue && (
-                <button
-                  type="button"
-                  aria-pressed={note.againTomorrow}
-                  onClick={() => onEdit(note.id, { againTomorrow: !note.againTomorrow })}
-                  className={`inline-flex min-h-11 items-center gap-1 underline underline-offset-2 ${note.againTomorrow ? "text-ink" : "hover:text-ink"}`}
-                >
-                  <TomorrowActionIcon on={note.againTomorrow} />
-                  {note.againTomorrow ? "On for tomorrow" : "Do this tomorrow"}
                 </button>
               )}
             </div>

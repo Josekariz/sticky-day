@@ -34,7 +34,7 @@ export function DoneTray({ notes, armed, initialSummary, onPutBack }: Props) {
         aria-label={`Done tray, ${notes.length} finished. Open the day's record.`}
         animate={{ scale: armed ? 1.04 : 1, y: armed ? -4 : 0 }}
         transition={{ type: "spring", stiffness: 300, damping: 20 }}
-        className="relative h-32 w-full text-left"
+        className="relative h-28 w-full text-left md:h-32"
       >
         {/* back wall of the tray */}
         <div

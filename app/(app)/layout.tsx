@@ -1,6 +1,5 @@
 import { after } from "next/server";
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
 import { Navbar } from "@/components/nav/Navbar";
 import { SyncTimezone } from "@/components/profile/SyncTimezone";
 import { AppearanceAccount } from "@/components/theme/AppearanceAccount";
@@ -10,10 +9,10 @@ import { isUnreadLetter } from "@/lib/summary/unread";
 import { resolveDisplayName } from "@/lib/core/name";
 import { isSummaryBusy, parseStoredSummary } from "@/lib/ai/tasks/summarize";
 import { writeDaySummary } from "@/lib/ai/writeDaySummary";
+import { getSessionUser } from "@/lib/supabase/session";
 
 export default async function AppLayout({ children }: LayoutProps<"/">) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { supabase, user } = await getSessionUser();
   if (!user) redirect("/");
 
   const { data: profile } = await supabase

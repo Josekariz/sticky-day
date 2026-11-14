@@ -7,7 +7,8 @@ import { clearGuestBoard, readGuestBoard } from "@/components/board/guestStore";
 
 /** Where a board's notes live: the account in Supabase, or a guest's browser. */
 export type BoardStore = {
-  save(id: string, patch: Partial<Note>): void;
+  /** Resolves false when the write didn't stick (RLS miss, error). */
+  save(id: string, patch: Partial<Note>): Promise<boolean>;
   remove(ids: string[]): void;
   /** Rejects if the profile couldn't be saved, so the first-visit card can say so. */
   saveOnboarding(fields: { default_shape?: NoteShape | null }): Promise<void>;
@@ -26,14 +27,25 @@ export function supabaseStore(userId: string, dayId: string): BoardStore {
 
   // Optimistic UI; track in-flight writes so nav can flush briefly.
   return {
-    save(id, patch) {
-      void trackSave(
+    async save(id, patch) {
+      const ok = await trackSave(
         Promise.resolve(
-          supabase.from("notes").update(patchToRow(patch)).eq("id", id).eq("user_id", userId),
-        ).then(({ error }) => {
-          if (error) console.error("save failed", id, error.message);
+          supabase
+            .from("notes")
+            .update(patchToRow(patch))
+            .eq("id", id)
+            .eq("user_id", userId)
+            .select("id"),
+        ).then(({ data, error }) => {
+          // RLS can "succeed" with 0 rows — treat that as a failed save.
+          if (error || !data?.length) {
+            console.error("save failed", id, error?.message ?? "no row matched");
+            return false;
+          }
+          return true;
         }),
       );
+      return ok;
     },
 
     remove(ids) {

@@ -5,7 +5,8 @@ import { AnimatePresence, motion } from "framer-motion";
 import type { Note } from "@/lib/core/types";
 
 export function BinShape({ notes = [] }: { notes?: Note[] }) {
-  const shade = useId();
+  // SVG url(#…) breaks on the colons React puts in useId(); strip them.
+  const shade = `bin-shade-${useId().replace(/:/g, "")}`;
   return (
     <svg viewBox="0 0 96 112" className="h-full w-full" aria-hidden>
       {notes.slice(0, 3).map((n, i) => (
@@ -50,9 +51,11 @@ export function Bin({ notes, armed, onRestore, onEmpty }: Props) {
   return (
     <>
       <motion.button
+        type="button"
         data-drop="bin"
         onClick={() => setOpen(true)}
         aria-label={`Open the bin, ${notes.length} trashed`}
+        initial={false}
         animate={
           armed
             ? { rotate: [-8, 8, -8], scale: 1.12 }
@@ -65,7 +68,7 @@ export function Bin({ notes, armed, onRestore, onEmpty }: Props) {
         }
         whileHover={armed ? undefined : { scale: 1.06, rotate: -3 }}
         whileTap={{ scale: 0.96 }}
-        className="relative h-24 w-20 shrink-0 drop-shadow-[0_12px_14px_rgba(0,0,0,0.35)] md:h-28 md:w-24"
+        className="relative h-20 w-[4.5rem] shrink-0 drop-shadow-[0_12px_14px_rgba(0,0,0,0.35)] md:h-28 md:w-24"
       >
         <BinShape notes={notes} />
         {notes.length > 0 && (

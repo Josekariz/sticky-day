@@ -51,6 +51,10 @@ export function useDropTargets() {
 
   /** Points are viewport coordinates: the note's centre, and the pointer when known. */
   function move(px: number, py: number, pointer?: [number, number]) {
+    // Docked clipboard mounts after start()'s first measure — refresh until it exists.
+    if (!rects.current.clipboard || rects.current.clipboard.width === 0) {
+      rects.current = measureAll();
+    }
     const points = pointer ? [[px, py], pointer] : [[px, py]];
     const hit = (r?: DOMRect) =>
       !!r && points.some(([x, y]) => x >= r.left && x <= r.right && y >= r.top && y <= r.bottom);

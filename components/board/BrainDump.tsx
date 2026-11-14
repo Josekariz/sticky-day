@@ -86,7 +86,7 @@ export function BrainDump({
           disabled
           title="Dictation coming soon"
           aria-label="Dictate (coming soon)"
-          className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-fg-soft opacity-40 md:h-10 md:w-10"
+          className="hidden h-11 w-11 shrink-0 place-items-center rounded-full text-fg-soft opacity-40 md:grid md:h-10 md:w-10"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
             <rect x="9" y="2" width="6" height="12" rx="3" />

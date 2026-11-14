@@ -22,7 +22,9 @@ export function clearGuestBoard() {
 /** A board kept in this browser only. It never calls the server or an AI. */
 export function guestStore(): BoardStore {
   return {
-    save() {},
+    async save() {
+      return true;
+    },
     remove() {},
     async saveOnboarding() {},
     async insert() {},

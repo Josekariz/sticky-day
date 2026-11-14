@@ -2,6 +2,11 @@
 
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import {
+  clearBoardCache,
+  pauseBoardCacheWrites,
+  resumeBoardCacheWrites,
+} from "@/components/board/boardCache";
 
 export function SignOutButton({
   className = "h-11 rounded-xl border border-frame px-5 text-sm font-semibold text-danger",
@@ -11,7 +16,14 @@ export function SignOutButton({
   const router = useRouter();
 
   async function signOut() {
-    await createClient().auth.signOut();
+    pauseBoardCacheWrites();
+    clearBoardCache();
+    try {
+      await createClient().auth.signOut();
+    } finally {
+      clearBoardCache();
+      resumeBoardCacheWrites();
+    }
     router.replace("/");
     router.refresh();
   }

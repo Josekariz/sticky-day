@@ -5,7 +5,7 @@ import type { Note, NoteShape } from "@/lib/core/types";
 import type { StoredSummary } from "@/lib/ai/tasks/summarize";
 import { EXAMPLE_DAYS, type ExampleDay } from "@/lib/core/examples";
 import { toBoardNotes } from "@/lib/core/split";
-import { useBoard } from "./useBoard";
+import { useBoard, type BoardAccount } from "./useBoard";
 import { supabaseStore } from "./store";
 import { guestStore } from "./guestStore";
 import { ExampleDays } from "./ExampleDays";
@@ -28,7 +28,7 @@ export function DayView({
   isNewAccount,
   aside,
 }: {
-  account: { userId: string; dayId: string } | null; // null: the guest board on the landing page
+  account: BoardAccount | null; // null: the guest board on the landing page
   initialNotes: Note[];
   initialSummary: StoredSummary | null;
   defaultShape: NoteShape | null;
@@ -43,8 +43,11 @@ export function DayView({
     () => (userId && dayId ? supabaseStore(userId, dayId) : guestStore()),
     [userId, dayId],
   );
-  const b = useBoard(initialNotes, store, guest || onboarded);
+  const b = useBoard(initialNotes, store, guest || onboarded, account);
   const drop = useDropTargets();
+  // On phones, hide the empty clipboard so the board + sheet stay usable;
+  // DockedTargets still catch drops while dragging. Desktop keeps the column.
+  const showClipboard = b.focusNotes.length > 0;
 
   function addExample(example: ExampleDay) {
     b.addNotes(toBoardNotes(example.result.notes, b.boardNotes, null, () => crypto.randomUUID()));
@@ -86,11 +89,12 @@ export function DayView({
       )}
 
       <div className="flex flex-1 flex-col gap-4 lg:flex-row">
-        <div className="relative flex flex-1 flex-col">
+        <div className={`relative flex flex-1 flex-col ${showClipboard ? "" : "min-h-0"}`}>
           <Board
             notes={b.boardNotes}
             dragging={drop.dragging}
             over={drop.over}
+            roomy={!showClipboard}
             onMove={b.move}
             onOpen={b.open}
             onDone={b.done}
@@ -112,17 +116,19 @@ export function DayView({
         </div>
         <aside className="mx-auto flex w-full max-w-sm flex-col gap-5 lg:mx-0 lg:w-72 lg:max-w-none">
           {aside}
-          <Clipboard
-            notes={b.focusNotes}
-            armed={drop.over === "clipboard"}
-            onOpen={b.open}
-            onDone={b.done}
-            onPutBack={b.putBack}
-            onResume={b.resume}
-            onDragStart={drop.start}
-            onDragMove={drop.move}
-            onDragEnd={dropFromClipboard}
-          />
+          <div className={showClipboard ? undefined : "hidden lg:block"}>
+            <Clipboard
+              notes={b.focusNotes}
+              armed={drop.over === "clipboard"}
+              onOpen={b.open}
+              onDone={b.done}
+              onPutBack={b.putBack}
+              onResume={b.resume}
+              onDragStart={drop.start}
+              onDragMove={drop.move}
+              onDragEnd={dropFromClipboard}
+            />
+          </div>
           <div className="flex items-end gap-3">
             <DoneTray
               notes={b.doneNotes}

@@ -1,18 +1,19 @@
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
 import { rowToNote, type NoteRow } from "@/lib/core/mappers";
 import { todayFor } from "@/lib/core/date";
 import { parseShape } from "@/lib/core/types";
 import { DayView } from "@/components/board/DayView";
 import { parseStoredSummary } from "@/lib/ai/tasks/summarize";
 import { ensureTodayDay } from "@/lib/ai/writeDaySummary";
+import { getSessionUser } from "@/lib/supabase/session";
 
 export default async function BoardPage() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { supabase, user } = await getSessionUser();
   if (!user) redirect("/");
   const userId = user.id;
 
+  // Auth is shared with the layout via getSessionUser(); profile then day stay serial
+  // because ensureTodayDay needs timezone from the profile.
   const { data: profile } = await supabase
     .from("profiles")
     .select("timezone, default_shape, onboarded_at")
@@ -25,7 +26,7 @@ export default async function BoardPage() {
 
   const day = await ensureTodayDay(supabase, userId, today);
 
-  const { data: rows } = await supabase
+  const notesPromise = supabase
     .from("notes")
     .select("*, carried_from")
     .eq("day_id", day.id)
@@ -33,19 +34,21 @@ export default async function BoardPage() {
     .order("created_at");
 
   // Only asked before the first-visit card is answered: has this account ever had a note?
-  let isNewAccount = false;
-  if (!onboarded) {
-    const { count } = await supabase
-      .from("notes")
-      .select("id", { count: "exact", head: true })
-      .eq("user_id", userId);
-    isNewAccount = (count ?? 0) === 0;
-  }
+  const [{ data: rows }, newAccountResult] = await Promise.all([
+    notesPromise,
+    !onboarded
+      ? supabase
+          .from("notes")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", userId)
+      : Promise.resolve({ count: null as number | null }),
+  ]);
+  const isNewAccount = !onboarded && (newAccountResult.count ?? 0) === 0;
 
   return (
     <main className="flex flex-1 flex-col">
       <DayView
-        account={{ userId, dayId: day.id }}
+        account={{ userId, dayId: day.id, date: today }}
         initialNotes={(rows as NoteRow[] ?? []).map(rowToNote)}
         initialSummary={parseStoredSummary(day.summary)}
         defaultShape={defaultShape}

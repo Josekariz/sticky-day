@@ -1,10 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { MAX_FOCUS, type Note, type NoteShape } from "@/lib/core/types";
 import { placeNote } from "@/lib/core/placement";
 import { asOneNote, toBoardNotes } from "@/lib/core/split";
 import type { BoardStore } from "@/components/board/store";
+import { writeBoardCache } from "@/components/board/boardCache";
+
+export type BoardAccount = { userId: string; dayId: string; date: string };
 
 /** Fold running time into spentMs and stop the clock. */
 function pause(n: Note): Note {
@@ -29,12 +32,28 @@ function mergeNew(ns: Note[], created: Note[]): Note[] {
   return [...ns, ...created.filter((n) => !shown.has(n.id))];
 }
 
+/** Only undo fields that still match what this failed save tried to write. */
+function revertPatch(current: Note, before: Note, patch: Partial<Note>): Note {
+  const next = { ...current };
+  for (const key of Object.keys(patch) as (keyof Note)[]) {
+    const attempted = patch[key];
+    if (Object.is(current[key], attempted)) {
+      (next as Note)[key] = before[key] as never;
+    }
+  }
+  return next;
+}
+
 export function useBoard(
   initial: Note[],
   store: BoardStore,
   initialOnboarded: boolean,
+  account: BoardAccount | null = null,
 ) {
+  // Always seed from the server — localStorage belongs in loading.tsx, not hydration.
   const [notes, setNotes] = useState(initial);
+  const notesRef = useRef(notes);
+  notesRef.current = notes;
   const [openId, setOpenId] = useState<string | null>(null);
   const [doneAskId, setDoneAskId] = useState<string | null>(null);
   const [onboarded, setOnboarded] = useState(initialOnboarded);
@@ -54,6 +73,12 @@ export function useBoard(
     store.persist?.(notes);
   }, [store, notes]);
 
+  // Signed-in cold-start cache — same shape as guest persist, keyed by day.
+  useEffect(() => {
+    if (!account || store.persist) return;
+    writeBoardCache(account.userId, account.dayId, account.date, notes);
+  }, [account, store.persist, notes]);
+
   useEffect(() => {
     store.importGuest?.().then((imported) => {
       if (imported.length) setNotes((ns) => mergeNew(ns, imported));
@@ -61,8 +86,15 @@ export function useBoard(
   }, [store]);
 
   const update = (id: string, patch: Partial<Note>) => {
+    const prev = notesRef.current.find((n) => n.id === id);
+    if (!prev) return;
     setNotes((ns) => ns.map((n) => (n.id === id ? { ...n, ...patch } : n)));
-    save(id, patch);
+    void save(id, patch).then((ok) => {
+      if (ok) return;
+      setNotes((cur) =>
+        cur.map((n) => (n.id === id ? revertPatch(n, prev, patch) : n)),
+      );
+    });
   };
 
   const boardNotes = notes.filter((n) => n.status === "board");
@@ -111,69 +143,113 @@ export function useBoard(
     },
 
     move(id: string, x: number, y: number) {
+      const prev = notesRef.current.find((k) => k.id === id);
+      if (!prev) return;
+      const patch = { x, y };
       setNotes((ns) => {
         const n = ns.find((k) => k.id === id);
         if (!n) return ns;
         return [...ns.filter((k) => k.id !== id), { ...n, x, y }]; // last = on top
       });
-      save(id, { x, y });
+      void save(id, patch).then((ok) => {
+        if (ok) return;
+        setNotes((cur) =>
+          cur.map((n) => (n.id === id ? revertPatch(n, prev, patch) : n)),
+        );
+      });
     },
     open: (id: string) => setOpenId(id),
     close: () => setOpenId(null),
 
     workOn(id: string) {
-      setNotes((ns) => {
-        const already = ns.filter((n) => n.status === "focus" && n.id !== id);
-        // Other clipboard timers keep running; only kick the oldest if at the cap.
-        let acc = ns;
-        if (already.length >= MAX_FOCUS) {
-          const oldest = already[0];
-          acc = acc.map((n) => (n.id === oldest.id ? { ...pause(n), status: "board" as const } : n));
+      const before = notesRef.current;
+      const already = before.filter((n) => n.status === "focus" && n.id !== id);
+      const demoted = already.length >= MAX_FOCUS ? already[0] : null;
+      let acc = before;
+      if (demoted) {
+        acc = acc.map((n) => (n.id === demoted.id ? { ...pause(n), status: "board" as const } : n));
+      }
+      acc = acc.map((n) => {
+        if (n.id !== id) return n;
+        if (n.status === "focus" && n.startedAt) return n;
+        return { ...n, status: "focus" as const, startedAt: Date.now() };
+      });
+      const pinned = acc.find((n) => n.id === id);
+      if (!pinned) return;
+      const result = [...acc.filter((n) => n.id !== id), pinned];
+      setNotes(result);
+      setOpenId(null);
+
+      void (async () => {
+        const touched = new Set<string>();
+        const restoreUi = () => {
+          setNotes((cur) =>
+            cur.map((n) => (touched.has(n.id) ? before.find((b) => b.id === n.id) ?? n : n)),
+          );
+        };
+
+        // Demote first so enforce_focus_cap doesn't reject the promote.
+        if (demoted) {
+          const after = result.find((n) => n.id === demoted.id)!;
+          const patch = changedTimerFields(demoted, after);
+          if (patch) {
+            touched.add(demoted.id);
+            if (!(await save(demoted.id, patch))) {
+              restoreUi();
+              return;
+            }
+          }
         }
-        acc = acc.map((n) => {
-          if (n.id !== id) return n;
-          // Already timing on the clipboard — leave the clock alone.
-          if (n.status === "focus" && n.startedAt) return n;
-          return { ...n, status: "focus" as const, startedAt: Date.now() };
-        });
-        const pinned = acc.find((n) => n.id === id);
-        if (!pinned) return acc;
-        const result = [...acc.filter((n) => n.id !== id), pinned];
 
         for (const n of result) {
-          const p = ns.find((k) => k.id === n.id);
+          if (demoted && n.id === demoted.id) continue;
+          const p = before.find((k) => k.id === n.id);
           if (!p) continue;
           const patch = changedTimerFields(p, n);
-          if (patch) save(n.id, patch);
+          if (!patch) continue;
+          touched.add(n.id);
+          if (await save(n.id, patch)) continue;
+          // Promote failed after a successful demote — put the kicked note back on the server.
+          if (demoted && touched.has(demoted.id)) {
+            const after = result.find((k) => k.id === demoted.id)!;
+            const undo = changedTimerFields(after, demoted);
+            if (undo) await save(demoted.id, undo);
+          }
+          restoreUi();
+          return;
         }
-        return result;
-      });
-      setOpenId(null);
+      })();
     },
 
     resume(id: string) {
-      setNotes((ns) => {
-        const result = ns.map((n) =>
-          n.id === id && n.status === "focus" ? { ...n, startedAt: Date.now() } : n,
-        );
-        for (const n of result) {
-          const p = ns.find((k) => k.id === n.id)!;
-          const patch = changedTimerFields(p, n);
-          if (patch) save(n.id, patch);
-        }
-        return result;
-      });
+      const before = notesRef.current;
+      const result = before.map((n) =>
+        n.id === id && n.status === "focus" ? { ...n, startedAt: Date.now() } : n,
+      );
+      setNotes(result);
+      for (const n of result) {
+        const p = before.find((k) => k.id === n.id);
+        if (!p) continue;
+        const patch = changedTimerFields(p, n);
+        if (!patch) continue;
+        void save(n.id, patch).then((ok) => {
+          if (ok) return;
+          setNotes((cur) =>
+            cur.map((k) => (k.id === n.id ? revertPatch(k, p, patch) : k)),
+          );
+        });
+      }
     },
 
     putBack(id: string) {
-      const n = notes.find((k) => k.id === id);
+      const n = notesRef.current.find((k) => k.id === id);
       if (!n) return;
       const paused = pause(n);
       update(id, { status: "board", startedAt: paused.startedAt, spentMs: paused.spentMs });
     },
 
     done(id: string) {
-      const n = notes.find((k) => k.id === id);
+      const n = notesRef.current.find((k) => k.id === id);
       if (!n) return;
       // A note queued for tomorrow should not silently come back after Done.
       if (n.againTomorrow) {
@@ -184,7 +260,7 @@ export function useBoard(
     },
 
     confirmDone(keepTomorrow: boolean) {
-      const n = notes.find((k) => k.id === doneAskId);
+      const n = notesRef.current.find((k) => k.id === doneAskId);
       if (!n) {
         setDoneAskId(null);
         return;
@@ -197,7 +273,7 @@ export function useBoard(
     },
 
     trash(id: string) {
-      const n = notes.find((k) => k.id === id);
+      const n = notesRef.current.find((k) => k.id === id);
       if (!n) return;
       const paused = pause(n);
       update(id, { status: "trashed", startedAt: paused.startedAt, spentMs: paused.spentMs });
@@ -205,13 +281,16 @@ export function useBoard(
     },
 
     restore(id: string) {
-      setNotes((ns) => {
-        const n = ns.find((k) => k.id === id);
-        if (!n) return ns;
-        const pos = placeNote(ns.filter((k) => k.status === "board"));
-        const patch = { status: "board" as const, startedAt: null, actualMinutes: null, ...pos };
-        save(id, patch);
-        return ns.map((k) => (k.id === id ? { ...k, ...patch } : k));
+      const before = notesRef.current.find((k) => k.id === id);
+      if (!before) return;
+      const pos = placeNote(notesRef.current.filter((k) => k.status === "board"));
+      const patch = { status: "board" as const, startedAt: null, actualMinutes: null, ...pos };
+      setNotes((ns) => ns.map((k) => (k.id === id ? { ...k, ...patch } : k)));
+      void save(id, patch).then((ok) => {
+        if (ok) return;
+        setNotes((cur) =>
+          cur.map((k) => (k.id === id ? revertPatch(k, before, patch) : k)),
+        );
       });
     },
 

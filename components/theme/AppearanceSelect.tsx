@@ -41,27 +41,21 @@ export function AppearanceSelect({
   const { resolvedTheme, setTheme } = useTheme();
   const account = useAppearanceAccount();
   const mounted = useMounted();
-
-  if (!mounted) {
-    return (
-      <span
-        className={`inline-block h-11 w-11 rounded-full border border-frame bg-surface md:h-10 md:w-10 ${className}`}
-        aria-hidden
-      />
-    );
-  }
-
-  const dark = resolvedTheme === "dark";
+  const dark = mounted && resolvedTheme === "dark";
   const next = dark ? "light" : "dark";
 
   async function toggle() {
+    if (!mounted) return;
     setTheme(next);
     if (!account) return;
-    const { error } = await createClient()
+    const { data, error } = await createClient()
       .from("profiles")
       .update({ appearance: next })
-      .eq("id", account.userId);
-    if (error) console.error("appearance save failed", error.message);
+      .eq("id", account.userId)
+      .select("id");
+    if (error || !data?.length) {
+      console.error("appearance save failed", error?.message ?? "no row");
+    }
   }
 
   return (
@@ -69,13 +63,17 @@ export function AppearanceSelect({
       <button
         type="button"
         onClick={() => void toggle()}
+        disabled={!mounted}
         aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
         title={dark ? "Light" : "Dark"}
         className="flex h-11 w-11 items-center justify-center rounded-full border border-frame bg-surface text-fg md:h-10 md:w-10"
       >
-        {dark ? <SunIcon /> : <MoonIcon />}
+        {/* Same shell on server + client; icon waits for theme so hydration stays quiet. */}
+        <span className="grid h-[18px] w-[18px] place-items-center" suppressHydrationWarning>
+          {mounted ? dark ? <SunIcon /> : <MoonIcon /> : null}
+        </span>
       </button>
-      {tone === "full" && (
+      {tone === "full" && mounted && (
         <p className="text-xs text-fg-soft">
           {dark ? "Dark on — tap for paper." : "Light on — tap for neon."}
           {account ? " Saved to your account." : ""}
