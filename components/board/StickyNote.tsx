@@ -70,15 +70,8 @@ const CHIPS: Record<NoteShape, string> = {
   rounded: "justify-center",
   circle: "justify-center",
   heart: "justify-center",
-  pill: "justify-center",
-};
-// Top of the face — bottom-left used to sit on the priority / tomorrow chips.
-const STAMP: Record<NoteShape, string> = {
-  square: "absolute left-2 top-1.5 md:left-3 md:top-2",
-  rounded: "absolute left-2.5 top-1.5 md:left-3.5 md:top-2",
-  circle: "absolute left-1/2 top-[14%] -translate-x-1/2",
-  heart: "absolute left-1/2 top-[20%] -translate-x-1/2",
-  pill: "absolute left-3 top-1",
+  // Wrap on the short face so "from …" never sits on the title.
+  pill: "max-w-full flex-wrap justify-center",
 };
 
 export function StickyNote(props: Props) {
@@ -103,8 +96,15 @@ export function StickyNote(props: Props) {
   const stamped = carried;
   const shape = note.shape;
   const sizeVars = noteSizeVars(note.title, shape);
-  // Heart + stamps leave less room for a third title line.
-  const clamp = stamped || queued || shape === "heart" ? "line-clamp-2" : "line-clamp-3";
+  // Pill is short; meta chips steal a line. Heart / carried / queued need room too.
+  const clamp =
+    shape === "pill"
+      ? stamped || queued
+        ? "line-clamp-1"
+        : "line-clamp-2"
+      : stamped || queued || shape === "heart"
+        ? "line-clamp-2"
+        : "line-clamp-3";
 
   function handleDragEnd() {
     if (readOnly) return;
@@ -127,11 +127,9 @@ export function StickyNote(props: Props) {
     );
   }
 
-  const stamp = stamped && (
-    <span
-      className={`pointer-events-none text-[9px] font-semibold tracking-wide text-ink-soft/80 md:text-[10px] ${STAMP[shape]}`}
-      aria-hidden
-    >
+  // In the chips row (not absolute) so every shape keeps title + meta clear.
+  const fromChip = stamped && (
+    <span className="whitespace-nowrap rounded-full bg-black/10 px-1 py-0.5 text-[9px] font-semibold tracking-wide text-ink-soft md:px-1.5 md:text-[10px]">
       {`from ${weekdayShort(note.carriedFrom!)}`}
     </span>
   );
@@ -206,14 +204,14 @@ export function StickyNote(props: Props) {
 
       {readOnly ? (
         <div className={`relative flex h-full w-full flex-col ${BODY[shape]}`}>
-          {stamp}
-          <span
-            className={`font-hand text-(length:--note-font) font-semibold leading-tight ${clamp} ${TITLE[shape]} ${
-              stamped ? "mt-3" : ""
-            }`}
-          >
+          <span className={`font-hand text-(length:--note-font) font-semibold leading-tight ${clamp} ${TITLE[shape]}`}>
             {note.title}
           </span>
+          {fromChip && (
+            <span className={`flex items-center gap-1 ${CHIPS[shape]}`}>
+              {fromChip}
+            </span>
+          )}
           {faded && (
             <span
               className="absolute right-2 top-2 grid h-7 w-7 place-items-center rounded-full bg-black/15"
@@ -238,15 +236,11 @@ export function StickyNote(props: Props) {
             }}
             className={`note-hit relative flex h-full w-full flex-col ${BODY[shape]}`}
           >
-            {stamp}
-            <span
-              className={`font-hand text-(length:--note-font) font-semibold leading-tight ${clamp} ${TITLE[shape]} ${
-                stamped ? "mt-3" : ""
-              }`}
-            >
+            <span className={`font-hand text-(length:--note-font) font-semibold leading-tight ${clamp} ${TITLE[shape]}`}>
               {note.title}
             </span>
             <span className={`flex items-center gap-1 text-[10px] font-semibold text-ink-soft md:gap-1.5 md:text-[11px] ${CHIPS[shape]}`}>
+              {fromChip}
               {queued && <TomorrowBadge />}
               <span className="whitespace-nowrap px-1 py-0.5 rounded-full bg-black/10 capitalize md:px-1.5">{note.priority}<span className="sr-only"> priority</span></span>
               {queued && <span className="sr-only">on for tomorrow</span>}
