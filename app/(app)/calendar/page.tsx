@@ -81,7 +81,7 @@ export default async function CalendarPage({
     <main className="flex flex-1 flex-col gap-6">
       <h1 className="font-hand text-5xl font-bold">Calendar</h1>
       <CalendarView
-        key={monthParam(year, month)}
+        key={`${monthParam(year, month)}:${openDay ?? ""}`}
         userId={userId}
         year={year}
         month={month}
