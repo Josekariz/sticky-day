@@ -49,6 +49,7 @@ export function CalendarView({
   nextHref: string;
 }) {
   const router = useRouter();
+  const monthStr = `${year}-${String(month).padStart(2, "0")}`;
   const byDate = new Map(days.map((d) => [d.date, d]));
   const [selected, setSelected] = useState<string | null>(initialDay ?? null);
   const [fetched, setFetched] = useState<{
@@ -56,6 +57,12 @@ export function CalendarView({
     dayId: string | null;
     notes: DayDrawerNote[];
   } | null>(null);
+
+  // Prod can restore a cached client with the drawer closed while ?day= remains.
+  // Parent remounts on openDay changes; this covers prop updates without remount.
+  useEffect(() => {
+    if (initialDay) setSelected(initialDay);
+  }, [initialDay]);
 
   useEffect(() => {
     if (!selected) return;
@@ -97,7 +104,13 @@ export function CalendarView({
     };
   }, [selected, userId]);
 
-  const close = useCallback(() => setSelected(null), []);
+  const close = useCallback(() => {
+    setSelected(null);
+    // Drop ?day= so the next Your day deep-link is a real navigation, not a no-op.
+    if (initialDay) {
+      router.replace(`/calendar?m=${monthStr}`);
+    }
+  }, [router, initialDay, monthStr]);
   const markRead = useCallback(
     (dayId: string) => {
       void markSummaryRead(createClient(), dayId).then((ok) => {
@@ -114,11 +127,11 @@ export function CalendarView({
     function onPointerDown(e: PointerEvent) {
       const target = e.target as Node;
       if (drawerRef.current?.contains(target) || gridRef.current?.contains(target)) return;
-      setSelected(null);
+      close();
     }
     document.addEventListener("pointerdown", onPointerDown);
     return () => document.removeEventListener("pointerdown", onPointerDown);
-  }, [selected]);
+  }, [selected, close]);
 
   const notes = selected && fetched?.date === selected ? fetched.notes : null;
   const dayId = selected && fetched?.date === selected ? fetched.dayId : null;
