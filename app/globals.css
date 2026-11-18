@@ -19,6 +19,12 @@
   /* same in both modes: these sit on paper or are physical objects */
   --on-ink: #FBFAF6;
   --done: #2E7D4F;
+  /* Calendar day rings: neutral → blue → teal → near-green → full --done.
+     Blue/teal = calm progress; green reserved for the last stretch. */
+  --cal-ring-low: #E8E4DC;
+  --cal-ring-mid: #5B8FA8;
+  --cal-ring-rise: #3D9E9A;
+  --cal-ring-high: #5FAF7A;
   --clipboard: #B98F63;
   --clipboard-clip: #4A4A4A;
   --clipboard-paper: #FFFDF8;
@@ -70,6 +76,10 @@
   --tray-front-armed: #52607A;
   --tray-line: #1C2027;
   --on-tray: #F2EFE6;
+  --cal-ring-low: #F2EFE6;
+  --cal-ring-mid: #7BAFC9;
+  --cal-ring-rise: #5CB8B0;
+  --cal-ring-high: #7BC896;
 }
 
 @media (width >= 48rem) {

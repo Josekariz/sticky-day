@@ -18,3 +18,15 @@ export function isoDate(d: Date): string {
   const day = String(d.getDate()).padStart(2, "0");
   return `${y}-${m}-${day}`;
 }
+
+/**
+ * Progress arc stroke for a calendar day ring.
+ * 0–25% neutral, >25–50% blue, >50–75% teal, ≥75–<100% near-green, 100% done.
+ */
+export function calendarRingStroke(frac: number): string {
+  if (frac >= 1) return "var(--done)";
+  if (frac >= 0.75) return "var(--cal-ring-high)";
+  if (frac > 0.5) return "var(--cal-ring-rise)";
+  if (frac > 0.25) return "var(--cal-ring-mid)";
+  return "var(--cal-ring-low)";
+}

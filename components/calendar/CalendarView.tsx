@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { calendarRingStroke } from "@/lib/core/calendar";
 import type { StoredSummary } from "@/lib/ai/tasks/summarize";
 import { markSummaryRead } from "@/lib/summary/markRead";
 import { DayDrawer, type DayDrawerNote } from "./DayDrawer";
@@ -211,7 +212,7 @@ export function CalendarView({
                     />
                     <circle
                       cx="12" cy="12" r="9" fill="none" strokeWidth="4" strokeLinecap="round"
-                      stroke={frac >= 1 ? "var(--done)" : "currentColor"}
+                      stroke={calendarRingStroke(frac)}
                       strokeDasharray={`${frac * C} ${C}`}
                       transform="rotate(-90 12 12)"
                     />
