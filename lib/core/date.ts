@@ -74,16 +74,98 @@ export function isSummaryDue(now: Date, tz: string, summaryTime: string): boolea
   return h * 60 + min >= dueH * 60 + dueM;
 }
 
+type GreetingPeriod = "morning" | "afternoon" | "evening" | "late";
+
+const GREETINGS: Record<GreetingPeriod, readonly string[]> = {
+  morning: [
+    "Hey there",
+    "Rise and shine",
+    "Fresh day, fresh stickies",
+    "Morning — coffee, then the board",
+    "A new day, same whiteboard",
+    "Look who's early",
+    "Top of the morning",
+    "Good morning, sunshine",
+    "Ready to pin a few?",
+    "Let's make today count",
+  ],
+  afternoon: [
+    "Hey there",
+    "Good afternoon",
+    "Halfway there — keep going",
+    "Hope the day's treating you okay",
+    "Afternoon — still room on the board",
+    "Back at it?",
+    "Let's clear a few more",
+    "What's left on the pile?",
+    "Glad you're here",
+    "Keep the momentum",
+  ],
+  evening: [
+    "Hey there",
+    "Good evening",
+    "Evening — time to wind the day down",
+    "Hope today treated you well",
+    "Welcome back",
+    "Soft landing for the day",
+    "Let's see how it went",
+    "Cozy hour, honest notes",
+    "You made it to evening",
+    "Glad you stopped by",
+  ],
+  late: [
+    "Night owl detected",
+    "Still up? Respect",
+    "Quiet hours, honest list",
+    "Burning a little midnight oil",
+    "Late shift on the board",
+    "Hey, legend",
+    "The notes will wait — or won't",
+    "Late night, clear head",
+    "You and the stickies",
+    "Soft hello from the late side",
+  ],
+};
+
+function greetingPeriod(now: Date, tz: string): GreetingPeriod {
+  const { h } = zonedParts(now, tz);
+  if (h >= 5 && h <= 11) return "morning";
+  if (h >= 12 && h <= 16) return "afternoon";
+  if (h >= 17 && h <= 21) return "evening";
+  return "late";
+}
+
+function stableIndex(key: string, len: number): number {
+  let h = 0;
+  for (let i = 0; i < key.length; i++) h = (h * 31 + key.charCodeAt(i)) | 0;
+  return Math.abs(h) % len;
+}
+
 /**
- * Time-of-day greeting in `tz`: Morning (05–11), Afternoon (12–16),
- * Evening (17–21), Late one (22–04).
+ * Time-of-day greeting in `tz` from curated pools.
+ * Stable for a given local calendar day + period (no AI).
  */
 export function greetingFor(now: Date, tz: string): string {
-  const { h } = zonedParts(now, tz);
-  if (h >= 5 && h <= 11) return "Morning";
-  if (h >= 12 && h <= 16) return "Afternoon";
-  if (h >= 17 && h <= 21) return "Evening";
-  return "Late one";
+  const period = greetingPeriod(now, tz);
+  const pool = GREETINGS[period];
+  const day = todayFor(tz, now);
+  return pool[stableIndex(`${day}:${period}`, pool.length)]!;
+}
+
+/** Greeting with optional first name, e.g. "Hey there, Qariz". */
+export function greetingWithName(now: Date, tz: string, firstName: string | null): string {
+  const g = greetingFor(now, tz);
+  return firstName ? `${g}, ${firstName}` : g;
+}
+
+/**
+ * Letter section title for the day being shown.
+ * "Yesterday" only when the letter date is calendar yesterday.
+ */
+export function storyYouHeading(letterDate: string, today: string): string {
+  if (letterDate === today) return "Today you…";
+  if (letterDate === shiftDate(today, -1)) return "Yesterday you…";
+  return `On ${weekdayLong(letterDate)} you…`;
 }
 
 /** Quiet caption for when a summary was written, in local time (or `tz` if given). */

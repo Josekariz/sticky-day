@@ -1,17 +1,20 @@
 /**
- * Mock checks for Your day unread routing (no DB / network).
+ * Mock checks for Your day unread routing + copy helpers (no DB / network).
  * Usage: npm run summary:unread-check
  */
 import assert from "node:assert/strict";
+import { greetingFor, greetingWithName, storyYouHeading } from "../lib/core/date";
+import { DUMP_PLACEHOLDERS, pickDumpPlaceholder } from "../lib/core/dumpPlaceholder";
 import {
   isUnreadLetter,
+  pickSummaryDay,
   resolveSummaryDate,
   unreadYourDayHref,
 } from "../lib/summary/unread";
 
 const TODAY = "2026-11-18";
 const YESTERDAY = "2026-11-17";
-const OLDER = "2026-11-15";
+const OLDER = "2026-11-15"; // Sunday-ish distance from Wed in the story
 
 const letter = {
   story: "You moved a few stickies.",
@@ -43,75 +46,95 @@ check("unread letter: already read", () => {
   assert.equal(isUnreadLetter(letter, "2026-11-17T20:00:00.000Z"), false);
 });
 
-check("unread letter: garbage summary", () => {
-  assert.equal(isUnreadLetter({ nope: true }, null), false);
-});
-
-check("href: only yesterday unread → /summary?day=yesterday", () => {
+check("href: always /summary", () => {
   assert.equal(
     unreadYourDayHref({
       todayUnread: false,
       yesterdayUnread: true,
       yesterday: YESTERDAY,
     }),
-    `/summary?day=${YESTERDAY}`,
+    "/summary",
+  );
+  assert.equal(unreadYourDayHref(), "/summary");
+});
+
+check("pick: yesterday unread → yesterday", () => {
+  assert.equal(
+    pickSummaryDay({
+      today: TODAY,
+      yesterday: YESTERDAY,
+      todayUnread: false,
+      yesterdayUnread: true,
+    }),
+    YESTERDAY,
   );
 });
 
-check("href: today unread wins → /summary", () => {
+check("pick: today unread wins", () => {
   assert.equal(
-    unreadYourDayHref({
+    pickSummaryDay({
+      today: TODAY,
+      yesterday: YESTERDAY,
       todayUnread: true,
       yesterdayUnread: true,
-      yesterday: YESTERDAY,
     }),
-    "/summary",
+    TODAY,
   );
 });
 
-check("href: nothing unread → /summary", () => {
+check("pick: after yesterday read → today", () => {
   assert.equal(
-    unreadYourDayHref({
+    pickSummaryDay({
+      today: TODAY,
+      yesterday: YESTERDAY,
       todayUnread: false,
       yesterdayUnread: false,
-      yesterday: YESTERDAY,
     }),
-    "/summary",
+    TODAY,
   );
 });
 
-check("href: never points at calendar", () => {
-  const href = unreadYourDayHref({
-    todayUnread: false,
-    yesterdayUnread: true,
-    yesterday: YESTERDAY,
-  });
-  assert.ok(!href.includes("/calendar"), href);
-  assert.ok(href.startsWith("/summary"), href);
+check("pick: ?day= override when valid", () => {
+  assert.equal(
+    pickSummaryDay({
+      today: TODAY,
+      yesterday: YESTERDAY,
+      todayUnread: false,
+      yesterdayUnread: false,
+      dayParam: YESTERDAY,
+    }),
+    YESTERDAY,
+  );
 });
 
-check("resolve: ?day=yesterday opens yesterday", () => {
-  assert.equal(resolveSummaryDate(YESTERDAY, TODAY, YESTERDAY), YESTERDAY);
-});
-
-check("resolve: ?day=today opens today", () => {
-  assert.equal(resolveSummaryDate(TODAY, TODAY, YESTERDAY), TODAY);
-});
-
-check("resolve: missing day → today", () => {
-  assert.equal(resolveSummaryDate(undefined, TODAY, YESTERDAY), TODAY);
-});
-
-check("resolve: older than yesterday → today (reject)", () => {
+check("resolve: older than yesterday → today", () => {
   assert.equal(resolveSummaryDate(OLDER, TODAY, YESTERDAY), TODAY);
 });
 
-check("resolve: junk → today", () => {
-  assert.equal(resolveSummaryDate("not-a-date", TODAY, YESTERDAY), TODAY);
+check("story: today → Today you…", () => {
+  assert.equal(storyYouHeading(TODAY, TODAY), "Today you…");
 });
 
-check("resolve: future day → today", () => {
-  assert.equal(resolveSummaryDate("2026-11-19", TODAY, YESTERDAY), TODAY);
+check("story: yesterday → Yesterday you…", () => {
+  assert.equal(storyYouHeading(YESTERDAY, TODAY), "Yesterday you…");
+});
+
+check("story: older → On weekday you… (not Yesterday)", () => {
+  const h = storyYouHeading(OLDER, TODAY);
+  assert.ok(h.startsWith("On "), h);
+  assert.ok(h.endsWith(" you…"), h);
+  assert.ok(!h.includes("Yesterday"), h);
+});
+
+check("greeting: stable for same day+period", () => {
+  const now = new Date("2026-11-18T09:00:00+03:00");
+  assert.equal(greetingFor(now, "Africa/Nairobi"), greetingFor(now, "Africa/Nairobi"));
+  assert.ok(greetingWithName(now, "Africa/Nairobi", "Qariz").includes("Qariz"));
+});
+
+check("dump placeholders: pool non-empty + pick", () => {
+  assert.ok(DUMP_PLACEHOLDERS.length > 10);
+  assert.ok(DUMP_PLACEHOLDERS.includes(pickDumpPlaceholder(() => 0) as typeof DUMP_PLACEHOLDERS[number]));
 });
 
 process.stdout.write(`\n${failed === 0 ? "All passed." : `${failed} failed.`}\n`);

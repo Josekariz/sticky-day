@@ -2,7 +2,13 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { dayHeading, formatSummaryTime, greetingFor, writtenTime } from "@/lib/core/date";
+import {
+  dayHeading,
+  formatSummaryTime,
+  greetingWithName,
+  storyYouHeading,
+  writtenTime,
+} from "@/lib/core/date";
 import { paperVar, type Note } from "@/lib/core/types";
 import { signOffFor } from "@/lib/core/themes";
 import type { StoredSummary } from "@/lib/ai/tasks/summarize";
@@ -10,6 +16,8 @@ import { StoredSummarySchema } from "@/lib/ai/tasks/summarize";
 
 export type SummaryBlock = {
   date: string;
+  /** Calendar today in the user's timezone — for Today/Yesterday headings. */
+  today: string;
   dayId: string;
   firstName: string | null;
   timezone: string;
@@ -25,18 +33,18 @@ export type SummaryBlock = {
 };
 
 function greetingLine(data: SummaryBlock, now = new Date()): string {
-  const period = greetingFor(now, data.timezone);
-  return data.firstName ? `${period}, ${data.firstName}` : period;
+  return greetingWithName(now, data.timezone, data.firstName);
 }
 
 function toText(data: SummaryBlock): string {
   if (!data.summary) return "";
   const s = data.summary;
+  const you = storyYouHeading(data.date, data.today);
   const lines = [
     greetingLine(data),
     dayHeading(data.date),
     "",
-    "Today you…",
+    you,
     s.story,
     "",
     ...(data.doneNotes.length ? data.doneNotes.map((n) => `• ${n.title}`) : []),
@@ -91,6 +99,7 @@ export function SummaryView({ data }: { data: SummaryBlock }) {
   const [copied, setCopied] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const openNotes = [...data.focusNotes, ...data.unfinishedNotes];
 
   async function copy() {
     if (!data.summary) return;
@@ -130,6 +139,20 @@ export function SummaryView({ data }: { data: SummaryBlock }) {
           <h1 className="font-hand text-5xl font-bold">{greetingLine(data)}</h1>
           <p className="text-sm text-fg-soft">{dayHeading(data.date)}</p>
         </header>
+        {openNotes.length > 0 && (
+          <section className="flex flex-col gap-4">
+            <h2 className="font-hand text-2xl font-semibold text-fg">Today you have</h2>
+            <ul className="flex flex-col gap-2">
+              {openNotes.map((n) => (
+                <NoteLine
+                  key={n.id}
+                  note={n}
+                  mark={n.status === "focus" ? "still on it" : undefined}
+                />
+              ))}
+            </ul>
+          </section>
+        )}
         <div className="flex flex-col gap-4 rounded-2xl border border-frame bg-surface p-6">
           <p className="text-base text-fg">
             Writes itself at {formatSummaryTime(data.summaryTime)}
@@ -151,6 +174,7 @@ export function SummaryView({ data }: { data: SummaryBlock }) {
   const s = data.summary;
   const showTomorrow = data.unfinishedNotes.length > 0;
   const greeting = greetingLine(data);
+  const youHeading = storyYouHeading(data.date, data.today);
 
   return (
     <div className="mx-auto flex w-full max-w-[35rem] flex-col gap-10">
@@ -160,7 +184,7 @@ export function SummaryView({ data }: { data: SummaryBlock }) {
       </header>
 
       <section className="flex flex-col gap-4">
-        <h2 className="font-hand text-2xl font-semibold text-fg">Today you…</h2>
+        <h2 className="font-hand text-2xl font-semibold text-fg">{youHeading}</h2>
         {s.story && <p className="text-base leading-relaxed text-fg">{s.story}</p>}
         {(data.doneNotes.length > 0 || data.focusNotes.length > 0) && (
           <ul className="flex flex-col gap-2">

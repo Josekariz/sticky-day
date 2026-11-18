@@ -3,6 +3,7 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
+import { pickDumpPlaceholder } from "@/lib/core/dumpPlaceholder";
 
 const AI_NOTICE = "Your notes go to an AI to be split. Keep passwords and money out.";
 const QUICK_NOTICE = "Quick split, right here in your browser. Nothing is sent anywhere. Sign in and the AI does it properly.";
@@ -28,6 +29,7 @@ export function BrainDump({
   quick?: boolean; // the guest board: split by rules in the browser, no AI
 }) {
   const [text, setText] = useState("");
+  const [placeholder] = useState(() => pickDumpPlaceholder());
   const [busy, setBusy] = useState<"split" | "one" | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   // Server snapshot is "hidden" so people who dismissed it never see it flash.
@@ -78,7 +80,7 @@ export function BrainDump({
           value={text}
           onChange={(e) => setText(e.target.value)}
           aria-describedby="dump-ai-notice"
-          placeholder="What's on today?"
+          placeholder={placeholder}
           className="min-w-0 flex-1 rounded-lg bg-transparent font-hand text-2xl outline-none placeholder:text-fg-soft focus-visible:shadow-[0_0_0_2px_var(--focus-gap),0_0_0_4px_var(--focus)]"
         />
         <button

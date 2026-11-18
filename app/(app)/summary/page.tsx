@@ -7,7 +7,7 @@ import { SummaryView, type SummaryBlock } from "@/components/summary/SummaryView
 import { parseStoredSummary } from "@/lib/ai/tasks/summarize";
 import { ensureTodayDay } from "@/lib/ai/writeDaySummary";
 import { markSummaryRead } from "@/lib/summary/markRead";
-import { resolveSummaryDate } from "@/lib/summary/unread";
+import { isUnreadLetter, pickSummaryDay } from "@/lib/summary/unread";
 import { RefreshAfterRead } from "@/components/summary/RefreshAfterRead";
 
 type NoteRowWithTimes = NoteRow & {
@@ -38,7 +38,39 @@ export default async function SummaryPage({
   const summaryTime = String(profile?.summary_time ?? "18:00");
   const today = todayFor(timezone);
   const yesterday = yesterdayFor(timezone);
-  const date = resolveSummaryDate(dayRaw, today, yesterday);
+
+  const todayDay = await ensureTodayDay(supabase, userId, today);
+
+  const { data: yDay } = await supabase
+    .from("days")
+    .select("id, summary, summary_read_at")
+    .eq("user_id", userId)
+    .eq("date", yesterday)
+    .maybeSingle();
+
+  const { data: todayMeta } = await supabase
+    .from("days")
+    .select("summary, summary_read_at")
+    .eq("id", todayDay.id)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  const todayUnread = isUnreadLetter(
+    todayMeta?.summary ?? todayDay.summary,
+    todayMeta?.summary_read_at as string | null | undefined,
+  );
+  const yesterdayUnread = isUnreadLetter(
+    yDay?.summary,
+    yDay?.summary_read_at as string | null | undefined,
+  );
+
+  const date = pickSummaryDay({
+    today,
+    yesterday,
+    todayUnread,
+    yesterdayUnread,
+    dayParam: dayRaw,
+  });
 
   const displayName = resolveDisplayName(
     profile?.display_name as string | null | undefined,
@@ -49,34 +81,32 @@ export default async function SummaryPage({
 
   let dayId: string;
   let summaryRaw: unknown;
+  let summaryReadAt: string | null | undefined;
 
   if (date === today) {
-    const day = await ensureTodayDay(supabase, userId, today);
-    dayId = day.id;
-    summaryRaw = day.summary;
+    dayId = todayDay.id;
+    summaryRaw = todayMeta?.summary ?? todayDay.summary;
+    summaryReadAt = todayMeta?.summary_read_at as string | null | undefined;
+  } else if (yDay && date === yesterday) {
+    dayId = yDay.id as string;
+    summaryRaw = yDay.summary;
+    summaryReadAt = yDay.summary_read_at as string | null | undefined;
   } else {
     const { data: day } = await supabase
       .from("days")
-      .select("id, summary")
+      .select("id, summary, summary_read_at")
       .eq("user_id", userId)
       .eq("date", date)
       .maybeSingle();
-    // No row for that past day — fall back to today's letter page.
     if (!day) redirect("/summary");
     dayId = day.id as string;
     summaryRaw = day.summary;
+    summaryReadAt = day.summary_read_at as string | null | undefined;
   }
 
-  const { data: dayRow } = await supabase
-    .from("days")
-    .select("summary, summary_read_at")
-    .eq("id", dayId)
-    .eq("user_id", userId)
-    .maybeSingle();
-
-  const summary = parseStoredSummary(dayRow?.summary ?? summaryRaw);
+  const summary = parseStoredSummary(summaryRaw);
   let didMark = false;
-  if (summary && dayRow?.summary_read_at == null) {
+  if (summary && summaryReadAt == null) {
     didMark = await markSummaryRead(supabase, dayId);
   }
 
@@ -103,6 +133,7 @@ export default async function SummaryPage({
 
   const data: SummaryBlock = {
     date,
+    today,
     dayId,
     firstName,
     timezone,

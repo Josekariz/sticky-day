@@ -5,18 +5,12 @@ export function isUnreadLetter(summary: unknown, summaryReadAt: string | null | 
   return !!parseStoredSummary(summary) && summaryReadAt == null;
 }
 
-/**
- * Navbar target for the Your day red dot.
- * Yesterday's letter opens on /summary?day=… — never the calendar.
- */
-export function unreadYourDayHref(opts: {
-  todayUnread: boolean;
-  yesterdayUnread: boolean;
-  yesterday: string;
+/** Navbar target for the Your day red dot — page picks yesterday vs today. */
+export function unreadYourDayHref(_opts?: {
+  todayUnread?: boolean;
+  yesterdayUnread?: boolean;
+  yesterday?: string;
 }): string {
-  if (opts.yesterdayUnread && !opts.todayUnread) {
-    return `/summary?day=${opts.yesterday}`;
-  }
   return "/summary";
 }
 
@@ -35,4 +29,23 @@ export function resolveSummaryDate(
     return raw;
   }
   return today;
+}
+
+/**
+ * Which day Your day should show.
+ * Valid `?day=` wins; else yesterday when that letter is unread and today isn't.
+ */
+export function pickSummaryDay(opts: {
+  today: string;
+  yesterday: string;
+  todayUnread: boolean;
+  yesterdayUnread: boolean;
+  dayParam?: string;
+}): string {
+  if (opts.dayParam) {
+    const resolved = resolveSummaryDate(opts.dayParam, opts.today, opts.yesterday);
+    if (resolved === opts.dayParam) return resolved;
+  }
+  if (opts.yesterdayUnread && !opts.todayUnread) return opts.yesterday;
+  return opts.today;
 }

@@ -3,7 +3,7 @@
 import { useEffect, useState, type Ref } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
-import { dayHeading, writtenTime } from "@/lib/core/date";
+import { dayHeading, storyYouHeading, writtenTime } from "@/lib/core/date";
 import { signOffFor } from "@/lib/core/themes";
 import type { NoteStatus } from "@/lib/core/types";
 import type { StoredSummary } from "@/lib/ai/tasks/summarize";
@@ -168,6 +168,7 @@ export function DayDrawer({
                 {hasLetter && summary ? (
                   <LetterBody
                     date={date}
+                    today={today}
                     summary={summary}
                     unfinishedTitles={unfinishedNotes.map((n) => n.title)}
                   />
@@ -237,10 +238,12 @@ function FaceTab({
 
 function LetterBody({
   date,
+  today,
   summary,
   unfinishedTitles,
 }: {
   date: string;
+  today: string;
   summary: StoredSummary;
   unfinishedTitles: string[];
 }) {
@@ -251,7 +254,9 @@ function LetterBody({
     <>
       {story && (
         <section className="flex flex-col gap-3">
-          <h3 className="font-hand text-2xl font-semibold text-fg">Today you…</h3>
+          <h3 className="font-hand text-2xl font-semibold text-fg">
+            {storyYouHeading(date, today)}
+          </h3>
           <p className="text-base leading-relaxed text-fg">{story}</p>
         </section>
       )}
