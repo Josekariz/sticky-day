@@ -5,7 +5,7 @@ import { SyncTimezone } from "@/components/profile/SyncTimezone";
 import { AppearanceAccount } from "@/components/theme/AppearanceAccount";
 import { isSummaryDue, todayFor, yesterdayFor } from "@/lib/core/date";
 import { parseAppearance } from "@/lib/core/appearance";
-import { isUnreadLetter } from "@/lib/summary/unread";
+import { isUnreadLetter, unreadYourDayHref } from "@/lib/summary/unread";
 import { resolveDisplayName } from "@/lib/core/name";
 import { isSummaryBusy, parseStoredSummary } from "@/lib/ai/tasks/summarize";
 import { writeDaySummary } from "@/lib/ai/writeDaySummary";
@@ -60,11 +60,11 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
       r.date === yesterday && isUnreadLetter(r.summary, r.summary_read_at as string | null | undefined),
   );
   const unreadLetter = !!(todayUnread || yesterdayUnread);
-  const unreadHref = todayUnread
-    ? "/summary"
-    : yesterdayUnread
-      ? `/calendar?m=${yesterday.slice(0, 7)}&day=${yesterday}`
-      : "/summary";
+  const unreadHref = unreadYourDayHref({
+    todayUnread: !!todayUnread,
+    yesterdayUnread: !!yesterdayUnread,
+    yesterday,
+  });
 
   const name = resolveDisplayName(
     profile?.display_name as string | null | undefined,

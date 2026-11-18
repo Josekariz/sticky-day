@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "split:regression": "tsx scripts/split-regression.ts"
+    "split:regression": "tsx scripts/split-regression.ts",
+    "summary:unread-check": "npx tsx scripts/summary-unread-check.ts"
   },
   "dependencies": {
     "@ai-sdk/google": "^4.0.80",

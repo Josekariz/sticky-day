@@ -29,7 +29,7 @@ export function Navbar({
   avatar: string | null;
   /** Red dot on Your day when a letter is waiting. */
   unreadLetter?: boolean;
-  /** Your day link target when unread (today vs yesterday in calendar). */
+  /** Your day link when unread (/summary or /summary?day=yesterday). */
   unreadHref?: string;
 }) {
   const path = usePathname();
@@ -136,7 +136,8 @@ export function Navbar({
 
         <nav className="hidden gap-1 md:flex">
           {LINKS.map((l) => {
-            const active = path.startsWith(l.href);
+            // Active uses the route base (/summary), not unreadHref (?day=…).
+            const active = pathMatches(path, l.href);
             const isYourDay = l.href === "/summary";
             const href = isYourDay && unread ? unreadHref : l.href;
             return (
@@ -274,7 +275,7 @@ export function Navbar({
             className="absolute inset-x-0 top-full z-40 flex flex-col gap-1 border-b border-frame bg-surface p-2 shadow-lg md:hidden"
           >
             {LINKS.map((l) => {
-              const active = path.startsWith(l.href);
+              const active = pathMatches(path, l.href);
               const isYourDay = l.href === "/summary";
               const href = isYourDay && unread ? unreadHref : l.href;
               return (
