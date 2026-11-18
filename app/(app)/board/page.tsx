@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { rowToNote, type NoteRow } from "@/lib/core/mappers";
 import { todayFor } from "@/lib/core/date";
+import { pickDumpPlaceholder } from "@/lib/core/dumpPlaceholder";
 import { parseShape } from "@/lib/core/types";
 import { DayView } from "@/components/board/DayView";
 import { parseStoredSummary } from "@/lib/ai/tasks/summarize";
@@ -54,6 +55,7 @@ export default async function BoardPage() {
         defaultShape={defaultShape}
         onboarded={onboarded}
         isNewAccount={isNewAccount}
+        dumpPlaceholder={pickDumpPlaceholder()}
       />
     </main>
   );

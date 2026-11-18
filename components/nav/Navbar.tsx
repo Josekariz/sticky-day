@@ -7,12 +7,11 @@ import { SignOutButton } from "@/components/auth/SignOutButton";
 import { AppearanceSelect } from "@/components/theme/AppearanceSelect";
 import { flushPendingSaves, hasPendingSaves } from "@/components/board/pendingSaves";
 import { ManualTopProgress, NavTopProgress, PendingLabel } from "@/components/nav/PendingNav";
+import { createClient } from "@/lib/supabase/client";
+import { markSummaryRead } from "@/lib/summary/markRead";
+import { takeRecapDayId } from "@/lib/summary/recapDismiss";
 
-const LINKS = [
-  { href: "/board", label: "Board" },
-  { href: "/calendar", label: "Calendar" },
-  { href: "/summary", label: "Your day" },
-];
+type NavLink = { href: string; label: string; unread?: boolean };
 
 function pathMatches(path: string, href: string) {
   const base = href.split("?")[0] || href;
@@ -22,15 +21,12 @@ function pathMatches(path: string, href: string) {
 export function Navbar({
   initials,
   avatar,
-  unreadLetter = false,
-  unreadHref = "/summary",
+  showRecap = false,
 }: {
   initials: string;
   avatar: string | null;
-  /** Red dot on Your day when a letter is waiting. */
-  unreadLetter?: boolean;
-  /** Your day link when unread (/summary or /summary?day=yesterday). */
-  unreadHref?: string;
+  /** Yesterday's unread letter — Recap after Calendar with a red dot. */
+  showRecap?: boolean;
 }) {
   const path = usePathname();
   const router = useRouter();
@@ -44,7 +40,27 @@ export function Navbar({
   const accountMenu = useRef<HTMLDivElement>(null);
   const accountToggle = useRef<HTMLButtonElement>(null);
   const flushNav = flushHref !== null && !pathMatches(path, flushHref);
-  const unread = unreadLetter;
+  const prevPath = useRef(path);
+
+  const links: NavLink[] = [
+    { href: "/board", label: "Board" },
+    { href: "/calendar", label: "Calendar" },
+    ...(showRecap ? [{ href: "/recap", label: "Recap", unread: true }] : []),
+    { href: "/summary", label: "Your day" },
+  ];
+
+  // Leaving Recap: mark read if still armed (button already cleared it), then refresh nav.
+  useEffect(() => {
+    const wasRecap = prevPath.current === "/recap";
+    prevPath.current = path;
+    if (!wasRecap || path === "/recap") return;
+    const dayId = takeRecapDayId();
+    if (dayId) {
+      void markSummaryRead(createClient(), dayId).finally(() => router.refresh());
+      return;
+    }
+    router.refresh();
+  }, [path, router]);
 
   // Clear pending indicators once we land — flushHref used to stick forever and
   // re-spin the bar on the next navigation away from that target.
@@ -135,17 +151,14 @@ export function Navbar({
         </Link>
 
         <nav className="hidden gap-1 md:flex">
-          {LINKS.map((l) => {
-            // Active uses the route base (/summary), not unreadHref (?day=…).
+          {links.map((l) => {
             const active = pathMatches(path, l.href);
-            const isYourDay = l.href === "/summary";
-            const href = isYourDay && unread ? unreadHref : l.href;
             return (
               <Link
                 key={l.href}
-                href={href}
+                href={l.href}
                 onClick={(e) => {
-                  void onNavClick(e, href);
+                  void onNavClick(e, l.href);
                 }}
                 aria-current={active ? "page" : undefined}
                 className={`relative flex h-9 items-center rounded-xl px-3.5 text-sm font-semibold ${
@@ -154,10 +167,10 @@ export function Navbar({
               >
                 <NavTopProgress />
                 <PendingLabel>{l.label}</PendingLabel>
-                {isYourDay && unread && (
+                {l.unread && (
                   <span
                     className="absolute right-1.5 top-1.5 size-1.5 rounded-full bg-danger"
-                    aria-label="Unread Your day"
+                    aria-label="Unread Recap"
                   />
                 )}
               </Link>
@@ -274,16 +287,14 @@ export function Navbar({
             id="mobile-menu"
             className="absolute inset-x-0 top-full z-40 flex flex-col gap-1 border-b border-frame bg-surface p-2 shadow-lg md:hidden"
           >
-            {LINKS.map((l) => {
+            {links.map((l) => {
               const active = pathMatches(path, l.href);
-              const isYourDay = l.href === "/summary";
-              const href = isYourDay && unread ? unreadHref : l.href;
               return (
                 <Link
                   key={l.href}
-                  href={href}
+                  href={l.href}
                   onClick={(e) => {
-                    void onNavClick(e, href);
+                    void onNavClick(e, l.href);
                   }}
                   aria-current={active ? "page" : undefined}
                   className={`relative flex h-12 items-center justify-center rounded-xl px-4 font-semibold ${
@@ -292,10 +303,10 @@ export function Navbar({
                 >
                   <NavTopProgress />
                   <PendingLabel>{l.label}</PendingLabel>
-                  {isYourDay && unread && (
+                  {l.unread && (
                     <span
                       className="absolute right-3 top-3 size-2 rounded-full bg-danger"
-                      aria-label="Unread Your day"
+                      aria-label="Unread Recap"
                     />
                   )}
                 </Link>

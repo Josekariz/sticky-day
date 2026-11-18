@@ -5,7 +5,7 @@ import { SyncTimezone } from "@/components/profile/SyncTimezone";
 import { AppearanceAccount } from "@/components/theme/AppearanceAccount";
 import { isSummaryDue, todayFor, yesterdayFor } from "@/lib/core/date";
 import { parseAppearance } from "@/lib/core/appearance";
-import { isUnreadLetter, unreadYourDayHref } from "@/lib/summary/unread";
+import { isUnreadLetter, shouldShowRecap } from "@/lib/summary/unread";
 import { resolveDisplayName } from "@/lib/core/name";
 import { isSummaryBusy, parseStoredSummary } from "@/lib/ai/tasks/summarize";
 import { writeDaySummary } from "@/lib/ai/writeDaySummary";
@@ -46,25 +46,16 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
     }
   }
 
-  const { data: unreadRows } = await supabase
+  const { data: yDay } = await supabase
     .from("days")
-    .select("date, summary, summary_read_at")
+    .select("summary, summary_read_at")
     .eq("user_id", user.id)
-    .in("date", [today, yesterday]);
+    .eq("date", yesterday)
+    .maybeSingle();
 
-  const todayUnread = (unreadRows ?? []).find(
-    (r) => r.date === today && isUnreadLetter(r.summary, r.summary_read_at as string | null | undefined),
+  const showRecap = shouldShowRecap(
+    isUnreadLetter(yDay?.summary, yDay?.summary_read_at as string | null | undefined),
   );
-  const yesterdayUnread = (unreadRows ?? []).find(
-    (r) =>
-      r.date === yesterday && isUnreadLetter(r.summary, r.summary_read_at as string | null | undefined),
-  );
-  const unreadLetter = !!(todayUnread || yesterdayUnread);
-  const unreadHref = unreadYourDayHref({
-    todayUnread: !!todayUnread,
-    yesterdayUnread: !!yesterdayUnread,
-    yesterday,
-  });
 
   const name = resolveDisplayName(
     profile?.display_name as string | null | undefined,
@@ -77,12 +68,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
   return (
     <AppearanceAccount userId={user.id} appearance={appearance}>
       <SyncTimezone userId={user.id} storedTimezone={timezone} />
-      <Navbar
-        initials={initials}
-        avatar={avatar}
-        unreadLetter={unreadLetter}
-        unreadHref={unreadHref}
-      />
+      <Navbar initials={initials} avatar={avatar} showRecap={showRecap} />
       <div className="flex flex-1 flex-col overflow-x-clip px-2 py-4 md:overflow-x-visible md:p-8">{children}</div>
     </AppearanceAccount>
   );

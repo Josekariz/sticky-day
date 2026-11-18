@@ -1,20 +1,15 @@
 /**
- * Mock checks for Your day unread routing + copy helpers (no DB / network).
+ * Mock checks for Recap nav + Your day copy helpers (no DB / network).
  * Usage: npm run summary:unread-check
  */
 import assert from "node:assert/strict";
 import { greetingFor, greetingWithName, storyYouHeading } from "../lib/core/date";
 import { DUMP_PLACEHOLDERS, pickDumpPlaceholder } from "../lib/core/dumpPlaceholder";
-import {
-  isUnreadLetter,
-  pickSummaryDay,
-  resolveSummaryDate,
-  unreadYourDayHref,
-} from "../lib/summary/unread";
+import { isUnreadLetter, shouldShowRecap } from "../lib/summary/unread";
 
 const TODAY = "2026-11-18";
 const YESTERDAY = "2026-11-17";
-const OLDER = "2026-11-15"; // Sunday-ish distance from Wed in the story
+const OLDER = "2026-11-15";
 
 const letter = {
   story: "You moved a few stickies.",
@@ -46,69 +41,12 @@ check("unread letter: already read", () => {
   assert.equal(isUnreadLetter(letter, "2026-11-17T20:00:00.000Z"), false);
 });
 
-check("href: always /summary", () => {
-  assert.equal(
-    unreadYourDayHref({
-      todayUnread: false,
-      yesterdayUnread: true,
-      yesterday: YESTERDAY,
-    }),
-    "/summary",
-  );
-  assert.equal(unreadYourDayHref(), "/summary");
+check("recap: show while yesterday unread", () => {
+  assert.equal(shouldShowRecap(true), true);
 });
 
-check("pick: yesterday unread → yesterday", () => {
-  assert.equal(
-    pickSummaryDay({
-      today: TODAY,
-      yesterday: YESTERDAY,
-      todayUnread: false,
-      yesterdayUnread: true,
-    }),
-    YESTERDAY,
-  );
-});
-
-check("pick: today unread wins", () => {
-  assert.equal(
-    pickSummaryDay({
-      today: TODAY,
-      yesterday: YESTERDAY,
-      todayUnread: true,
-      yesterdayUnread: true,
-    }),
-    TODAY,
-  );
-});
-
-check("pick: after yesterday read → today", () => {
-  assert.equal(
-    pickSummaryDay({
-      today: TODAY,
-      yesterday: YESTERDAY,
-      todayUnread: false,
-      yesterdayUnread: false,
-    }),
-    TODAY,
-  );
-});
-
-check("pick: ?day= override when valid", () => {
-  assert.equal(
-    pickSummaryDay({
-      today: TODAY,
-      yesterday: YESTERDAY,
-      todayUnread: false,
-      yesterdayUnread: false,
-      dayParam: YESTERDAY,
-    }),
-    YESTERDAY,
-  );
-});
-
-check("resolve: older than yesterday → today", () => {
-  assert.equal(resolveSummaryDate(OLDER, TODAY, YESTERDAY), TODAY);
+check("recap: hide after yesterday read", () => {
+  assert.equal(shouldShowRecap(false), false);
 });
 
 check("story: today → Today you…", () => {
@@ -126,15 +64,18 @@ check("story: older → On weekday you… (not Yesterday)", () => {
   assert.ok(!h.includes("Yesterday"), h);
 });
 
-check("greeting: stable for same day+period", () => {
+check("greeting: period pool + name on refresh pick", () => {
   const now = new Date("2026-11-18T09:00:00+03:00");
-  assert.equal(greetingFor(now, "Africa/Nairobi"), greetingFor(now, "Africa/Nairobi"));
-  assert.ok(greetingWithName(now, "Africa/Nairobi", "Qariz").includes("Qariz"));
+  const g = greetingFor(now, "Africa/Nairobi", () => 0);
+  assert.ok(g.length > 0);
+  assert.ok(greetingWithName(now, "Africa/Nairobi", "Qariz", () => 0).includes("Qariz"));
 });
 
 check("dump placeholders: pool non-empty + pick", () => {
   assert.ok(DUMP_PLACEHOLDERS.length > 10);
-  assert.ok(DUMP_PLACEHOLDERS.includes(pickDumpPlaceholder(() => 0) as typeof DUMP_PLACEHOLDERS[number]));
+  assert.ok(
+    DUMP_PLACEHOLDERS.includes(pickDumpPlaceholder(() => 0) as (typeof DUMP_PLACEHOLDERS)[number]),
+  );
 });
 
 process.stdout.write(`\n${failed === 0 ? "All passed." : `${failed} failed.`}\n`);

@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   dayHeading,
   formatSummaryTime,
-  greetingWithName,
   storyYouHeading,
   writtenTime,
 } from "@/lib/core/date";
@@ -13,6 +13,12 @@ import { paperVar, type Note } from "@/lib/core/types";
 import { signOffFor } from "@/lib/core/themes";
 import type { StoredSummary } from "@/lib/ai/tasks/summarize";
 import { StoredSummarySchema } from "@/lib/ai/tasks/summarize";
+import { RecapDone } from "@/components/summary/RecapDone";
+
+function calendarDayHref(date: string): string {
+  const m = date.slice(0, 7);
+  return `/calendar?m=${m}&day=${date}`;
+}
 
 export type SummaryBlock = {
   date: string;
@@ -21,6 +27,8 @@ export type SummaryBlock = {
   dayId: string;
   firstName: string | null;
   timezone: string;
+  /** Time-of-day line fixed at page load (server). */
+  greeting: string;
   summary: StoredSummary | null;
   doneNotes: Note[];
   /** On the clipboard right now — still today. */
@@ -32,16 +40,12 @@ export type SummaryBlock = {
   stale: boolean;
 };
 
-function greetingLine(data: SummaryBlock, now = new Date()): string {
-  return greetingWithName(now, data.timezone, data.firstName);
-}
-
 function toText(data: SummaryBlock): string {
   if (!data.summary) return "";
   const s = data.summary;
   const you = storyYouHeading(data.date, data.today);
   const lines = [
-    greetingLine(data),
+    data.greeting,
     dayHeading(data.date),
     "",
     you,
@@ -94,12 +98,20 @@ function NoteLine({ note, tick, mark }: { note: Note; tick?: boolean; mark?: str
   );
 }
 
-export function SummaryView({ data }: { data: SummaryBlock }) {
+export function SummaryView({
+  data,
+  variant = "day",
+}: {
+  data: SummaryBlock;
+  /** Recap shows a calendar disclaimer; no Write it now. */
+  variant?: "day" | "recap";
+}) {
   const router = useRouter();
   const [copied, setCopied] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const openNotes = [...data.focusNotes, ...data.unfinishedNotes];
+  const isRecap = variant === "recap";
 
   async function copy() {
     if (!data.summary) return;
@@ -136,7 +148,7 @@ export function SummaryView({ data }: { data: SummaryBlock }) {
     return (
       <div className="mx-auto flex w-full max-w-[35rem] flex-col gap-10">
         <header className="flex flex-col gap-1">
-          <h1 className="font-hand text-5xl font-bold">{greetingLine(data)}</h1>
+          <h1 className="font-hand text-5xl font-bold">{data.greeting}</h1>
           <p className="text-sm text-fg-soft">{dayHeading(data.date)}</p>
         </header>
         {openNotes.length > 0 && (
@@ -173,14 +185,25 @@ export function SummaryView({ data }: { data: SummaryBlock }) {
 
   const s = data.summary;
   const showTomorrow = data.unfinishedNotes.length > 0;
-  const greeting = greetingLine(data);
   const youHeading = storyYouHeading(data.date, data.today);
 
   return (
     <div className="mx-auto flex w-full max-w-[35rem] flex-col gap-10">
       <header className="flex flex-col gap-1">
-        <h1 className="font-hand text-5xl font-bold">{greeting}</h1>
+        <h1 className="font-hand text-5xl font-bold">{data.greeting}</h1>
         <p className="text-sm text-fg-soft">{dayHeading(data.date)}</p>
+        {isRecap && (
+          <p className="mt-2 text-sm leading-relaxed text-fg-soft">
+            You can always find this again on the{" "}
+            <Link
+              href={calendarDayHref(data.date)}
+              className="underline underline-offset-2 hover:text-fg"
+            >
+              calendar for this day
+            </Link>
+            .
+          </p>
+        )}
       </header>
 
       <section className="flex flex-col gap-4">
@@ -227,7 +250,7 @@ export function SummaryView({ data }: { data: SummaryBlock }) {
         {s.createdAt && (
           <p className="text-xs text-fg-soft">{writtenTime(s.createdAt, data.timezone)}</p>
         )}
-        {data.stale && (
+        {!isRecap && data.stale && (
           <p className="text-sm text-fg-soft">
             Things changed since this was written ·{" "}
             <button
@@ -243,14 +266,15 @@ export function SummaryView({ data }: { data: SummaryBlock }) {
         {error && <p className="text-sm text-danger">{error}</p>}
       </div>
 
-      <div>
+      <div className="flex flex-col gap-6">
         <button
           type="button"
           onClick={() => void copy()}
-          className="inline-flex h-11 items-center justify-center rounded-xl border border-frame px-4 text-sm font-semibold"
+          className="inline-flex h-11 w-fit items-center justify-center rounded-xl border border-frame px-4 text-sm font-semibold"
         >
           {copied ? "Copied" : "Copy"}
         </button>
+        {isRecap && <RecapDone dayId={data.dayId} />}
       </div>
     </div>
   );

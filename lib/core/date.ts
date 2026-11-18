@@ -135,26 +135,25 @@ function greetingPeriod(now: Date, tz: string): GreetingPeriod {
   return "late";
 }
 
-function stableIndex(key: string, len: number): number {
-  let h = 0;
-  for (let i = 0; i < key.length; i++) h = (h * 31 + key.charCodeAt(i)) | 0;
-  return Math.abs(h) % len;
-}
-
 /**
- * Time-of-day greeting in `tz` from curated pools.
- * Stable for a given local calendar day + period (no AI).
+ * Time-of-day greeting in `tz` from curated pools (no AI, no cron).
+ * Period from the clock; line picked fresh each call (each page load / refresh).
  */
-export function greetingFor(now: Date, tz: string): string {
+export function greetingFor(now: Date, tz: string, random = Math.random): string {
   const period = greetingPeriod(now, tz);
   const pool = GREETINGS[period];
-  const day = todayFor(tz, now);
-  return pool[stableIndex(`${day}:${period}`, pool.length)]!;
+  const i = Math.floor(random() * pool.length);
+  return pool[i] ?? pool[0]!;
 }
 
 /** Greeting with optional first name, e.g. "Hey there, Qariz". */
-export function greetingWithName(now: Date, tz: string, firstName: string | null): string {
-  const g = greetingFor(now, tz);
+export function greetingWithName(
+  now: Date,
+  tz: string,
+  firstName: string | null,
+  random = Math.random,
+): string {
+  const g = greetingFor(now, tz, random);
   return firstName ? `${g}, ${firstName}` : g;
 }
 

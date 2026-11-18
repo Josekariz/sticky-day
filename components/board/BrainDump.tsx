@@ -22,14 +22,17 @@ export function BrainDump({
   onSubmit,
   onAddOne,
   quick = false,
+  placeholder: placeholderProp,
 }: {
   onSubmit: (text: string) => Promise<string | null>;
   /** One sticky from the text as typed; no AI. */
   onAddOne: (text: string) => Promise<string | null>;
   quick?: boolean; // the guest board: split by rules in the browser, no AI
+  /** From the board page on refresh; guest board picks once in the browser. */
+  placeholder?: string;
 }) {
   const [text, setText] = useState("");
-  const [placeholder] = useState(() => pickDumpPlaceholder());
+  const [placeholder] = useState(() => placeholderProp ?? pickDumpPlaceholder());
   const [busy, setBusy] = useState<"split" | "one" | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   // Server snapshot is "hidden" so people who dismissed it never see it flash.

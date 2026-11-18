@@ -27,6 +27,7 @@ export function DayView({
   onboarded,
   isNewAccount,
   aside,
+  dumpPlaceholder,
 }: {
   account: BoardAccount | null; // null: the guest board on the landing page
   initialNotes: Note[];
@@ -35,6 +36,8 @@ export function DayView({
   onboarded: boolean;
   isNewAccount: boolean;
   aside?: ReactNode; // top of the side column
+  /** Picked on the board page load / refresh. */
+  dumpPlaceholder?: string;
 }) {
   const userId = account?.userId ?? null;
   const dayId = account?.dayId ?? null;
@@ -78,6 +81,7 @@ export function DayView({
         onSubmit={b.addFromDump}
         onAddOne={(text) => b.addOne(text, defaultShape)}
         quick={guest}
+        placeholder={dumpPlaceholder}
       />
       {guest && (
         <ExampleDays
